@@ -1,44 +1,37 @@
 package saavuu
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 )
 
 // listten to a port and start http server
 func ListenAndServe(cfg *Configuration) {
+	var (
+		result []byte
+		err    error
+	)
 	//get item
-	http.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		svcContext := LoadHttpContext(r, w)
-		if svcContext.Jwt == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
+		if r.Method == "GET" {
+			result, err = svcContext.getHandler()
+		} else if r.Method == "PUT" {
+			result, err = svcContext.putHandler()
+		} else if r.Method == "DELETE" {
+			result, err = svcContext.delHandler()
 		}
-		if svcContext.QueryFields == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if result, err := svcContext.getHandler(); err != nil {
+		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			if len(result) > 0 {
-				w.Write(result)
+				w.Write([]byte(err.Error()))
 			}
 			return
 		} else {
 			w.WriteHeader(http.StatusOK)
 			w.Write(result)
 		}
-	})
-	http.HandleFunc("/put", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q	", r.URL.Path)
-	})
-	http.HandleFunc("/rm", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q	", r.URL.Path)
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	})
 	http.ListenAndServe(":"+strconv.Itoa(cfg.Port), nil)
 }

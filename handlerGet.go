@@ -53,18 +53,18 @@ func (scvCtx *ServiceContext) getHandler() (data []byte, err error) {
 	//fill content type, to support binary or json response
 	if _Type := scvCtx.req.Header.Get("Content-Type"); _Type != "application/json" {
 		scvCtx.rsb.Header().Set("Content-Type", _Type)
-		if msgpack.Unmarshal(data, resultBytes) == nil {
+		if msgpack.Unmarshal(data, &resultBytes) == nil {
 			return resultBytes, err
 		}
-		if msgpack.Unmarshal(data, resultString) == nil {
+		if msgpack.Unmarshal(data, &resultString) == nil {
 			return []byte(resultString), err
 		}
 	}
 	scvCtx.rsb.Header().Set("Content-Type", contentType)
-	if err = msgpack.Unmarshal(data, result); err == nil {
+	if err = msgpack.Unmarshal(data, &result); err == nil {
 		//remove fields that not in svc.QueryFields only
 		if scvCtx.QueryFields != "" {
-			for k, _ := range result {
+			for k := range result {
 				if !strings.Contains(scvCtx.QueryFields, k) {
 					delete(result, k)
 				}
