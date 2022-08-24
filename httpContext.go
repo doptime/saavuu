@@ -8,22 +8,26 @@ import (
 )
 
 type ServiceContext struct {
-	req         *http.Request
-	rsb         http.ResponseWriter
-	Jwt         *jwt.Token
-	ctx         context.Context
-	Key         string
-	Field       string
-	QueryFields string
+	req                 *http.Request
+	rsb                 http.ResponseWriter
+	Jwt                 *jwt.Token
+	ctx                 context.Context
+	Action              string
+	Key                 string
+	Field               string
+	QueryFields         string
+	ExpectedReponseType string
 }
 
 func LoadHttpContext(r *http.Request, w http.ResponseWriter) *ServiceContext {
 	svcContext := &ServiceContext{req: r, rsb: w, ctx: r.Context()}
 	svcContext.Jwt, _ = JwtFromHttpRequest(r)
 	svcContext.req.ParseMultipartForm(Config.MaxBufferSize)
+	svcContext.Action = svcContext.req.FormValue("Action")
 	svcContext.Key = svcContext.req.FormValue("Key")
 	svcContext.Field = svcContext.req.FormValue("Field")
 	svcContext.QueryFields = svcContext.req.FormValue("Queries")
+	svcContext.QueryFields = svcContext.req.FormValue("Expect")
 	return svcContext
 }
 

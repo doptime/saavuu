@@ -17,7 +17,6 @@ func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
 		resultBytes  []byte                 = []byte{}
 		resultString string                 = ""
 		result       map[string]interface{} = map[string]interface{}{}
-		contentType  string                 = "application/json"
 	)
 	if dataIn, ok = scvCtx.Data(); !ok {
 		return nil, errors.New("data error")
@@ -30,8 +29,7 @@ func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
 	}
 
 	//fill content type, to support binary or json response
-	if _Type := scvCtx.req.Header.Get("Content-Type"); _Type != "application/json" {
-		scvCtx.rsb.Header().Set("Content-Type", _Type)
+	if scvCtx.ExpectedReponseType != "application/json" {
 		if err = msgpack.Unmarshal(resultBytes, &resultBytes); err == nil {
 			return resultBytes, err
 		}
@@ -39,7 +37,6 @@ func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
 			return []byte(resultString), err
 		}
 	}
-	scvCtx.rsb.Header().Set("Content-Type", contentType)
 	if err = msgpack.Unmarshal(data, &result); err == nil {
 		//remove fields that not in svc.QueryFields only
 		if scvCtx.QueryFields != "" {

@@ -20,25 +20,24 @@ func (scvCtx *ServiceContext) replaceUID(s string) (r string, err error) {
 	s = strings.Replace(s, "@me", id, -1)
 	return s, nil
 }
-func (scvCtx *ServiceContext) getHandler() (data []byte, err error) {
+func (svcCtx *ServiceContext) getHandler() (data []byte, err error) {
 	var (
 		resultBytes  []byte                 = []byte{}
 		resultString string                 = ""
 		result       map[string]interface{} = map[string]interface{}{}
-		contentType  string                 = "application/json"
 	)
-	if scvCtx.Key, err = scvCtx.replaceUID(scvCtx.Key); err != nil {
+	if svcCtx.Key, err = svcCtx.replaceUID(svcCtx.Key); err != nil {
 		return nil, err
-	} else if len(scvCtx.Key) == 0 {
+	} else if len(svcCtx.Key) == 0 {
 		return nil, errors.New("no key")
 	}
 
-	if scvCtx.Field, err = scvCtx.replaceUID(scvCtx.Field); err != nil {
+	if svcCtx.Field, err = svcCtx.replaceUID(svcCtx.Field); err != nil {
 		return nil, err
 	}
 	//return list of keys
-	if scvCtx.Field == "" {
-		cmd := Config.rds.HKeys(scvCtx.ctx, scvCtx.Key)
+	if svcCtx.Field == "" {
+		cmd := Config.rds.HKeys(svcCtx.ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
 			return nil, err
 		}
@@ -46,13 +45,12 @@ func (scvCtx *ServiceContext) getHandler() (data []byte, err error) {
 	}
 
 	//return item
-	cmd := Config.rds.HGet(scvCtx.ctx, scvCtx.Key, scvCtx.Field)
+	cmd := Config.rds.HGet(svcCtx.ctx, svcCtx.Key, svcCtx.Field)
 	if data, err = cmd.Bytes(); err != nil {
 		return nil, err
 	}
 	//fill content type, to support binary or json response
-	if _Type := scvCtx.req.Header.Get("Content-Type"); _Type != "application/json" {
-		scvCtx.rsb.Header().Set("Content-Type", _Type)
+	if svcCtx.ExpectedReponseType != "application/json" {
 		if msgpack.Unmarshal(data, &resultBytes) == nil {
 			return resultBytes, err
 		}
@@ -60,12 +58,11 @@ func (scvCtx *ServiceContext) getHandler() (data []byte, err error) {
 			return []byte(resultString), err
 		}
 	}
-	scvCtx.rsb.Header().Set("Content-Type", contentType)
 	if err = msgpack.Unmarshal(data, &result); err == nil {
 		//remove fields that not in svc.QueryFields only
-		if scvCtx.QueryFields != "" {
+		if svcCtx.QueryFields != "" {
 			for k := range result {
-				if !strings.Contains(scvCtx.QueryFields, k) {
+				if !strings.Contains(svcCtx.QueryFields, k) {
 					delete(result, k)
 				}
 			}

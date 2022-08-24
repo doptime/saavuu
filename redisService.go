@@ -26,8 +26,7 @@ func CounterResetEveryMinute() func() (newMinute bool, counter int) {
 
 type fn func(paramIn string) (out interface{}, BackTo string, err error)
 
-func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
-	rds := _rds
+func RedisServe(_serviceName string, f fn) func() {
 	var batch_size int64 = 128
 	serviceName := _serviceName
 	cnt := CounterResetEveryMinute()
@@ -47,7 +46,7 @@ func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
 			return err
 		}
 		ctx := context.Background()
-		pipline := rds.Pipeline()
+		pipline := Config.rds.Pipeline()
 		pipline.RPush(ctx, backTo, marshaledBytes)
 		pipline.Expire(ctx, backTo, 6)
 		_, err = pipline.Exec(ctx)
@@ -58,12 +57,12 @@ func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
 		for true {
 			//fetch datas from redis
 			c := context.Background()
-			pipline := rds.Pipeline()
+			pipline := Config.rds.Pipeline()
 			pipline.LRange(c, serviceName, 0, batch_size-1)
 			pipline.LTrim(c, serviceName, batch_size, -1)
 			cmd, err := pipline.Exec(c)
 			if err != nil || len(cmd) < 2 {
-				rlt := rds.BLPop(c, time.Minute, serviceName)
+				rlt := Config.rds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
 					continue
 				}

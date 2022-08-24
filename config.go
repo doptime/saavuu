@@ -7,13 +7,13 @@ import (
 type Configuration struct {
 	Port          int
 	rds           *redis.Client
-	JwtToken      string
+	JwtSecret     string
 	MaxBufferSize int64
 }
 
 var Config Configuration = Configuration{
 	Port:          8080,
 	rds:           nil,
-	JwtToken:      "",
+	JwtSecret:     "",
 	MaxBufferSize: 32 << 20,
 }

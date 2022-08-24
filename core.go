@@ -6,19 +6,19 @@ import (
 )
 
 // listten to a port and start http server
-func ListenAndServe(cfg *Configuration) {
+func RedisHttpStart(cfg *Configuration, path string) {
 	var (
 		result []byte
 		err    error
 	)
 	//get item
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		svcContext := LoadHttpContext(r, w)
-		if r.Method == "GET" {
+		if svcContext.Action == "GET" {
 			result, err = svcContext.getHandler()
-		} else if r.Method == "PUT" {
+		} else if svcContext.Action == "PUT" {
 			result, err = svcContext.putHandler()
-		} else if r.Method == "DELETE" {
+		} else if svcContext.Action == "DELETE" {
 			result, err = svcContext.delHandler()
 		}
 		if err != nil {
@@ -29,6 +29,9 @@ func ListenAndServe(cfg *Configuration) {
 			return
 		} else {
 			w.WriteHeader(http.StatusOK)
+			if len(svcContext.ExpectedReponseType) > 0 {
+				w.Header().Set("Content-Type", svcContext.ExpectedReponseType)
+			}
 			w.Write(result)
 		}
 		w.WriteHeader(http.StatusMethodNotAllowed)
