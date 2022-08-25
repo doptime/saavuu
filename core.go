@@ -15,11 +15,11 @@ func RedisHttpStart(cfg *Configuration, path string, port int) {
 	//get item
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		svcContext := LoadHttpContext(r, w)
-		if svcContext.Action == "GET" {
+		if r.Method == "GET" {
 			result, err = svcContext.getHandler()
-		} else if svcContext.Action == "PUT" {
+		} else if r.Method == "POST" {
 			result, err = svcContext.putHandler()
-		} else if svcContext.Action == "DELETE" {
+		} else if r.Method == "DELETE" {
 			result, err = svcContext.delHandler()
 		}
 		if err != nil {
