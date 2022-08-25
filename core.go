@@ -3,10 +3,11 @@ package saavuu
 import (
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // listten to a port and start http server
-func RedisHttpStart(cfg *Configuration, path string) {
+func RedisHttpStart(cfg *Configuration, path string, port int) {
 	var (
 		result []byte
 		err    error
@@ -22,19 +23,22 @@ func RedisHttpStart(cfg *Configuration, path string) {
 			result, err = svcContext.delHandler()
 		}
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			errStr := err.Error()
+			if strings.Contains(errStr, "JWT") {
+				w.WriteHeader(http.StatusUnauthorized)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
+			}
 			if len(result) > 0 {
-				w.Write([]byte(err.Error()))
+				w.Write([]byte(errStr))
 			}
 			return
-		} else {
-			w.WriteHeader(http.StatusOK)
-			if len(svcContext.ExpectedReponseType) > 0 {
-				w.Header().Set("Content-Type", svcContext.ExpectedReponseType)
-			}
-			w.Write(result)
 		}
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusOK)
+		if len(svcContext.ExpectedReponseType) > 0 {
+			w.Header().Set("Content-Type", svcContext.ExpectedReponseType)
+		}
+		w.Write(result)
 	})
-	http.ListenAndServe(":"+strconv.Itoa(cfg.Port), nil)
+	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }

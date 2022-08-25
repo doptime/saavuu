@@ -15,7 +15,7 @@ func (scvCtx *ServiceContext) replaceUID(s string) (r string, err error) {
 	}
 	id, ok := scvCtx.JwtField("id")
 	if !ok {
-		return s, fmt.Errorf("no id in jwt")
+		return s, fmt.Errorf("JWT field id not found")
 	}
 	s = strings.Replace(s, "@me", id, -1)
 	return s, nil
