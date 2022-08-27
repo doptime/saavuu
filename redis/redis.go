@@ -7,42 +7,43 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (scvCtx *ServiceContext) RedisGet(key string, param interface{}) (err error) {
-	cmd := Config.rds.Get(scvCtx.ctx, key)
+func RedisGet(c context.Context, rds *redis.Client, key string, param interface{}) (err error) {
+	cmd := rds.Get(c, key)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err
 	}
-	return msgpack.Unmarshal(data, &param)
+	return msgpack.Unmarshal(data, param)
 }
-func (scvCtx *ServiceContext) RedisSet(key string, param interface{}, expiration time.Duration) (err error) {
+func RedisSet(c context.Context, rds *redis.Client, key string, param interface{}, expiration time.Duration) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err
 	}
-	status := Config.rds.Set(scvCtx.ctx, key, bytes, expiration)
+	status := rds.Set(c, key, bytes, expiration)
 	return status.Err()
 }
-func (scvCtx *ServiceContext) RedisHGet(key string, field string, param interface{}) (err error) {
-	cmd := Config.rds.HGet(scvCtx.ctx, key, field)
+func RedisHGet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
+	cmd := rds.HGet(c, key, field)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err
 	}
-	return msgpack.Unmarshal(data, &param)
+	return msgpack.Unmarshal(data, param)
 }
 
-func (scvCtx *ServiceContext) RedisHSet(key string, field string, param interface{}) (err error) {
+func RedisHSet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err
 	}
-	status := Config.rds.HSet(scvCtx.ctx, key, field, bytes)
+	status := rds.HSet(c, key, field, bytes)
 	return status.Err()
 }
+
 func RedisDo(c context.Context, rds *redis.Client, ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
 	var (
 		b       []byte

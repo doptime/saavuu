@@ -1,8 +1,10 @@
-package saavuu
+package http
 
 import (
 	"fmt"
 	"net/http"
+
+	. "saavuu/config"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -15,7 +17,7 @@ func JwtFromHttpRequest(r *http.Request) (t *jwt.Token, err error) {
 	//decode jwt string to map[string] interface{} with jwtSrcrets as jwt secret
 	//map[string] interface{} is the type of jwt.Claims
 	keyFunction := func(t *jwt.Token) (value interface{}, err error) {
-		return []byte(Config.JwtSecret), nil
+		return []byte(Cfg.JwtSecret), nil
 	}
 	return jwt.ParseWithClaims(jwtStr, &jwt.MapClaims{}, keyFunction)
 }

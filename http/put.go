@@ -1,14 +1,21 @@
-package saavuu
+package http
 
 import (
 	"encoding/json"
 	"errors"
+	. "saavuu/config"
+	. "saavuu/redis"
 	"strings"
 
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
+func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
+	//use local service map to handle request
+	if fun, ok := ServiceMap[scvCtx.Field]; ok {
+		return fun(scvCtx)
+	}
+	//use remote service map to handle request
 	var (
 		dataIn  string
 		paramIn map[string]interface{} = map[string]interface{}{}
@@ -24,7 +31,7 @@ func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
 	if err = json.Unmarshal([]byte(dataIn), &paramIn); err != nil {
 		return nil, err
 	}
-	if resultBytes, err = RedisDo(scvCtx.ctx, Config.rds, scvCtx.Key, paramIn); err != nil {
+	if resultBytes, err = RedisDo(scvCtx.Ctx, Cfg.Rds, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
@@ -34,19 +41,19 @@ func (scvCtx *ServiceContext) putHandler() (data []byte, err error) {
 			return resultBytes, err
 		}
 		if err = msgpack.Unmarshal(resultBytes, &resultString); err == nil {
-			return []byte(resultString), err
+			return resultString, err
 		}
 	}
-	if err = msgpack.Unmarshal(data, &result); err == nil {
-		//remove fields that not in svc.QueryFields only
-		if scvCtx.QueryFields != "" {
-			for k := range result {
-				if !strings.Contains(scvCtx.QueryFields, k) {
-					delete(result, k)
-				}
+	if err = msgpack.Unmarshal(resultBytes, &result); err != nil {
+		return nil, errors.New("unsupported data type")
+	}
+	//remove fields that not in svc.QueryFields only
+	if scvCtx.QueryFields != "" {
+		for k := range result {
+			if !strings.Contains(scvCtx.QueryFields, k) {
+				delete(result, k)
 			}
 		}
-		return json.Marshal(result)
 	}
-	return nil, errors.New("unsupported data type")
+	return result, nil
 }

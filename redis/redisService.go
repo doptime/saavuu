@@ -3,6 +3,7 @@ package saavuu
 import (
 	"context"
 	"fmt"
+	. "saavuu/config"
 	"strconv"
 	"time"
 
@@ -46,7 +47,7 @@ func RedisServe(_serviceName string, f fn) func() {
 			return err
 		}
 		ctx := context.Background()
-		pipline := Config.rds.Pipeline()
+		pipline := Cfg.Rds.Pipeline()
 		pipline.RPush(ctx, backTo, marshaledBytes)
 		pipline.Expire(ctx, backTo, 6)
 		_, err = pipline.Exec(ctx)
@@ -57,12 +58,12 @@ func RedisServe(_serviceName string, f fn) func() {
 		for true {
 			//fetch datas from redis
 			c := context.Background()
-			pipline := Config.rds.Pipeline()
+			pipline := Cfg.Rds.Pipeline()
 			pipline.LRange(c, serviceName, 0, batch_size-1)
 			pipline.LTrim(c, serviceName, batch_size, -1)
 			cmd, err := pipline.Exec(c)
 			if err != nil || len(cmd) < 2 {
-				rlt := Config.rds.BLPop(c, time.Minute, serviceName)
+				rlt := Cfg.Rds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
 					continue
 				}
