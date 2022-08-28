@@ -1,16 +1,28 @@
 package service
 
 import (
+	"fmt"
 	"saavuu/http"
 )
 
-var _ bool = http.NewService("SvcAccelero", func(svcCtx *http.HttpContext) (data interface{}, err error) {
-	type Input struct {
-		Name string
+func init() {
+	type Accelero struct {
+		Accleration1s []int16
 	}
-	var i = &Input{}
-	if err = http.ToStruct(svcCtx.Req, i); err != nil {
-		return nil, err
-	}
-	return data, nil
-})
+
+	http.NewService("svc:Acceleros1s", func(svcCtx *http.HttpContext) (data interface{}, err error) {
+		var (
+			i = &Accelero{}
+		)
+		if err = http.ToStruct(svcCtx.Req, i); err != nil || len(i.Accleration1s)%3 != 0 {
+			return nil, err
+		}
+
+		for v := range i.Accleration1s {
+			var a float32 = 16.0 * float32(v) / 32768.0
+			fmt.Println("a:", a)
+		}
+
+		return data, nil
+	})
+}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	. "saavuu/config"
 	sttp "saavuu/http"
+	"saavuu/service"
 	"strconv"
 	"strings"
 
@@ -65,5 +66,6 @@ func main() {
 		DB:       10,               // use default DB
 	})
 	Cfg.JwtSecret = Cfg.Rds.Get(context.Background(), "jwtSecret").String()
+	service.PrintServices()
 	RedisHttpStart("/rSvc", 3025)
 }

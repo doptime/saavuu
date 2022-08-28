@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	. "saavuu/config"
-
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -23,7 +21,6 @@ type HttpContext struct {
 func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: r.Context()}
 	svcContext.Jwt, _ = JwtFromHttpRequest(r)
-	svcContext.Req.ParseMultipartForm(Cfg.MaxBufferSize)
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")

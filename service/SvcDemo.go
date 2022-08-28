@@ -4,16 +4,19 @@ import (
 	"saavuu/http"
 )
 
-type Input struct {
-	Name string
-}
-
-var _ = http.NewService("SvcDemo", func(svcCtx *http.HttpContext) (data interface{}, err error) {
-	var i = &Input{}
-	if err = http.ToStruct(svcCtx.Req, i); err != nil {
-		return nil, err
+func init() {
+	type DemoInput struct {
+		data []uint16
+		//ogg *multipart.FileHeader
 	}
-	// your logic here
 
-	return data, nil
-})
+	http.NewService("SvcDemo", func(svcCtx *http.HttpContext) (data interface{}, err error) {
+		var i = &DemoInput{}
+		if err = http.ToStruct(svcCtx.Req, i); err != nil {
+			return nil, err
+		}
+		// your logic here
+
+		return data, nil
+	})
+}
