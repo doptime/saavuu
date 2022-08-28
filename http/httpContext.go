@@ -8,12 +8,16 @@ import (
 )
 
 type HttpContext struct {
-	Req                 *http.Request
-	Rsb                 http.ResponseWriter
-	Jwt                 *jwt.Token
-	Ctx                 context.Context
-	Key                 string
-	Field               string
+	Req *http.Request
+	Rsb http.ResponseWriter
+	Jwt *jwt.Token
+	Ctx context.Context
+	// case get
+	Key   string
+	Field string
+	// case post
+	Service string
+
 	QueryFields         string
 	ExpectedReponseType string
 }
@@ -23,6 +27,8 @@ func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext.Jwt, _ = JwtFromHttpRequest(r)
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
+	svcContext.Service = svcContext.Req.FormValue("Service")
+
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
 	svcContext.QueryFields = svcContext.Req.FormValue("Expect")
 	return svcContext

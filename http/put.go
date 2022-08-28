@@ -12,7 +12,7 @@ import (
 
 func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	//use local service map to handle request
-	if fun, ok := ServiceMap[scvCtx.Key]; ok {
+	if fun, ok := ServiceMap[scvCtx.Service]; ok {
 		return fun(scvCtx)
 	}
 	//use remote service map to handle request
