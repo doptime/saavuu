@@ -14,7 +14,7 @@ func replaceUID(scvCtx *HttpContext, s string) (r string, err error) {
 	if !strings.Contains(s, "@me") {
 		return s, nil
 	}
-	id, ok := scvCtx.JwtField("id")
+	id, ok := scvCtx.JwtField("id").(string)
 	if !ok {
 		return s, fmt.Errorf("JWT field id not found")
 	}

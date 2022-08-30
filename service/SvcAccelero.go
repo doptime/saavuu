@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"saavuu/config"
 	"saavuu/http"
-	"saavuu/redis"
+	. "saavuu/redis"
+	"time"
+
+	redis "github.com/go-redis/redis/v8"
 )
 
 func init() {
@@ -17,13 +20,18 @@ func init() {
 	}
 	type Input struct {
 		Accleration1s []int16
-		HeartBeat     uint8
 	}
 	type Output struct {
 		Heartbeat uint8
 	}
 
 	http.NewService("svc:Acceleros1s", func(svcCtx *http.HttpContext) (data interface{}, err error) {
+		//get jwtid
+		JwtID, ok := svcCtx.JwtField("id").(string)
+		if !ok {
+			return nil, http.ErrJWT
+		}
+
 		var (
 			in  = &Input{}
 			out = &Output{}
@@ -31,10 +39,17 @@ func init() {
 		if err = http.ToStruct(svcCtx.Req, in); err != nil || len(in.Accleration1s)%3 != 0 {
 			return nil, err
 		}
-		// convert to HeartRate1s
-		if err = redis.Do(svcCtx.Ctx, config.Cfg.Rds, "svc:Acceleros1sToHeartBeat", in, out); err != nil {
+		now := time.Now().Unix()
+		his := &AcceleroHeartBeat{StartTime: now, EndTime: now}
+		if err = HGet(svcCtx.Ctx, config.Cfg.Rds, "AcceleroHeartbeat:"+JwtID, "_", &his); err != nil {
 			return nil, err
 		}
+
+		// convert to HeartRate1s
+		if err = Do(svcCtx.Ctx, config.Cfg.Rds, "svc:Acceleros1sToHeartBeat", in, out); err != nil && err != redis.Nil {
+			return nil, err
+		}
+
 		fmt.Println("lengthof data is ", len(in.Accleration1s)/3)
 		for i := 0; i < len(in.Accleration1s)/3; i += 3 {
 			x := float32(in.Accleration1s[i]) * 16.0 / 32768.0

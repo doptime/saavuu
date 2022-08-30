@@ -8,7 +8,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func RedisGet(c context.Context, rds *redis.Client, key string, param interface{}) (err error) {
+func Get(c context.Context, rds *redis.Client, key string, param interface{}) (err error) {
 	cmd := rds.Get(c, key)
 	data, err := cmd.Bytes()
 	if err != nil {
@@ -16,7 +16,7 @@ func RedisGet(c context.Context, rds *redis.Client, key string, param interface{
 	}
 	return msgpack.Unmarshal(data, param)
 }
-func RedisSet(c context.Context, rds *redis.Client, key string, param interface{}, expiration time.Duration) (err error) {
+func Set(c context.Context, rds *redis.Client, key string, param interface{}, expiration time.Duration) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func RedisSet(c context.Context, rds *redis.Client, key string, param interface{
 	status := rds.Set(c, key, bytes, expiration)
 	return status.Err()
 }
-func RedisHGet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
+func HGet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
 	cmd := rds.HGet(c, key, field)
 	data, err := cmd.Bytes()
 	if err != nil {
@@ -33,7 +33,7 @@ func RedisHGet(c context.Context, rds *redis.Client, key string, field string, p
 	return msgpack.Unmarshal(data, param)
 }
 
-func RedisHSet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
+func HSet(c context.Context, rds *redis.Client, key string, field string, param interface{}) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err

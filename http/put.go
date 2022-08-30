@@ -4,6 +4,7 @@ import (
 	"errors"
 	. "saavuu/config"
 	. "saavuu/redis"
+	"saavuu/tools"
 	"strings"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -43,11 +44,7 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 	//remove fields that not in svc.QueryFields only
 	if scvCtx.QueryFields != "" {
-		var resultKeys = make([]string, len(result))
-		for k, _ := range result {
-			resultKeys = append(resultKeys, k)
-		}
-		for _, k := range resultKeys {
+		for _, k := range tools.MapKeys(result) {
 			if !strings.Contains(scvCtx.QueryFields, k) {
 				delete(result, k)
 			}

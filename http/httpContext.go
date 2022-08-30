@@ -38,16 +38,18 @@ func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
 	return svcContext
 }
 
-func (svc *HttpContext) JwtField(field string) (s string, ok bool) {
+func (svc *HttpContext) JwtField(field string) (f interface{}) {
 	if svc.Jwt == nil {
-		return "", false
+		return nil
 	}
 	mpclaims, ok := svc.Jwt.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", ok
+		return nil
 	}
-	id, ok := mpclaims[field].(string)
-	return id, ok
+	if f, ok = mpclaims[field]; !ok {
+		return nil
+	}
+	return f
 }
 func (svc *HttpContext) BodyMessage() (msgPack map[string]interface{}, err error) {
 	var (
