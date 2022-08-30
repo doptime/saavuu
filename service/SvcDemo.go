@@ -5,13 +5,13 @@ import (
 )
 
 func init() {
-	type DemoInput struct {
+	type Input struct {
 		data []uint16
 	}
 
 	http.NewService("Svc:Demo", func(svcCtx *http.HttpContext) (data interface{}, err error) {
-		var i = &DemoInput{}
-		if err = http.ToStruct(svcCtx.Req, i); err != nil {
+		var in = &Input{}
+		if err = http.ToStruct(svcCtx.Req, in); err != nil {
 			return nil, err
 		}
 		// your logic here
