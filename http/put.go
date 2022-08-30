@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"errors"
 	. "saavuu/config"
 	. "saavuu/redis"
@@ -17,21 +16,16 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 	//use remote service map to handle request
 	var (
-		dataIn  string
 		paramIn map[string]interface{} = map[string]interface{}{}
-		ok      bool                   = false
+		result  map[string]interface{} = map[string]interface{}{}
 
-		resultBytes  []byte                 = []byte{}
-		resultString string                 = ""
-		result       map[string]interface{} = map[string]interface{}{}
+		resultBytes  []byte = []byte{}
+		resultString string = ""
 	)
-	if dataIn, ok = scvCtx.Data(); !ok {
+	if paramIn, err = scvCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	if err = json.Unmarshal([]byte(dataIn), &paramIn); err != nil {
-		return nil, err
-	}
-	if resultBytes, err = RedisDo(scvCtx.Ctx, Cfg.Rds, scvCtx.Key, paramIn); err != nil {
+	if resultBytes, err = DoBasic(scvCtx.Ctx, Cfg.Rds, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
@@ -49,7 +43,11 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 	//remove fields that not in svc.QueryFields only
 	if scvCtx.QueryFields != "" {
-		for k := range result {
+		var resultKeys = make([]string, len(result))
+		for k, _ := range result {
+			resultKeys = append(resultKeys, k)
+		}
+		for _, k := range resultKeys {
 			if !strings.Contains(scvCtx.QueryFields, k) {
 				delete(result, k)
 			}
