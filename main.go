@@ -9,6 +9,7 @@ import (
 	. "saavuu/config"
 	sttp "saavuu/http"
 	"saavuu/service"
+	"saavuu/tools"
 	"strconv"
 	"strings"
 
@@ -57,31 +58,27 @@ func RedisHttpStart(path string, port int) {
 			//keep fields exits in svcContext.QueryFields
 			if len(svcContext.QueryFields) > 0 {
 				//convert result to map[string]interface{} using msgpack
-				_tmpMap := map[string]interface{}{}
+				_map := map[string]interface{}{}
 				if b, err = msgpack.Marshal(result); err != nil {
 					sttp.InternalError(w, err)
 					return
 				}
-				if err = msgpack.Unmarshal(b, &_tmpMap); err != nil {
+				if err = msgpack.Unmarshal(b, &_map); err != nil {
 					sttp.InternalError(w, err)
 					return
 				}
 				//remove fields not exits in svcContext.QueryFields
-				for k, _ := range _tmpMap {
+				for _, k := range tools.MapKeys(_map) {
 					if !strings.Contains(svcContext.QueryFields, k) {
-						delete(_tmpMap, k)
+						delete(_map, k)
 					}
 				}
-				//write to client
-				if b, err = json.Marshal(_tmpMap); err != nil {
-					sttp.InternalError(w, err)
-					return
-				}
-			} else {
-				if b, err = json.Marshal(result); err != nil {
-					sttp.InternalError(w, err)
-					return
-				}
+				result = _map
+			}
+			//reponse result json to client
+			if b, err = json.Marshal(result); err != nil {
+				sttp.InternalError(w, err)
+				return
 			}
 			w.Write(b)
 		}

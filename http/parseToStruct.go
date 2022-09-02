@@ -19,6 +19,13 @@ const (
 	tokensInAttribute = 2
 )
 
+func ToValidStruct(r *http.Request, v interface{}, cheeckInput func(v interface{}) error) (err error) {
+	if err = ToStruct(r, v); err != nil {
+		return err
+	}
+	return cheeckInput(v)
+}
+
 // Parse parses the request.
 func ToStruct(r *http.Request, v interface{}) error {
 	//parse json body
