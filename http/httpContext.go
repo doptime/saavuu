@@ -12,10 +12,10 @@ import (
 )
 
 type HttpContext struct {
-	Req *http.Request
-	Rsb http.ResponseWriter
-	Jwt *jwt.Token
-	Ctx context.Context
+	Req      *http.Request
+	Rsb      http.ResponseWriter
+	jwtToken *jwt.Token
+	Ctx      context.Context
 	// case get
 	Key   string
 	Field string
@@ -28,29 +28,15 @@ type HttpContext struct {
 
 func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: r.Context()}
-	svcContext.Jwt, _ = JwtFromHttpRequest(r)
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
 	svcContext.Service = svcContext.Req.FormValue("Service")
 
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
-	svcContext.QueryFields = svcContext.Req.FormValue("Expect")
+	svcContext.ExpectedReponseType = svcContext.Req.FormValue("Expect")
 	return svcContext
 }
 
-func (svc *HttpContext) JwtField(field string) (f interface{}) {
-	if svc.Jwt == nil {
-		return nil
-	}
-	mpclaims, ok := svc.Jwt.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil
-	}
-	if f, ok = mpclaims[field]; !ok {
-		return nil
-	}
-	return f
-}
 func (svc *HttpContext) BodyMessage() (msgPack map[string]interface{}, err error) {
 	var (
 		param map[string]interface{} = map[string]interface{}{}
