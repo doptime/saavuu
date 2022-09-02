@@ -36,13 +36,21 @@ func init() {
 			HeartbeatPrediction []uint8
 		}
 	)
-	http.NewService("svc:HeartbeatAcceleros1s", func(svcCtx *http.HttpContext) (data interface{}, err error) {
-		absInt64 := func(i int64) int64 {
-			if i < 0 {
-				return -i
-			}
-			return i
+	checkInput := func(v interface{}) error {
+		in := v.(Input)
+		//validate input
+		if in.Accleration1s == nil && in.HeartBeat == 0 {
+			return fmt.Errorf("ErrInvalidInput")
 		}
+		if in.Time <= 0 || absInt64(in.Time-time.Now().Unix()) > 86400 {
+			return fmt.Errorf("ErrInvalidTimeInput")
+		}
+		if in.Accleration1s != nil && len(in.Accleration1s)%3 != 0 {
+			return fmt.Errorf("ErrInvalidAccleration1s")
+		}
+		return nil
+	}
+	http.NewService("svc:HeartbeatAcceleros1s", func(svcCtx *http.HttpContext) (data interface{}, err error) {
 		//get jwtid
 		JwtID, ok := svcCtx.JwtField("id").(string)
 		if !ok {
@@ -52,17 +60,10 @@ func init() {
 		var (
 			in = &Input{}
 		)
-		if err = http.ToStruct(svcCtx.Req, in); err != nil || len(in.Accleration1s)%3 != 0 {
+		if err = http.ToValidStruct(svcCtx.Req, in, checkInput); err != nil {
 			return nil, err
 		}
 
-		//validate input
-		if in.Accleration1s == nil && in.HeartBeat == 0 {
-			return nil, fmt.Errorf("ErrInvalidInput")
-		}
-		if in.Time <= 0 || absInt64(in.Time-time.Now().Unix()) > 86400 {
-			return nil, fmt.Errorf("ErrInvalidTimeInput")
-		}
 		fmt.Println("lengthof data is ", len(in.Accleration1s)/3)
 
 		//get previous data
@@ -118,4 +119,11 @@ func init() {
 		HSet(svcCtx.Ctx, config.Cfg.Rds, "AcceleroHeartbeat:"+JwtID, "_", &his)
 		return his, nil
 	})
+}
+
+func absInt64(i int64) int64 {
+	if i < 0 {
+		return -i
+	}
+	return i
 }
