@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"encoding/json"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 // listten to a port and start http server
@@ -52,7 +54,35 @@ func RedisHttpStart(path string, port int) {
 		} else if s, ok = result.(string); ok {
 			w.Write([]byte(s))
 		} else {
-			b, _ = json.Marshal(result)
+			//keep fields exits in svcContext.QueryFields
+			if len(svcContext.QueryFields) > 0 {
+				//convert result to map[string]interface{} using msgpack
+				_tmpMap := map[string]interface{}{}
+				if b, err = msgpack.Marshal(result); err != nil {
+					sttp.InternalError(w, err)
+					return
+				}
+				if err = msgpack.Unmarshal(b, &_tmpMap); err != nil {
+					sttp.InternalError(w, err)
+					return
+				}
+				//remove fields not exits in svcContext.QueryFields
+				for k, _ := range _tmpMap {
+					if !strings.Contains(svcContext.QueryFields, k) {
+						delete(_tmpMap, k)
+					}
+				}
+				//write to client
+				if b, err = json.Marshal(_tmpMap); err != nil {
+					sttp.InternalError(w, err)
+					return
+				}
+			} else {
+				if b, err = json.Marshal(result); err != nil {
+					sttp.InternalError(w, err)
+					return
+				}
+			}
 			w.Write(b)
 		}
 	})
@@ -65,7 +95,8 @@ func main() {
 		Password: "",               // no password set
 		DB:       10,               // use default DB
 	})
-	Cfg.JwtSecret = Cfg.Rds.Get(context.Background(), "jwtSecret").String()
+	Cfg.JwtSecret = Cfg.Rds.Get(context.Background(), "JwtSecret").String()
+	fmt.Println("JwtSecret:", Cfg.JwtSecret)
 	service.PrintServices()
 	RedisHttpStart("/rSvc", 3025)
 }
