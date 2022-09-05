@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	. "saavuu/config"
-	sttp "saavuu/http"
+	"saavuu/https"
 	"saavuu/service"
 	"saavuu/tools"
 	"strconv"
@@ -28,13 +28,19 @@ func RedisHttpStart(path string, port int) {
 	)
 	//get item
 	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		svcContext := sttp.NewHttpContext(r, w)
+		if https.CorsChecked(r, w) {
+			return
+		}
+		svcContext := https.NewHttpContext(r, w)
 		if r.Method == "GET" {
 			result, err = svcContext.GetHandler()
 		} else if r.Method == "POST" {
 			result, err = svcContext.PutHandler()
 		} else if r.Method == "DELETE" {
 			result, err = svcContext.DelHandler()
+		}
+		if len(Cfg.CORS) > 0 {
+			w.Header().Set("Access-Control-Allow-Origin", Cfg.CORS)
 		}
 		if err != nil {
 			errStr := err.Error()
@@ -46,10 +52,10 @@ func RedisHttpStart(path string, port int) {
 			w.Write([]byte(errStr))
 			return
 		}
-		w.WriteHeader(http.StatusOK)
-		if len(svcContext.ExpectedReponseType) > 0 {
+		if len(svcContext.ExpectedReponseType) > 0 && len(svcContext.QueryFields) > 0 {
 			w.Header().Set("Content-Type", svcContext.ExpectedReponseType)
 		}
+		w.WriteHeader(http.StatusOK)
 		if b, ok = result.([]byte); ok {
 			w.Write(b)
 		} else if s, ok = result.(string); ok {
@@ -57,15 +63,18 @@ func RedisHttpStart(path string, port int) {
 		} else {
 			//keep fields exits in svcContext.QueryFields
 			if len(svcContext.QueryFields) > 0 {
-				//convert result to map[string]interface{} using msgpack
 				_map := map[string]interface{}{}
-				if b, err = msgpack.Marshal(result); err != nil {
-					sttp.InternalError(w, err)
-					return
-				}
-				if err = msgpack.Unmarshal(b, &_map); err != nil {
-					sttp.InternalError(w, err)
-					return
+				//check if type of result is not map[string]interface{}
+				if _map, ok = result.(map[string]interface{}); !ok {
+					//convert result to map[string]interface{} using msgpack
+					if b, err = msgpack.Marshal(result); err != nil {
+						https.InternalError(w, err)
+						return
+					}
+					if err = msgpack.Unmarshal(b, &_map); err != nil {
+						https.InternalError(w, err)
+						return
+					}
 				}
 				//remove fields not exits in svcContext.QueryFields
 				for _, k := range tools.MapKeys(_map) {
@@ -74,13 +83,13 @@ func RedisHttpStart(path string, port int) {
 					}
 				}
 				result = _map
+				//reponse result json to client
+				if b, err = json.Marshal(result); err != nil {
+					https.InternalError(w, err)
+					return
+				}
+				w.Write(b)
 			}
-			//reponse result json to client
-			if b, err = json.Marshal(result); err != nil {
-				sttp.InternalError(w, err)
-				return
-			}
-			w.Write(b)
 		}
 	})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
