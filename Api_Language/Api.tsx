@@ -9,38 +9,44 @@ export const BuildFormData = (data: any) => {
     return formData;
 }
 const JwtRequest = (headers: any = {}) => {
+    let jwt = localStorage.getItem("jwt");
+    if (jwt == null) return axios.create({ headers });
     try {
-        let jwt = localStorage.getItem("jwt");
-        if (jwt !== null) {
-            let jwto: any = JSON.parse(jwt);
-            if (jwto !== null && jwto["jwt"] !== null) headers["Authorization"] = jwto["jwt"];
-        }
-    } catch (e) { }
+        let jwto: any = JSON.parse(jwt);
+        if (jwto !== null && !!jwto.jwt) headers["Authorization"] = jwto.jwt;
+    } catch (e) {
+    }
     return axios.create({ headers });
 };
 const SignOut = (e: any) => {
+    var UnAuthorized = !!e.response && e.response.status === 401
+    if (!UnAuthorized) return;
     var jwt = { jwt: "", sub: "", id: "", LastGetJwtTime: new Date().getTime() + Math.random() };
     localStorage.setItem("jwt", JSON.stringify(jwt))
 }
 export enum Action { GET, PUT, DELETE, }
-export enum ExpectResponse { json = "application/json", jpeg = "image/jpeg", ogg = "audio/ogg", mpeg = "video/mpeg", mp4 = "video/mp4" }
+export enum ResponseContentType { json = "application/json", jpeg = "image/jpeg", ogg = "audio/ogg", mpeg = "video/mpeg", mp4 = "video/mp4", none = "", text = "text/plain", stream = "application/octet-stream" }
 export class ReqGet {
-    constructor(public Key: string, public Field: string = "", public Queries: string = "", public Expect: ExpectResponse = ExpectResponse.json) { }
+    constructor(public Key: string, public Field: string = "", public Queries: string = "", public RspType: ResponseContentType = ResponseContentType.json) {
+        if (Queries === "") RspType = ResponseContentType.none
+    }
 }
 export class ReqSet {
-    constructor(public Service: string, public Queries: string = "", public Expect: ExpectResponse = ExpectResponse.json) { }
+    constructor(public Service: string, public Queries: string = "", public RspType: ResponseContentType = ResponseContentType.json) {
+        if (Queries === "") RspType = ResponseContentType.none
+    }
 }
-const Url = "/rSvc"
-export const RGet = (req: ReqGet, setState: Function = (d: any) => null, dataTransform: Function = (d: any) => d) => {
-    JwtRequest().get(`${Url}?Key=${req.Key}&Field=${req.Field}&Queries=${req.Queries}&Expect=${req.Expect}`)
-        .then(rsb => setState(dataTransform(rsb.data))).catch(SignOut);
+const Url = "https://api.iam26.com:3080/rSvc"
+export const RGet = (req: ReqGet, callback: Function = (d: any) => null) => {
+    JwtRequest().get(`${Url}?Key=${req.Key}&Field=${req.Field}&Queries=${req.Queries}&RspType=${req.RspType}`)
+        .then(rsb => callback(rsb.data)).catch(SignOut);
 };
-export const RDel = (req: ReqGet, setState: Function = (d: any) => null, dataTransform: Function = (d: any) => d) => {
-    JwtRequest().delete(`${Url}?Key=${req.Key}&Field=${req.Field}&Queries=${req.Queries}&Expect=${req.Expect}`)
-        .then(rsb => setState(dataTransform(rsb.data))).catch(SignOut);
+export const RDel = (req: ReqGet, callback: Function = (d: any) => null) => {
+    JwtRequest().delete(`${Url}?Key=${req.Key}&Field=${req.Field}&Queries=${req.Queries}&RspType=${req.RspType}`)
+        .then(rsb => callback(rsb.data)).catch(SignOut);
 };
-export const RSet = (req: ReqSet, data: object | FormData = {}, setState: Function = (d: any) => null, dataTransform: Function = (d: any) => d) => {
+export const RSet = (req: ReqSet, data: object | FormData = {}, callback: Function = (d: any) => null) => {
     var header = Object.getPrototypeOf(data) === Object.prototype && Object.keys(data).length === 0 ? {} : { "Content-Type": "application/octet-stream" }
-    JwtRequest(header).post(`${Url}?Service=${req.Service}&Queries=${req.Queries}&Expect=${req.Expect}`, msgpack.serialize(data))
-        .then(rsb => setState(dataTransform(rsb.data))).catch(SignOut);
+    JwtRequest(header).post(`${Url}?Service=${req.Service}&Queries=${req.Queries}&RspType=${req.RspType}`, msgpack.serialize(data))
+        .then(rsb => callback(rsb.data)).catch(SignOut);
 };
