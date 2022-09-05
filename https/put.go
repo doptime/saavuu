@@ -31,7 +31,7 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 
 	//fill content type, to support binary or json response
-	if scvCtx.ContentType != "application/json" {
+	if scvCtx.ResponseContentType != "application/json" {
 		if err = msgpack.Unmarshal(resultBytes, &resultBytes); err == nil {
 			return resultBytes, err
 		}

@@ -22,8 +22,8 @@ type HttpContext struct {
 	// case post
 	Service string
 
-	QueryFields string
-	ContentType string
+	QueryFields         string
+	ResponseContentType string
 }
 
 func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
@@ -33,9 +33,7 @@ func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext.Service = svcContext.Req.FormValue("Service")
 
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
-	if len(svcContext.Req.Header["Content-Type"]) > 0 {
-		svcContext.ContentType = svcContext.Req.Header["Content-Type"][0]
-	}
+	svcContext.ResponseContentType = svcContext.Req.FormValue("RspType")
 	return svcContext
 }
 
