@@ -52,8 +52,8 @@ func RedisHttpStart(path string, port int) {
 			w.Write([]byte(errStr))
 			return
 		}
-		if len(svcContext.ExpectedReponseType) > 0 && len(svcContext.QueryFields) > 0 {
-			w.Header().Set("Content-Type", svcContext.ExpectedReponseType)
+		if len(svcContext.ContentType) > 0 && len(svcContext.QueryFields) > 0 {
+			w.Header().Set("Content-Type", svcContext.ContentType)
 		}
 		w.WriteHeader(http.StatusOK)
 		if b, ok = result.([]byte); ok {

@@ -52,7 +52,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, err
 	}
 	//fill content type, to support binary or json response
-	if svcCtx.ExpectedReponseType != "application/json" {
+	if svcCtx.ContentType != "application/json" {
 		if msgpack.Unmarshal(data, &resultBytes) == nil {
 			return resultBytes, err
 		}
