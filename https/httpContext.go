@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/vmihailenco/msgpack/v5"
@@ -27,7 +28,8 @@ type HttpContext struct {
 }
 
 func NewHttpContext(r *http.Request, w http.ResponseWriter) *HttpContext {
-	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: r.Context()}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*120)
+	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
 	svcContext.Service = svcContext.Req.FormValue("Service")

@@ -39,10 +39,17 @@ func DoBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn ma
 func Do(c context.Context, rds *redis.Client, ServiceKey string, structIn interface{}, out interface{}) (err error) {
 	var (
 		paramIn = map[string]interface{}{}
+		ok      bool
 	)
 	//convert struct to map, to allow add field "BackTo"
-	if b, err := msgpack.Marshal(structIn); err != nil || msgpack.Unmarshal(b, &paramIn) != nil {
-		return err
+	if paramIn, ok = structIn.(map[string]interface{}); !ok {
+		b, err := msgpack.Marshal(structIn)
+		if err != nil {
+			return err
+		}
+		if err = msgpack.Unmarshal(b, &paramIn); err != nil {
+			return err
+		}
 	}
 
 	result, err := DoBasic(c, rds, ServiceKey, paramIn)
