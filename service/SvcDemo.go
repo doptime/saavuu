@@ -10,7 +10,7 @@ func init() {
 		data []uint16
 	}
 
-	https.NewService("Svc:Demo", func(svcCtx *https.HttpContext) (data interface{}, err error) {
+	https.NewLocalService("Svc:Demo", func(svcCtx *https.HttpContext) (data interface{}, err error) {
 		JwtID, ok := svcCtx.JwtField("id").(string)
 		if !ok {
 			return nil, https.ErrJWT
