@@ -1,11 +1,11 @@
-package service
+package localLogic
 
 import (
 	"context"
 	"fmt"
 	"saavuu/config"
 	"saavuu/https"
-	. "saavuu/redis"
+	. "saavuu/redisService"
 	"strconv"
 	"time"
 
@@ -162,7 +162,7 @@ func PredicHeartRate(ctx context.Context, JwtID string, StartTime int64, Cursor 
 	)
 
 	paramIn := map[string]interface{}{"UID": JwtID, "Time": Cursor, "Accelero1s": Acceleration1s}
-	if err = Do(ctx, config.Cfg.Rds, "svc:PredictHeartBeat", paramIn, out); err != nil {
+	if err = Call(ctx, config.Cfg.Rds, "svc:PredictHeartBeat", paramIn, out); err != nil {
 		return err
 	}
 	if err = HGet(ctx, config.Cfg.Rds, rdsKey, rdsField, &HeartBeatPredicted); err != nil && err != redis.Nil {

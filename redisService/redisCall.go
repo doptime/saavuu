@@ -1,4 +1,4 @@
-package redis
+package redisService
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 
 //RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 //return: error
-func DoBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
+func CallBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
 	var (
 		b       []byte
 		BackTo  string = fmt.Sprintf("%x", rand.Int63())
@@ -36,7 +36,7 @@ func DoBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn ma
 	}
 	return []byte(results[1]), nil
 }
-func Do(c context.Context, rds *redis.Client, ServiceKey string, structIn interface{}, out interface{}) (err error) {
+func Call(c context.Context, rds *redis.Client, ServiceKey string, structIn interface{}, out interface{}) (err error) {
 	var (
 		paramIn = map[string]interface{}{}
 		ok      bool
@@ -52,7 +52,7 @@ func Do(c context.Context, rds *redis.Client, ServiceKey string, structIn interf
 		}
 	}
 
-	result, err := DoBasic(c, rds, ServiceKey, paramIn)
+	result, err := CallBasic(c, rds, ServiceKey, paramIn)
 	if err != nil {
 		return err
 	}

@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"encoding/json"
 	"net/http"
 	. "saavuu/config"
 	"saavuu/https"
-	"saavuu/service"
+	"saavuu/localLogic"
 	"saavuu/tools"
 	"strconv"
 	"strings"
@@ -31,7 +32,9 @@ func RedisHttpStart(path string, port int) {
 		if https.CorsChecked(r, w) {
 			return
 		}
-		svcContext := https.NewHttpContext(r, w)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+		defer cancel()
+		svcContext := https.NewHttpContext(ctx, r, w)
 		if r.Method == "GET" {
 			result, err = svcContext.GetHandler()
 		} else if r.Method == "POST" {
@@ -103,6 +106,6 @@ func main() {
 	})
 	Cfg.JwtSecret = Cfg.Rds.Get(context.Background(), "JwtSecret").String()
 	fmt.Println("JwtSecret:", Cfg.JwtSecret)
-	service.PrintServices()
+	localLogic.PrintServices()
 	RedisHttpStart("/rSvc", 3025)
 }
