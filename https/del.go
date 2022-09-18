@@ -22,13 +22,13 @@ func (scvCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		return nil, err
 	}
 	if scvCtx.Field == "" {
-		cmd := config.Cfg.Rds.Del(scvCtx.Ctx, keyWithMyID)
+		cmd := config.Cfg.ParamRedis.Del(scvCtx.Ctx, keyWithMyID)
 		if err = cmd.Err(); err != nil {
 			return nil, err
 		}
 		return "{deleted:true,key:" + scvCtx.Key + "} ", nil
 	}
-	cmd := config.Cfg.Rds.HDel(scvCtx.Ctx, keyWithMyID, scvCtx.Field)
+	cmd := config.Cfg.ParamRedis.HDel(scvCtx.Ctx, keyWithMyID, scvCtx.Field)
 	if err = cmd.Err(); err != nil {
 		return nil, err
 	}

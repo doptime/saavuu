@@ -63,7 +63,7 @@ func init() {
 
 		//get previous data
 		his := &AcceleroHeartBeat{Start: in.Time, End: in.Time}
-		if err = HGet(svcCtx.Ctx, config.Cfg.Rds, rdsKey, "_", &his); err != nil && err != redis.Nil {
+		if err = HGet(svcCtx.Ctx, config.Cfg.ParamRedis, rdsKey, "_", &his); err != nil && err != redis.Nil {
 			return nil, err
 		}
 		// save discontinual data to history
@@ -71,7 +71,7 @@ func init() {
 		dataTooLong := (his.End - his.Start) > 8*3600
 		if dataDiscontinual || dataTooLong {
 			//save data to new key,if data less than 1 minute long,discard it
-			HSet(svcCtx.Ctx, config.Cfg.Rds, rdsKey, strconv.FormatInt(his.Start, 10), his)
+			HSet(svcCtx.Ctx, config.Cfg.ParamRedis, rdsKey, strconv.FormatInt(his.Start, 10), his)
 			his.Start = in.Time
 			his.End = in.Time
 		}
@@ -91,7 +91,7 @@ func init() {
 			go SaveAccelero(svcCtx.Ctx, JwtID, his.Start, cursor, in.Accleration1s)
 		}
 
-		HSet(svcCtx.Ctx, config.Cfg.Rds, rdsKey, "_", &his)
+		HSet(svcCtx.Ctx, config.Cfg.ParamRedis, rdsKey, "_", &his)
 		//predict heart rate if accelerometer data is available
 		if len(in.Accleration1s) > 0 {
 			go PredicHeartRate(svcCtx.Ctx, JwtID, his.Start, cursor, in.Accleration1s)
@@ -107,16 +107,16 @@ func SaveAccelero(ctx context.Context, JwtID string, StartTime int64, Cursor int
 		rdsKey string = "TrajAcc:" + JwtID + ":" + strconv.FormatInt(StartTime, 10)
 		L      int64
 	)
-	for L = config.Cfg.Rds.LLen(ctx, rdsKey).Val(); L < Cursor; L++ {
-		pip := config.Cfg.Rds.Pipeline()
+	for L = config.Cfg.ParamRedis.LLen(ctx, rdsKey).Val(); L < Cursor; L++ {
+		pip := config.Cfg.ParamRedis.Pipeline()
 		pip.RPush(ctx, rdsKey, nil)
 		pip.Expire(ctx, rdsKey, -1)
 		pip.Exec(ctx)
 	}
 	if L == Cursor {
-		RPush(ctx, config.Cfg.Rds, rdsKey, Acceleration1s)
+		RPush(ctx, config.Cfg.ParamRedis, rdsKey, Acceleration1s)
 	} else if Cursor < L {
-		LSet(ctx, config.Cfg.Rds, rdsKey, Cursor, Acceleration1s)
+		LSet(ctx, config.Cfg.ParamRedis, rdsKey, Cursor, Acceleration1s)
 	}
 	return nil
 }
@@ -127,7 +127,7 @@ func SaveHeartRate(ctx context.Context, JwtID string, StartTime int64, Cursor in
 		HeartRateHistory []uint8
 		Len              int
 	)
-	if err = HGet(ctx, config.Cfg.Rds, rdsKey, rdsField, &HeartRateHistory); err != nil && err != redis.Nil {
+	if err = HGet(ctx, config.Cfg.ParamRedis, rdsKey, rdsField, &HeartRateHistory); err != nil && err != redis.Nil {
 		return err
 	}
 	//64 seconds should be enough to predict heart rate
@@ -140,7 +140,7 @@ func SaveHeartRate(ctx context.Context, JwtID string, StartTime int64, Cursor in
 		HeartRateHistory = append(HeartRateHistory, make([]uint8, int(Cursor)+1-Len)...)
 		HeartRateHistory[Cursor] = HeartRate
 	}
-	HSet(ctx, config.Cfg.Rds, rdsKey, rdsField, &HeartRateHistory)
+	HSet(ctx, config.Cfg.ParamRedis, rdsKey, rdsField, &HeartRateHistory)
 	return nil
 }
 
@@ -162,10 +162,10 @@ func PredicHeartRate(ctx context.Context, JwtID string, StartTime int64, Cursor 
 	)
 
 	paramIn := map[string]interface{}{"UID": JwtID, "Time": Cursor, "Accelero1s": Acceleration1s}
-	if err = Call(ctx, config.Cfg.Rds, "svc:PredictHeartBeat", paramIn, out); err != nil {
+	if err = Call(ctx, config.Cfg.ParamRedis, "svc:PredictHeartBeat", paramIn, out); err != nil {
 		return err
 	}
-	if err = HGet(ctx, config.Cfg.Rds, rdsKey, rdsField, &HeartBeatPredicted); err != nil && err != redis.Nil {
+	if err = HGet(ctx, config.Cfg.ParamRedis, rdsKey, rdsField, &HeartBeatPredicted); err != nil && err != redis.Nil {
 		return err
 	}
 	heartBeatValue := uint16(out.Heartbeat * 256.0)
@@ -180,7 +180,7 @@ func PredicHeartRate(ctx context.Context, JwtID string, StartTime int64, Cursor 
 		HeartBeatPredicted[Cursor] = heartBeatValue
 	}
 
-	HSet(ctx, config.Cfg.Rds, rdsKey, rdsField, &HeartBeatPredicted)
+	HSet(ctx, config.Cfg.ParamRedis, rdsKey, rdsField, &HeartBeatPredicted)
 	fmt.Println("PredictHeartBeat", out.Heartbeat)
 	return nil
 }

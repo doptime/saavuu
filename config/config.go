@@ -5,14 +5,19 @@ import (
 )
 
 type Configuration struct {
-	Rds           *redis.Client
+	// Parameter Server Should be Memory Only server.
+	// All parameter from web client are post to this redis server first
+	ParamRedis *redis.Client
+	// DataRedis usually slower But with Flash Storage support ,such as Pikadb, and later may be KeyDB or DragonflyDB
+	// Default redis server to read data from and write data to web client
+	DataRedis     *redis.Client
 	JwtSecret     string
 	MaxBufferSize int64
 	CORS          string
 }
 
 var Cfg Configuration = Configuration{
-	Rds:           nil,
+	ParamRedis:    nil,
 	JwtSecret:     "",
 	MaxBufferSize: 32 << 20,
 	CORS:          "*",

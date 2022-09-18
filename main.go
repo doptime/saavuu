@@ -99,12 +99,17 @@ func RedisHttpStart(path string, port int) {
 }
 
 func main() {
-	Cfg.Rds = redis.NewClient(&redis.Options{
+	Cfg.ParamRedis = redis.NewClient(&redis.Options{
+		Addr:     "docker.vm:6379", // use default Addr
+		Password: "",               // no password set
+		DB:       0,                // use default DB
+	})
+	Cfg.DataRedis = redis.NewClient(&redis.Options{
 		Addr:     "docker.vm:6379", // use default Addr
 		Password: "",               // no password set
 		DB:       10,               // use default DB
 	})
-	Cfg.JwtSecret = Cfg.Rds.Get(context.Background(), "JwtSecret").String()
+	Cfg.JwtSecret = Cfg.ParamRedis.Get(context.Background(), "JwtSecret").String()
 	fmt.Println("JwtSecret:", Cfg.JwtSecret)
 	localLogic.PrintServices()
 	RedisHttpStart("/rSvc", 3025)

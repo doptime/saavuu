@@ -20,23 +20,24 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		paramIn map[string]interface{} = map[string]interface{}{}
 		result  map[string]interface{} = map[string]interface{}{}
 
-		resultBytes  []byte = []byte{}
-		resultString string = ""
+		resultBytes    []byte = []byte{}
+		responseBytes  []byte = []byte{}
+		responseString string = ""
 	)
 	if paramIn, err = scvCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	if resultBytes, err = CallBasic(scvCtx.Ctx, Cfg.Rds, scvCtx.Key, paramIn); err != nil {
+	if resultBytes, err = CallBasic(scvCtx.Ctx, Cfg.ParamRedis, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
 	//fill content type, to support binary or json response
 	if scvCtx.ResponseContentType != "application/json" {
-		if err = msgpack.Unmarshal(resultBytes, &resultBytes); err == nil {
-			return resultBytes, err
+		if err = msgpack.Unmarshal(resultBytes, &responseBytes); err == nil {
+			return responseBytes, err
 		}
-		if err = msgpack.Unmarshal(resultBytes, &resultString); err == nil {
-			return resultString, err
+		if err = msgpack.Unmarshal(resultBytes, &responseString); err == nil {
+			return responseString, err
 		}
 	}
 	if err = msgpack.Unmarshal(resultBytes, &result); err != nil {

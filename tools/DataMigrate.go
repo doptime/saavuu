@@ -29,17 +29,17 @@ func DataMigrateDemo() (err error) {
 		}
 	)
 	Ctx := context.Background()
-	keys, _, _ := config.Cfg.Rds.Scan(Ctx, 0, "AcceleroHeartbeat:*", 1000).Result()
+	keys, _, _ := config.Cfg.ParamRedis.Scan(Ctx, 0, "AcceleroHeartbeat:*", 1000).Result()
 	his := &AcceleroHeartBeat{}
 	for _, key := range keys {
 		//get fields
-		fields, _, err := config.Cfg.Rds.HScan(Ctx, key, 0, "*", 1024*1024).Result()
+		fields, _, err := config.Cfg.ParamRedis.HScan(Ctx, key, 0, "*", 1024*1024).Result()
 		if err != nil {
 			continue
 		}
 		//read every field
 		for _, field := range fields {
-			err = redisService.HGet(Ctx, config.Cfg.Rds, key, field, his)
+			err = redisService.HGet(Ctx, config.Cfg.ParamRedis, key, field, his)
 			if err != nil {
 				continue
 			}
@@ -65,7 +65,7 @@ func DataMigrateDemo() (err error) {
 
 			//move HeartBeat to new key
 			HeartBeatKey := "TrajHr:" + key[18:]
-			redisService.HSet(Ctx, config.Cfg.Rds, HeartBeatKey, StartTime, his.HeartBeat)
+			redisService.HSet(Ctx, config.Cfg.ParamRedis, HeartBeatKey, StartTime, his.HeartBeat)
 
 			//move AcceleroSlots to new key
 			// AcceleroSlotsKey := "TrajAcc:" + key[18:] + ":" + StartTime
