@@ -68,11 +68,13 @@ func RedisHttpStart(path string, port int) {
 				if _map, ok = result.(map[string]interface{}); !ok {
 					//convert result to map[string]interface{} using msgpack
 					if b, err = msgpack.Marshal(result); err != nil {
-						https.InternalError(w, err)
+						w.WriteHeader(http.StatusInternalServerError)
+						w.Write([]byte(err.Error()))
 						return
 					}
 					if err = msgpack.Unmarshal(b, &_map); err != nil {
-						https.InternalError(w, err)
+						w.WriteHeader(http.StatusInternalServerError)
+						w.Write([]byte(err.Error()))
 						return
 					}
 				}
@@ -85,7 +87,8 @@ func RedisHttpStart(path string, port int) {
 				result = _map
 				//reponse result json to client
 				if b, err = json.Marshal(result); err != nil {
-					https.InternalError(w, err)
+					w.WriteHeader(http.StatusInternalServerError)
+					w.Write([]byte(err.Error()))
 					return
 				}
 				w.Write(b)
@@ -94,6 +97,7 @@ func RedisHttpStart(path string, port int) {
 	})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
+
 func main() {
 	config.LoadConfigFromEnv()
 
