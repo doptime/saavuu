@@ -5,7 +5,7 @@ import (
 )
 
 type Configuration struct {
-	// Parameter Server Should be Memory Only server.
+	// Parameter Server Should be Memory Only server, with high bandwidth and low latency.
 	// All parameter from web client are post to this redis server first
 	ParamRedis *redis.Client
 	// DataRedis usually slower But with Flash Storage support ,such as Pikadb, and later may be KeyDB or DragonflyDB
