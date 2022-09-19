@@ -40,7 +40,7 @@ func CounterResetEveryMinute() func() (newMinute bool, counter int) {
 
 var ErrBackTo = fmt.Errorf("param[\"backTo\"] is not a string")
 
-func NewLocalService(_rds *redis.Client, _serviceName string, f fn) {
+func NewService(_rds *redis.Client, _serviceName string, f fn) {
 	ServiceMap[_serviceName] = f
 	rds := _rds
 	var batch_size int64 = 128
