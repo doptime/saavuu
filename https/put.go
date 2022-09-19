@@ -2,10 +2,12 @@ package https
 
 import (
 	"errors"
-	"saavuu"
-	. "saavuu/config"
-	"saavuu/tools"
 	"strings"
+
+	"github.com/yangkequn/saavuu"
+
+	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/tools"
 
 	"github.com/vmihailenco/msgpack/v5"
 )

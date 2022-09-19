@@ -5,7 +5,8 @@ import (
 	"errors"
 	"net/http"
 	"reflect"
-	"saavuu/config"
+
+	"github.com/yangkequn/saavuu/config"
 
 	"github.com/vmihailenco/msgpack/v5"
 )

@@ -2,8 +2,9 @@ package tools
 
 import (
 	"context"
-	"saavuu/config"
 	"strconv"
+
+	"github.com/yangkequn/saavuu/config"
 )
 
 func DataMigrateDemo() (err error) {

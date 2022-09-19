@@ -2,8 +2,9 @@ package https
 
 import (
 	"net/http"
-	"saavuu/config"
 	"strconv"
+
+	"github.com/yangkequn/saavuu/config"
 )
 
 func CorsChecked(r *http.Request, w http.ResponseWriter) bool {

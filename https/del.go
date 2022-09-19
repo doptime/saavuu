@@ -2,7 +2,8 @@ package https
 
 import (
 	"errors"
-	"saavuu/config"
+
+	"github.com/yangkequn/saavuu/config"
 )
 
 func (scvCtx *HttpContext) DelHandler() (result interface{}, err error) {

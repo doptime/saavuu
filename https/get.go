@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	. "saavuu/config"
+	. "github.com/yangkequn/saavuu/config"
 
 	"github.com/vmihailenco/msgpack/v5"
 )

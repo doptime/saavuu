@@ -1,4 +1,4 @@
-module saavuu
+module github.com/yangkequn/saavuu
 
 go 1.18
 

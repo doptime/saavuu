@@ -6,11 +6,12 @@ import (
 
 	"encoding/json"
 	"net/http"
-	"saavuu/config"
-	"saavuu/https"
-	"saavuu/tools"
 	"strconv"
 	"strings"
+
+	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/https"
+	"github.com/yangkequn/saavuu/tools"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
