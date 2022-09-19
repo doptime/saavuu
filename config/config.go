@@ -9,7 +9,7 @@ type Configuration struct {
 	RedisPasswordParam string
 	RedisDbParam       int
 
-	RedisAdressData   string
+	RedisAddressData  string
 	RedisPasswordData string
 	RedisDbData       int
 
