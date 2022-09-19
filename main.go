@@ -2,19 +2,17 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"encoding/json"
 	"net/http"
-	. "saavuu/config"
+	"saavuu/config"
 	"saavuu/https"
 	"saavuu/localLogic"
 	"saavuu/tools"
 	"strconv"
 	"strings"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
@@ -42,8 +40,8 @@ func RedisHttpStart(path string, port int) {
 		} else if r.Method == "DELETE" {
 			result, err = svcContext.DelHandler()
 		}
-		if len(Cfg.CORS) > 0 {
-			w.Header().Set("Access-Control-Allow-Origin", Cfg.CORS)
+		if len(config.Cfg.CORS) > 0 {
+			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
 		}
 		if err != nil {
 			errStr := err.Error()
@@ -97,20 +95,9 @@ func RedisHttpStart(path string, port int) {
 	})
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
-
 func main() {
-	Cfg.ParamRedis = redis.NewClient(&redis.Options{
-		Addr:     "docker.vm:6379", // use default Addr
-		Password: "",               // no password set
-		DB:       0,                // use default DB
-	})
-	Cfg.DataRedis = redis.NewClient(&redis.Options{
-		Addr:     "docker.vm:6379", // use default Addr
-		Password: "",               // no password set
-		DB:       10,               // use default DB
-	})
-	Cfg.JwtSecret = Cfg.ParamRedis.Get(context.Background(), "JwtSecret").String()
-	fmt.Println("JwtSecret:", Cfg.JwtSecret)
+	config.LoadConfigFromEnv()
+
 	localLogic.PrintServices()
 	RedisHttpStart("/rSvc", 3025)
 }
