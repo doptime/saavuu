@@ -23,6 +23,11 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	if paramIn, err = scvCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
+	paramIn["jwtid"] = scvCtx.JwtField("id")
+	if id, ok := scvCtx.JwtField("id").(string); ok {
+		paramIn["jwtid"] = id
+	}
+
 	if resultBytes, err = saavuu.CallServiceBasic(scvCtx.Ctx, Cfg.ParamRedis, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
