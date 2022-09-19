@@ -11,10 +11,6 @@ import (
 )
 
 func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
-	//use local service map to handle request
-	if fun, ok := ServiceMap[scvCtx.Service]; ok {
-		return fun(scvCtx)
-	}
 	//use remote service map to handle request
 	var (
 		paramIn map[string]interface{} = map[string]interface{}{}

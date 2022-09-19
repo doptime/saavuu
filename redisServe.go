@@ -1,4 +1,4 @@
-package redisService
+package saavuu
 
 import (
 	"context"
@@ -9,6 +9,20 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
 )
+
+type fn func(paramIn map[string]interface{}) (out map[string]interface{}, err error)
+
+var ServiceMap map[string]fn = map[string]fn{}
+
+func PrintServicesNames() {
+	// all keys of ServiceMap to []string serviceNames
+	var serviceNames []string = make([]string, 0, len(ServiceMap))
+	for k := range ServiceMap {
+		serviceNames = append(serviceNames, k)
+	}
+
+	fmt.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
+}
 
 func CounterResetEveryMinute() func() (newMinute bool, counter int) {
 	var minute int = time.Now().Minute()
@@ -24,22 +38,32 @@ func CounterResetEveryMinute() func() (newMinute bool, counter int) {
 	}
 }
 
-type fn func(paramIn string) (out interface{}, BackTo string, err error)
+var ErrBackTo = fmt.Errorf("param[\"backTo\"] is not a string")
 
-func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
+func NewLocalService(_rds *redis.Client, _serviceName string, f fn) {
+	ServiceMap[_serviceName] = f
 	rds := _rds
 	var batch_size int64 = 128
 	serviceName := _serviceName
 	cnt := CounterResetEveryMinute()
 
-	ProcessOneJob := func(s string) (err error) {
+	ProcessOneJob := func(s []byte) (err error) {
 		var (
 			backTo         string
 			out            interface{}
 			marshaledBytes []byte
+			param          map[string]interface{} = map[string]interface{}{}
+			ok             bool
 		)
+		if err = msgpack.Unmarshal(s, &param); err != nil || param["backTo"] == nil {
+			return err
+		}
+		if backTo, ok = param["backTo"].(string); !ok {
+			return ErrBackTo
+		}
+		delete(param, "backTo")
 		//process one job
-		if out, backTo, err = f(s); err != nil {
+		if out, err = f(param); err != nil {
 			return err
 		}
 		//Post Back
@@ -72,7 +96,7 @@ func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
 				data = cmd[0].(*redis.StringSliceCmd).Val()
 			}
 			for _, s := range data {
-				go ProcessOneJob(s)
+				go ProcessOneJob([]byte(s))
 			}
 			if log, num := cnt(); log {
 				fmt.Print(time.Now().String()[11:19] + " service " + serviceName + " rcved " + strconv.Itoa(num) + " tasks")
@@ -80,7 +104,4 @@ func RedisServe(_rds *redis.Client, _serviceName string, f fn) func() {
 		}
 	}
 	go loop()
-	return func() {
-		fmt.Print("service " + serviceName + "is running")
-	}
 }

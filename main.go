@@ -1,4 +1,4 @@
-package main
+package saavuu
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"saavuu/config"
 	"saavuu/https"
-	"saavuu/localLogic"
 	"saavuu/tools"
 	"strconv"
 	"strings"
@@ -98,6 +97,5 @@ func RedisHttpStart(path string, port int) {
 func main() {
 	config.LoadConfigFromEnv()
 
-	localLogic.PrintServices()
 	RedisHttpStart("/rSvc", 3025)
 }
