@@ -3,7 +3,6 @@ package tools
 import (
 	"context"
 	"saavuu/config"
-	"saavuu/redisService"
 	"strconv"
 )
 
@@ -39,7 +38,7 @@ func DataMigrateDemo() (err error) {
 		}
 		//read every field
 		for _, field := range fields {
-			err = redisService.HGet(Ctx, config.Cfg.ParamRedis, key, field, his)
+			err = HGet(Ctx, config.Cfg.ParamRedis, key, field, his)
 			if err != nil {
 				continue
 			}
@@ -65,7 +64,7 @@ func DataMigrateDemo() (err error) {
 
 			//move HeartBeat to new key
 			HeartBeatKey := "TrajHr:" + key[18:]
-			redisService.HSet(Ctx, config.Cfg.ParamRedis, HeartBeatKey, StartTime, his.HeartBeat)
+			HSet(Ctx, config.Cfg.ParamRedis, HeartBeatKey, StartTime, his.HeartBeat)
 
 			//move AcceleroSlots to new key
 			// AcceleroSlotsKey := "TrajAcc:" + key[18:] + ":" + StartTime

@@ -1,4 +1,4 @@
-package redisService
+package saavuu
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 
 //RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 //return: error
-func CallBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
+func CallServiceBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
 	var (
 		b       []byte
 		BackTo  string = fmt.Sprintf("%x", rand.Int63())
@@ -36,7 +36,7 @@ func CallBasic(c context.Context, rds *redis.Client, ServiceKey string, paramIn 
 	}
 	return []byte(results[1]), nil
 }
-func Call(c context.Context, rds *redis.Client, ServiceKey string, structIn interface{}, out interface{}) (err error) {
+func CallService(c context.Context, rds *redis.Client, ServiceKey string, structIn interface{}, out interface{}) (err error) {
 	var (
 		paramIn = map[string]interface{}{}
 		ok      bool
@@ -52,7 +52,7 @@ func Call(c context.Context, rds *redis.Client, ServiceKey string, structIn inte
 		}
 	}
 
-	result, err := CallBasic(c, rds, ServiceKey, paramIn)
+	result, err := CallServiceBasic(c, rds, ServiceKey, paramIn)
 	if err != nil {
 		return err
 	}

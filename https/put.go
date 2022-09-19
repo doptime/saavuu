@@ -2,8 +2,8 @@ package https
 
 import (
 	"errors"
+	"saavuu"
 	. "saavuu/config"
-	. "saavuu/redisService"
 	"saavuu/tools"
 	"strings"
 
@@ -23,7 +23,7 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	if paramIn, err = scvCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	if resultBytes, err = CallBasic(scvCtx.Ctx, Cfg.ParamRedis, scvCtx.Key, paramIn); err != nil {
+	if resultBytes, err = saavuu.CallServiceBasic(scvCtx.Ctx, Cfg.ParamRedis, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
