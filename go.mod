@@ -3,6 +3,7 @@ module github.com/yangkequn/saavuu
 go 1.18
 
 require (
+	github.com/BurntSushi/toml v1.2.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5

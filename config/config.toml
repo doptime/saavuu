@@ -1,0 +1,12 @@
+RedisAddressParam = "127.0.0.1:6379"
+RedisPasswordParam = ""
+RedisDbParam = 0
+
+RedisAdressData = "127.0.0.1:6379"
+RedisPasswordData = ""
+RedisDbData = 1
+
+
+JwtSecret = "secret"
+MaxBufferSize = 33000000
+CORS = "*"
