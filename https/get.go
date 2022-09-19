@@ -39,7 +39,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	}
 	//return list of keys
 	if svcCtx.Field == "" {
-		cmd := Cfg.DataRedis.HKeys(svcCtx.Ctx, svcCtx.Key)
+		cmd := DataRedis.HKeys(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	}
 
 	//return item
-	cmd := Cfg.DataRedis.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
+	cmd := DataRedis.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 	if data, err = cmd.Bytes(); err != nil {
 		return nil, err
 	}

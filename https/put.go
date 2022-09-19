@@ -30,7 +30,7 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		paramIn["JwtID"] = id
 	}
 
-	if resultBytes, err = saavuu.CallServiceBasic(scvCtx.Ctx, Cfg.ParamRedis, scvCtx.Key, paramIn); err != nil {
+	if resultBytes, err = saavuu.CallServiceBasic(scvCtx.Ctx, ParamRedis, scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
