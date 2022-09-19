@@ -2,7 +2,8 @@ package https
 
 import (
 	"fmt"
-	. "saavuu/config"
+
+	. "github.com/yangkequn/saavuu/config"
 
 	"github.com/golang-jwt/jwt/v4"
 )
