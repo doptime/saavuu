@@ -100,7 +100,7 @@ func RedisHttpStart(path string, port int) {
 }
 
 func main() {
-	config.LoadConfigFromEnv()
+	config.LoadConfigFromEnv("config/configsaavuu.toml")
 
 	RedisHttpStart("/rSvc", 3025)
 }
