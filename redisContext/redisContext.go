@@ -69,3 +69,7 @@ func (sc RedisContext) LGet(key string, index int64, param interface{}) (err err
 	}
 	return msgpack.Unmarshal(data, param)
 }
+func (sc RedisContext) LLen(key string) (length int64) {
+	cmd := sc.RdsClient.LLen(sc.Ctx, key)
+	return cmd.Val()
+}
