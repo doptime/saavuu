@@ -44,10 +44,10 @@ var ErrBackTo = fmt.Errorf("param[\"backTo\"] is not a string")
 
 func NewService(_serviceName string, f fn) {
 	//check configureation is loaded
-	if config.DataRedis == nil {
+	if config.DataRds == nil {
 		panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
-	if config.ParamRedis == nil {
+	if config.ParamRds == nil {
 		panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
 
@@ -72,7 +72,7 @@ func NewService(_serviceName string, f fn) {
 		}
 		delete(param, "backTo")
 		//process one job
-		if out, err = f(&RedisContext{Ctx: context.Background(), RdsClient: config.DataRedis}, param); err != nil {
+		if out, err = f(&RedisContext{Ctx: context.Background(), DataRds: config.DataRds}, param); err != nil {
 			return err
 		}
 		//Post Back
@@ -80,7 +80,7 @@ func NewService(_serviceName string, f fn) {
 			return err
 		}
 		ctx := context.Background()
-		pipline := config.ParamRedis.Pipeline()
+		pipline := config.ParamRds.Pipeline()
 		pipline.RPush(ctx, backTo, marshaledBytes)
 		pipline.Expire(ctx, backTo, 6)
 		_, err = pipline.Exec(ctx)
@@ -91,12 +91,12 @@ func NewService(_serviceName string, f fn) {
 		for true {
 			//fetch datas from redis
 			c := context.Background()
-			pipline := config.ParamRedis.Pipeline()
+			pipline := config.ParamRds.Pipeline()
 			pipline.LRange(c, serviceName, 0, batch_size-1)
 			pipline.LTrim(c, serviceName, batch_size, -1)
 			cmd, err := pipline.Exec(c)
 			if err != nil || len(cmd) < 2 {
-				rlt := config.ParamRedis.BLPop(c, time.Minute, serviceName)
+				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
 					continue
 				}

@@ -26,8 +26,8 @@ var Cfg Configuration = Configuration{
 
 // Parameter Server Should be Memory Only server, with high bandwidth and low latency.
 // All parameter from web client are post to this redis server first
-var ParamRedis *redis.Client
+var ParamRds *redis.Client
 
-// DataRedis usually slower But with Flash Storage support ,such as Pikadb, and later may be KeyDB or DragonflyDB
+// DataRds usually slower But with Flash Storage support ,such as Pikadb, and later may be KeyDB or DragonflyDB
 // Default redis server to read data from and write data to web client
-var DataRedis *redis.Client
+var DataRds *redis.Client

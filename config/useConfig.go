@@ -8,12 +8,12 @@ func UseConfig() {
 		Password: Cfg.RedisPasswordParam, // no password set
 		DB:       Cfg.RedisDbParam,       // use default DB
 	}
-	ParamRedis = redis.NewClient(ParamRedisOption)
+	ParamRds = redis.NewClient(ParamRedisOption)
 
 	DataRedisOption := &redis.Options{
 		Addr:     Cfg.RedisAddressData,
 		Password: Cfg.RedisPasswordData, // no password set
 		DB:       Cfg.RedisDbData,       // use default DB
 	}
-	DataRedis = redis.NewClient(DataRedisOption)
+	DataRds = redis.NewClient(DataRedisOption)
 }

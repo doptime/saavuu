@@ -4,9 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/yangkequn/saavuu"
-
 	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/redisContext"
 	"github.com/yangkequn/saavuu/tools"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -30,7 +29,8 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		paramIn["JwtID"] = id
 	}
 
-	if resultBytes, err = saavuu.CallServiceBasic(scvCtx.Ctx, ParamRedis, scvCtx.Key, paramIn); err != nil {
+	rc := redisContext.RedisContext{Ctx: scvCtx.Ctx, ParamRds: ParamRds, DataRds: DataRds}
+	if resultBytes, err = rc.RdsApiBasic(scvCtx.Key, paramIn); err != nil {
 		return nil, err
 	}
 
