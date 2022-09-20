@@ -1,4 +1,4 @@
-package saavuu
+package redisContext
 
 import (
 	"context"
@@ -9,12 +9,12 @@ import (
 )
 
 type RedisContext struct {
-	RdisClient *redis.Client
-	ctx        context.Context
+	Ctx       context.Context
+	RdsClient *redis.Client
 }
 
 func (sc RedisContext) Get(key string, param interface{}) (err error) {
-	cmd := sc.RdisClient.Get(sc.ctx, key)
+	cmd := sc.RdsClient.Get(sc.Ctx, key)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err
@@ -26,11 +26,11 @@ func (sc RedisContext) Set(key string, param interface{}, expiration time.Durati
 	if err != nil {
 		return err
 	}
-	status := sc.RdisClient.Set(sc.ctx, key, bytes, expiration)
+	status := sc.RdsClient.Set(sc.Ctx, key, bytes, expiration)
 	return status.Err()
 }
 func (sc RedisContext) HGet(key string, field string, param interface{}) (err error) {
-	cmd := sc.RdisClient.HGet(sc.ctx, key, field)
+	cmd := sc.RdsClient.HGet(sc.Ctx, key, field)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func (sc RedisContext) HSet(key string, field string, param interface{}) (err er
 	if err != nil {
 		return err
 	}
-	status := sc.RdisClient.HSet(sc.ctx, key, field, bytes)
+	status := sc.RdsClient.HSet(sc.Ctx, key, field, bytes)
 	return status.Err()
 }
 func (sc RedisContext) RPush(key string, param interface{}) (err error) {
@@ -50,7 +50,7 @@ func (sc RedisContext) RPush(key string, param interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	status := sc.RdisClient.RPush(sc.ctx, key, bytes)
+	status := sc.RdsClient.RPush(sc.Ctx, key, bytes)
 	return status.Err()
 }
 func (sc RedisContext) LSet(key string, index int64, param interface{}) (err error) {
@@ -58,11 +58,11 @@ func (sc RedisContext) LSet(key string, index int64, param interface{}) (err err
 	if err != nil {
 		return err
 	}
-	status := sc.RdisClient.LSet(sc.ctx, key, index, bytes)
+	status := sc.RdsClient.LSet(sc.Ctx, key, index, bytes)
 	return status.Err()
 }
 func (sc RedisContext) LGet(key string, index int64, param interface{}) (err error) {
-	cmd := sc.RdisClient.LIndex(sc.ctx, key, index)
+	cmd := sc.RdsClient.LIndex(sc.Ctx, key, index)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err

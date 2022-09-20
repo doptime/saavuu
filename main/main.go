@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"encoding/json"
@@ -96,11 +97,12 @@ func RedisHttpStart(path string, port int) {
 			}
 		}
 	})
+	fmt.Println("http server started on port " + strconv.Itoa(port) + " , path is " + path)
 	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }
 
 func main() {
-	config.LoadConfigFromEnv("config/configsaavuu.toml")
+	config.LoadFromTomlOrEnviroment("/Users/yang/saavuu/config/configsaavuu.toml", "saavuu_redis_service_config")
 
 	RedisHttpStart("/rSvc", 3025)
 }
