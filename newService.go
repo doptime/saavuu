@@ -15,7 +15,8 @@ import (
 type fn func(rc *RedisContext, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ServiceMap map[string]fn = map[string]fn{}
-var ServiceCounter map[string]int = map[string]int{}
+
+var ServiceCounter Counter = Counter{}
 
 func PrintServiceStates() {
 	// all keys of ServiceMap to []string serviceNames
@@ -27,9 +28,10 @@ func PrintServiceStates() {
 	for true {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
-		for serviceName, num := range ServiceCounter {
-			fmt.Print(now + " service " + serviceName + " proccessed " + strconv.Itoa(num) + " tasks")
-			ServiceCounter[serviceName] = 0
+		for _, serviceName := range serviceNames {
+			num, _ := ServiceCounter.Get(serviceName)
+			fmt.Print(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+			ServiceCounter.DeleteAndGetLastValue(serviceName)
 		}
 	}
 }
@@ -62,8 +64,6 @@ func NewService(_serviceName string, f fn) {
 	ServiceMap[_serviceName] = f
 	var batch_size int64 = 128
 	serviceName := _serviceName
-	ServiceCounter[_serviceName] = 0
-
 	ProcessOneJob := func(s []byte) (err error) {
 		var (
 			backTo         string
@@ -115,7 +115,7 @@ func NewService(_serviceName string, f fn) {
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
 			}
-			ServiceCounter[_serviceName] = ServiceCounter[_serviceName] + 1
+			ServiceCounter.Add(_serviceName, 1)
 		}
 	}
 	go loop()
