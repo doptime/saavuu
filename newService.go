@@ -49,6 +49,7 @@ func NewService(_serviceName string, f fn) {
 
 	ServiceMap[_serviceName] = f
 	counter.DeleteAndGetLastValue(_serviceName)
+
 	var batch_size int64 = 128
 	serviceName := _serviceName
 	ProcessOneJob := func(s []byte) (err error) {
