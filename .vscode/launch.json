@@ -9,7 +9,19 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}/main.go"
+            "program": "${fileDirname}/main.go",
+            "env": {
+                "REDIS_ADDRESS_PARAM": "docker.vm:6379",
+                "REDIS_PASSWORD_PARAM": "",
+                "REDIS_DB_PARAM": "0",
+                "REDIS_ADDRESS_DATA": "docker.vm:6379",
+                "REDIS_PASSWORD_DATA": "",
+                "REDIS_DB_DATA": "0",
+                "JWT_SECRET": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
+                "CORS": "*",
+                "SAAVUU_CONFIG_KEY": "saavuuSvcConf",
+                "MAX_BUFFER_SIZE": 3024024,
+            },
         }
     ]
 }

@@ -102,7 +102,7 @@ func RedisHttpStart(path string, port int) {
 }
 
 func main() {
-	config.LoadFromTomlOrEnviroment("/Users/yang/saavuu/config/configsaavuu.toml", "saavuu_redis_service_config")
+	config.LoadConfigFromEnv()
 
 	RedisHttpStart("/rSvc", 3025)
 }
