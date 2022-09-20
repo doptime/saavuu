@@ -20,7 +20,6 @@ func LoadConfigFromEnv() {
 		panic("Error: Can not load REDIS_ADDR_PARAM from env")
 	}
 	if Cfg.RedisPasswordParam = os.Getenv("REDIS_PASSWORD_PARAM"); Cfg.RedisPasswordParam == "" {
-		panic("Error: Can not load REDIS_PASSWORD_PARAM from env")
 	}
 	if Cfg.RedisDbParam, err = strconv.Atoi(os.Getenv("REDIS_DB_PARAM")); err != nil {
 		panic("Error: Can not load REDIS_DB_PARAM from env")
@@ -29,7 +28,6 @@ func LoadConfigFromEnv() {
 		panic("Error: Can not load REDIS_ADDR_DATA from env")
 	}
 	if Cfg.RedisPasswordData = os.Getenv("REDIS_PASSWORD_DATA"); Cfg.RedisPasswordData == "" {
-		panic("Error: Can not load REDIS_PASSWORD_DATA from env")
 	}
 	if Cfg.RedisDbData, err = strconv.Atoi(os.Getenv("REDIS_DB_DATA")); err != nil {
 		panic("Error: Can not load REDIS_DB_DATA from env")
@@ -40,7 +38,7 @@ func LoadConfigFromEnv() {
 	if Cfg.MaxBufferSize, err = strconv.ParseInt(os.Getenv("MAX_BUFFER_SIZE"), 10, 64); err != nil {
 		panic("Error: Can not load MAX_BUFFER_SIZE from env")
 	}
-	if ConfigKey = os.Getenv("SAAVUU_CONFIG_KEY"); ConfigKey != "" {
+	if ConfigKey = os.Getenv("SAAVUU_CONFIG_KEY"); ConfigKey == "" {
 		panic("Error: Can not load SAAVUU_CONFIG_KEY from env")
 	}
 	UseConfig()
