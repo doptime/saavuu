@@ -15,15 +15,23 @@ import (
 type fn func(rc *RedisContext, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ServiceMap map[string]fn = map[string]fn{}
+var ServiceCounter map[string]int = map[string]int{}
 
-func PrintServicesNames() {
+func PrintServiceStates() {
 	// all keys of ServiceMap to []string serviceNames
 	var serviceNames []string = make([]string, 0, len(ServiceMap))
 	for k := range ServiceMap {
 		serviceNames = append(serviceNames, k)
 	}
-
 	fmt.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
+	for true {
+		time.Sleep(time.Second * 60)
+		now := time.Now().String()[11:19]
+		for serviceName, num := range ServiceCounter {
+			fmt.Print(now + " service " + serviceName + " proccessed " + strconv.Itoa(num) + " tasks")
+			ServiceCounter[serviceName] = 0
+		}
+	}
 }
 
 func CounterResetEveryMinute() func() (newMinute bool, counter int) {
@@ -54,7 +62,7 @@ func NewService(_serviceName string, f fn) {
 	ServiceMap[_serviceName] = f
 	var batch_size int64 = 128
 	serviceName := _serviceName
-	cnt := CounterResetEveryMinute()
+	ServiceCounter[_serviceName] = 0
 
 	ProcessOneJob := func(s []byte) (err error) {
 		var (
@@ -107,9 +115,7 @@ func NewService(_serviceName string, f fn) {
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
 			}
-			if log, num := cnt(); log {
-				fmt.Print(time.Now().String()[11:19] + " service " + serviceName + " rcved " + strconv.Itoa(num) + " tasks")
-			}
+			ServiceCounter[_serviceName] = ServiceCounter[_serviceName] + 1
 		}
 	}
 	go loop()
