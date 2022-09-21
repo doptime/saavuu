@@ -81,7 +81,7 @@ func RedisHttpStart(path string, port int) {
 					}
 				}
 				//remove fields not exits in svcContext.QueryFields
-				for k, _ := range _map {
+				for k := range _map {
 					if !strings.Contains(svcContext.QueryFields, k) {
 						delete(_map, k)
 					}
