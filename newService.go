@@ -54,19 +54,19 @@ func NewService(_serviceName string, f fn) {
 	serviceName := _serviceName
 	ProcessOneJob := func(s []byte) (err error) {
 		var (
-			backTo         string
+			BackTo         string
 			out            interface{}
 			marshaledBytes []byte
 			param          map[string]interface{} = map[string]interface{}{}
 			ok             bool
 		)
-		if err = msgpack.Unmarshal(s, &param); err != nil || param["backTo"] == nil {
+		if err = msgpack.Unmarshal(s, &param); err != nil || param["BackTo"] == nil {
 			return err
 		}
-		if backTo, ok = param["backTo"].(string); !ok {
+		if BackTo, ok = param["BackTo"].(string); !ok {
 			return ErrBackTo
 		}
-		delete(param, "backTo")
+		delete(param, "BackTo")
 		//process one job
 		if out, err = f(&RedisContext{Ctx: context.Background(), DataRds: config.DataRds}, param); err != nil {
 			return err
@@ -77,8 +77,8 @@ func NewService(_serviceName string, f fn) {
 		}
 		ctx := context.Background()
 		pipline := config.ParamRds.Pipeline()
-		pipline.RPush(ctx, backTo, marshaledBytes)
-		pipline.Expire(ctx, backTo, 6)
+		pipline.RPush(ctx, BackTo, marshaledBytes)
+		pipline.Expire(ctx, BackTo, 6)
 		_, err = pipline.Exec(ctx)
 		return err
 	}
@@ -91,7 +91,7 @@ func NewService(_serviceName string, f fn) {
 			pipline.LRange(c, serviceName, 0, batch_size-1)
 			pipline.LTrim(c, serviceName, batch_size, -1)
 			cmd, err := pipline.Exec(c)
-			if err != nil || len(cmd) <= 2 {
+			if err != nil || len(cmd) < 2 {
 				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
 					continue
@@ -102,8 +102,8 @@ func NewService(_serviceName string, f fn) {
 			}
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
+				counter.Add(_serviceName, 1)
 			}
-			counter.Add(_serviceName, 1)
 		}
 	}
 	go loop()
