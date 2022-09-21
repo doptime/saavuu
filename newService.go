@@ -94,6 +94,7 @@ func NewService(_serviceName string, f fn) {
 			if err != nil || len(cmd) < 2 {
 				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
+					time.Sleep(time.Millisecond * 10)
 					continue
 				}
 				data = rlt.Val()
