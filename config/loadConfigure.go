@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/go-redis/redis/v8"
 	. "github.com/yangkequn/saavuu/redisContext"
@@ -34,6 +35,10 @@ func LoadConfigFromEnv() {
 	}
 	if Cfg.JwtSecret = os.Getenv("JWT_SECRET"); Cfg.JwtSecret == "" {
 		panic("Error: Can not load JWT_SECRET from env")
+	}
+	if Cfg.JwtIgnoreFields = os.Getenv("JWT_IGNORE_FIELDS"); Cfg.JwtIgnoreFields != "" {
+		//to lower
+		Cfg.JwtIgnoreFields = strings.ToLower(Cfg.JwtIgnoreFields)
 	}
 	if Cfg.MaxBufferSize, err = strconv.ParseInt(os.Getenv("MAX_BUFFER_SIZE"), 10, 64); err != nil {
 		panic("Error: Can not load MAX_BUFFER_SIZE from env")

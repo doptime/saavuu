@@ -13,9 +13,10 @@ type Configuration struct {
 	RedisPasswordData string
 	RedisDbData       int
 
-	JwtSecret     string
-	MaxBufferSize int64
-	CORS          string
+	JwtSecret       string
+	JwtIgnoreFields string
+	MaxBufferSize   int64
+	CORS            string
 }
 
 var Cfg Configuration = Configuration{

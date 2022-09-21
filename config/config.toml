@@ -8,5 +8,6 @@ RedisDbData = 1
 
 
 JwtSecret = "secret"
+JWtFieldsRemoved="iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at"
 MaxBufferSize = 33000000
 CORS = "*"

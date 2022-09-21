@@ -28,10 +28,13 @@ type HttpContext struct {
 
 func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
+	//for get
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
+	//for post
 	svcContext.Service = svcContext.Req.FormValue("Service")
 
+	//for response
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
 	svcContext.ResponseContentType = svcContext.Req.FormValue("RspType")
 	return svcContext

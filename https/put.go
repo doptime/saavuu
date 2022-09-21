@@ -9,7 +9,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
+func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	//use remote service map to handle request
 	var (
 		paramIn map[string]interface{} = map[string]interface{}{}
@@ -19,13 +19,13 @@ func (scvCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		responseBytes  []byte = []byte{}
 		responseString string = ""
 	)
-	if paramIn, err = scvCtx.BodyMessage(); err != nil {
+	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	scvCtx.MergeJwtField(paramIn)
+	svcCtx.MergeJwtField(paramIn)
 
-	rc := redisContext.RedisContext{Ctx: scvCtx.Ctx, ParamRds: ParamRds, DataRds: DataRds}
-	if resultBytes, err = rc.RdsApiBasic(scvCtx.Key, paramIn); err != nil {
+	rc := redisContext.RedisContext{Ctx: svcCtx.Ctx, ParamRds: ParamRds, DataRds: DataRds}
+	if resultBytes, err = rc.RdsApiBasic(svcCtx.Service, paramIn); err != nil {
 		return nil, err
 	}
 
