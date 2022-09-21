@@ -12,7 +12,6 @@ import (
 
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/https"
-	"github.com/yangkequn/saavuu/tools"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -27,7 +26,8 @@ func RedisHttpStart(path string, port int) {
 		err    error
 	)
 	//get item
-	http.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+	router := http.NewServeMux()
+	router.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
 		if https.CorsChecked(r, w) {
 			return
 		}
@@ -81,7 +81,7 @@ func RedisHttpStart(path string, port int) {
 					}
 				}
 				//remove fields not exits in svcContext.QueryFields
-				for _, k := range tools.MapKeys(_map) {
+				for k, _ := range _map {
 					if !strings.Contains(svcContext.QueryFields, k) {
 						delete(_map, k)
 					}
@@ -98,7 +98,16 @@ func RedisHttpStart(path string, port int) {
 		}
 	})
 	fmt.Println("http server started on port " + strconv.Itoa(port) + " , path is " + path)
-	http.ListenAndServe(":"+strconv.Itoa(port), nil)
+
+	server := &http.Server{
+		Addr:              ":" + strconv.Itoa(port),
+		Handler:           router,
+		ReadTimeout:       50 * time.Second,
+		ReadHeaderTimeout: 50 * time.Second,
+		WriteTimeout:      50 * time.Second, //10ms Redundant time
+		IdleTimeout:       15 * time.Second,
+	}
+	server.ListenAndServe()
 }
 
 func main() {

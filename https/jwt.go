@@ -2,6 +2,7 @@ package https
 
 import (
 	"fmt"
+	"strings"
 
 	. "github.com/yangkequn/saavuu/config"
 
@@ -9,9 +10,25 @@ import (
 )
 
 func (svc *HttpContext) JwtField(field string) (f interface{}) {
+	var token *jwt.Token = svc.JwtToken()
+	if token == nil {
+		return nil
+	}
+	// return field in svc.Jwt.Claims
+	mpclaims, ok := svc.jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil
+	}
+	if f, ok = mpclaims[field]; !ok {
+		return nil
+	}
+	return f
+}
+
+func (svc *HttpContext) JwtToken() (token *jwt.Token) {
+	var jwtStr string
 	if svc.jwtToken == nil {
-		jwtStr := svc.Req.Header.Get("Authorization")
-		if len(jwtStr) == 0 {
+		if jwtStr = svc.Req.Header.Get("Authorization"); len(jwtStr) == 0 {
 			return nil
 		}
 		//decode jwt string to map[string] interface{} with jwtSrcrets as jwt secret
@@ -23,18 +40,28 @@ func (svc *HttpContext) JwtField(field string) (f interface{}) {
 			return []byte(Cfg.JwtSecret), nil
 		}
 		svc.jwtToken, _ = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction)
-		if svc.jwtToken == nil {
-			return nil
-		}
-
 	}
-	// return field in svc.Jwt.Claims
+	return svc.jwtToken
+}
+func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
+	//remove nay field that starts with "jwt_" in paramIn
+	//prevent forged jwt field
+	for k, _ := range paramIn {
+		if strings.HasPrefix(k, "jwt_") {
+			delete(paramIn, k)
+		}
+	}
+
+	var token *jwt.Token = svc.JwtToken()
+	if token == nil {
+		return
+	}
+	//save every field in svc.Jwt.Claims to in
 	mpclaims, ok := svc.jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return nil
+		return
 	}
-	if f, ok = mpclaims[field]; !ok {
-		return nil
+	for k, v := range mpclaims {
+		paramIn["jwt_"+k] = v
 	}
-	return f
 }

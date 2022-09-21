@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -42,27 +42,22 @@ func (svc *HttpContext) BodyMessage() (msgPack map[string]interface{}, err error
 		param map[string]interface{} = map[string]interface{}{}
 		data  []byte                 = make([]byte, svc.Req.ContentLength)
 		ctype string                 = svc.Req.Header.Get("Content-Type")
-		body  io.ReadCloser
 	)
 	//read request body to data
 	if ctype == "application/json" {
 
-		if body, err = svc.Req.GetBody(); err != nil {
+		if data, err = ioutil.ReadAll(svc.Req.Body); err != nil {
 			return nil, err
 		}
-		body.Read(data)
-		body.Close()
 		//unpack with json and convert to msgpack
 		if err = json.Unmarshal(data, &param); err != nil {
 			return nil, err
 		}
 		return param, nil
-	} else if ctype == "octet-stream" {
-		if body, err = svc.Req.GetBody(); err != nil {
+	} else if ctype == "octet-stream" || ctype == "application/octet-stream" {
+		if data, err = ioutil.ReadAll(svc.Req.Body); err != nil {
 			return nil, err
 		}
-		body.Read(data)
-		body.Close()
 		//unpack with msgpack
 		if err = msgpack.Unmarshal(data, &param); err != nil {
 			return nil, err

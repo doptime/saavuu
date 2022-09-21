@@ -91,7 +91,7 @@ func NewService(_serviceName string, f fn) {
 			pipline.LRange(c, serviceName, 0, batch_size-1)
 			pipline.LTrim(c, serviceName, batch_size, -1)
 			cmd, err := pipline.Exec(c)
-			if err != nil || len(cmd) < 2 {
+			if err != nil || len(cmd) <= 2 {
 				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
 				if rlt.Err() != nil || len(rlt.Val()) == 0 {
 					continue
