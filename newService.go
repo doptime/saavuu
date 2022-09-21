@@ -38,7 +38,7 @@ func PrintServiceStates() {
 
 var ErrBackTo = fmt.Errorf("param[\"backTo\"] is not a string")
 
-func NewService(_serviceName string, f fn) {
+func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	//check configureation is loaded
 	if config.DataRds == nil {
 		panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
@@ -47,11 +47,9 @@ func NewService(_serviceName string, f fn) {
 		panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
 
-	ServiceMap[_serviceName] = f
-	counter.DeleteAndGetLastValue(_serviceName)
+	ServiceMap[serviceName] = f
+	counter.DeleteAndGetLastValue(serviceName)
 
-	var batch_size int64 = 128
-	serviceName := _serviceName
 	ProcessOneJob := func(s []byte) (err error) {
 		var (
 			BackTo         string
@@ -88,8 +86,8 @@ func NewService(_serviceName string, f fn) {
 			//fetch datas from redis
 			c := context.Background()
 			pipline := config.ParamRds.Pipeline()
-			pipline.LRange(c, serviceName, 0, batch_size-1)
-			pipline.LTrim(c, serviceName, batch_size, -1)
+			pipline.LRange(c, serviceName, 0, DataRcvBatchSize-1)
+			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
 			cmd, err := pipline.Exec(c)
 			if err != nil || len(cmd) < 2 {
 				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
@@ -103,7 +101,7 @@ func NewService(_serviceName string, f fn) {
 			}
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
-				counter.Add(_serviceName, 1)
+				counter.Add(serviceName, 1)
 			}
 		}
 	}
