@@ -46,7 +46,7 @@ func (svc *HttpContext) JwtToken() (token *jwt.Token) {
 func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 	//remove nay field that starts with "JWT_" in paramIn
 	//prevent forged jwt field
-	for k, _ := range paramIn {
+	for k := range paramIn {
 		if strings.HasPrefix(k, "JWT_") {
 			delete(paramIn, k)
 		}
