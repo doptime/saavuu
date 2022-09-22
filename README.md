@@ -34,3 +34,4 @@ most concise, convinient, redis based microservice framework
 ```
 # JWT is read from "Authorization" fields in header. all jwt fields are and sent to service, except those defined in JWT_IGNORE_FIELDS
     if you do not want to 
+# Never use COOKIE, always use JWT

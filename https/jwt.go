@@ -6,7 +6,7 @@ import (
 
 	. "github.com/yangkequn/saavuu/config"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/dgrijalva/jwt-go"
 )
 
 func (svc *HttpContext) JwtField(field string) (f interface{}) {
