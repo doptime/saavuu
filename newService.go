@@ -76,7 +76,7 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		ctx := context.Background()
 		pipline := config.ParamRds.Pipeline()
 		pipline.RPush(ctx, BackTo, marshaledBytes)
-		pipline.Expire(ctx, BackTo, 6)
+		pipline.Expire(ctx, BackTo, time.Second*6)
 		_, err = pipline.Exec(ctx)
 		return err
 	}
