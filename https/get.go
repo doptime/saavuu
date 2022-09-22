@@ -37,6 +37,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	if svcCtx.Field, err = replaceUID(svcCtx, svcCtx.Field); err != nil {
 		return nil, err
 	}
+
+	//check auth. only Key start with upper case are allowed to access
+	if len(svcCtx.Key) <= 0 || !(svcCtx.Key[0] >= 'A' && svcCtx.Key[0] <= 'Z') {
+		return nil, errors.New("no auth")
+	}
 	//return list of keys
 	if svcCtx.Field == "" {
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
