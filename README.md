@@ -1,5 +1,15 @@
-# saavuu
-most concise, convinient, redis based microservice framework
+# saavuu, the most concise, convinient, redis based microservice framework
+* 1. You dont't need to write any HTTP API, api address is fixed. you will never need to consider api version related problem.
+* 2. You need no database but redis. Use api to easily save and load any data structure. Using redis compitable db that support flash storage brings both performance persistance and capacity.
+* 3. You will never need to write any GET Logic. Saavuu query query result from redis directly. It's alway possible and cheap.
+* 4. You can focus only and alway on Modification logic (POST PUT DEL) logic. 
+* 5. Saavuu allow Plug and Play services very easily without restart any other service. Very suitable for team development.
+* 6. All HTTP requests are transferd as binary msgpack data. It's compact and fast. And decode to data structure in your logic directly.
+* 7. redis pipeline 's batch read enabling every high volume request to be processed simultaneously.  
+
+# abstract    
+    saavuu take data from client and throw to redis queue, and the service listening the queue will process the data. all api from client or backend work in this way.
+    saavuu means kill bad wisdom, which borrow from "杀悟"。 I hate bad tools.
 
 # specification
 * specify content-type in header,if response type is not json, then return raw data
@@ -39,3 +49,5 @@ most concise, convinient, redis based microservice framework
 # privacy control for GET method.
     Only Key start with Upper case will be returned, Other wise access is not allowed
     This idea is borrow from golang, where only public method start with Upper case will be exported
+    
+    if filed in get contains @field, then the "field" will be replaced with the value of "field" in JWT
