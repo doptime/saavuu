@@ -35,3 +35,7 @@ most concise, convinient, redis based microservice framework
 # JWT is read from "Authorization" fields in header. all jwt fields are and sent to service, except those defined in JWT_IGNORE_FIELDS
     if you do not want to 
 # Never use COOKIE, always use JWT
+
+# privacy control for GET method.
+    Only Key start with Upper case will be returned, Other wise access is not allowed
+    This idea is borrow from golang, where only public method start with Upper case will be exported
