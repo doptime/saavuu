@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
