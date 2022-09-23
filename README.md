@@ -51,3 +51,6 @@
     This idea is borrow from golang, where only public method start with Upper case will be exported
     
     if filed in get contains @field, then the "field" will be replaced with the value of "field" in JWT
+
+# Annotation for api.tsx
+    QueryFields should be "*" or "field1,field2,field3" 
