@@ -62,7 +62,7 @@ func RedisHttpStart(path string, port int) {
 		w.WriteHeader(http.StatusOK)
 		if b, isByteArray = result.([]byte); isByteArray {
 			w.Write(b)
-		} else if s, isString = result.(string); isString && len(b) > 0 {
+		} else if s, isString = result.(string); isString {
 			w.Write([]byte(s))
 		} else {
 			//keep fields exits in svcContext.QueryFields
@@ -83,9 +83,11 @@ func RedisHttpStart(path string, port int) {
 					}
 				}
 				//remove fields not exits in svcContext.QueryFields
-				for k := range _map {
-					if !strings.Contains(svcContext.QueryFields, k) {
-						delete(_map, k)
+				if svcContext.QueryFields != "*" {
+					for k := range _map {
+						if !strings.Contains(svcContext.QueryFields, k) {
+							delete(_map, k)
+						}
 					}
 				}
 				result = _map
