@@ -9,10 +9,10 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
-	. "github.com/yangkequn/saavuu/redisContext"
+	"github.com/yangkequn/saavuu/redisContext"
 )
 
-type fn func(rc *DataContext, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(dc *redisContext.DataContext, pc *redisContext.ParamContext, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ServiceMap map[string]fn = map[string]fn{}
 
@@ -25,7 +25,7 @@ func PrintServiceStates() {
 		serviceNames = append(serviceNames, k)
 	}
 	fmt.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
-	for true {
+	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
 		for _, serviceName := range serviceNames {
@@ -66,7 +66,9 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		}
 		delete(param, "BackTo")
 		//process one job
-		if out, err = f(&DataContext{Ctx: context.Background(), Rds: config.DataRds}, param); err != nil {
+		dc := &redisContext.DataContext{Ctx: context.Background(), Rds: config.DataRds}
+		pc := &redisContext.ParamContext{Ctx: context.Background(), Rds: config.ParamRds}
+		if out, err = f(dc, pc, param); err != nil {
 			return err
 		}
 		//Post Back
@@ -82,7 +84,7 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	}
 	loop := func() {
 		var data []string
-		for true {
+		for {
 			//fetch datas from redis
 			c := context.Background()
 			pipline := config.ParamRds.Pipeline()
