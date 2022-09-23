@@ -10,22 +10,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func (svc *HttpContext) JwtField(field string) (f interface{}) {
-	var token *jwt.Token = svc.JwtToken()
-	if token == nil {
-		return nil
-	}
-	// return field in svc.Jwt.Claims
-	mpclaims, ok := svc.jwtToken.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil
-	}
-	if f, ok = mpclaims[field]; !ok {
-		return nil
-	}
-	return f
-}
-
 func (svc *HttpContext) JwtToken() (token *jwt.Token) {
 	var jwtStr string
 	if svc.jwtToken == nil {

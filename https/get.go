@@ -2,7 +2,6 @@ package https
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	. "github.com/yangkequn/saavuu/config"
@@ -11,31 +10,48 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func replaceUID(scvCtx *HttpContext, s string) (r string, err error) {
-	if !strings.Contains(s, "@me") {
-		return s, nil
+func replaceAtUseJwt(scvCtx *HttpContext, jwts map[string]interface{}, s string) (r string, err error) {
+	var (
+		jwtValue    interface{}
+		ok          bool
+		jwtFieldStr string
+	)
+	for i := strings.Index(s, "@"); i >= 0; i = strings.Index(s, "@") {
+		ie := i + 1
+		for ; ie < len(s) && ((s[ie] >= '0' && s[ie] <= '9') || (s[ie] >= 'a' && s[ie] <= 'z') || (s[ie] >= 'A' && s[ie] <= 'Z')); ie++ {
+		}
+		if ie == i+1 {
+			return "", errors.New("invalid field")
+		}
+		label := s[i+1 : ie]
+		if jwtValue, ok = jwts["JWT_"+label]; !ok {
+			return "", errors.New("invalid jwt field")
+		}
+		if jwtFieldStr, ok = jwtValue.(string); !ok {
+			return "", errors.New("invalid jwt field")
+		}
+		s = s[:i] + jwtFieldStr + s[ie:]
 	}
-	id, ok := scvCtx.JwtField("id").(string)
-	if !ok {
-		return s, fmt.Errorf("JWT field id not found")
-	}
-	s = strings.Replace(s, "@me", id, -1)
 	return s, nil
 }
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
+		jwts         map[string]interface{} = map[string]interface{}{}
 		data         []byte
 		resultBytes  []byte                 = []byte{}
 		resultString string                 = ""
 		result       map[string]interface{} = map[string]interface{}{}
 	)
-	if svcCtx.Key, err = replaceUID(svcCtx, svcCtx.Key); err != nil {
+
+	svcCtx.MergeJwtField(jwts)
+
+	if svcCtx.Key, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Key); err != nil {
 		return nil, err
 	} else if len(svcCtx.Key) == 0 {
 		return nil, errors.New("no key")
 	}
 
-	if svcCtx.Field, err = replaceUID(svcCtx, svcCtx.Field); err != nil {
+	if svcCtx.Field, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Field); err != nil {
 		return nil, err
 	}
 
@@ -75,14 +91,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	}
 	if err = msgpack.Unmarshal(data, &result); err != nil {
 		return nil, errors.New("unsupported data type")
-	}
-	//remove fields that not in svc.QueryFields only
-	if svcCtx.QueryFields != "" {
-		for k := range result {
-			if !strings.Contains(svcCtx.QueryFields, k) {
-				delete(result, k)
-			}
-		}
 	}
 	return result, nil
 }

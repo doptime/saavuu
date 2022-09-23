@@ -6,32 +6,35 @@ import (
 	"github.com/yangkequn/saavuu/config"
 )
 
-func (scvCtx *HttpContext) DelHandler() (result interface{}, err error) {
+func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 	var (
 		keyWithMyID string
+		jwts        map[string]interface{} = map[string]interface{}{}
 	)
-	if keyWithMyID, err = replaceUID(scvCtx, scvCtx.Key); err != nil {
+	svcCtx.MergeJwtField(jwts)
+
+	if keyWithMyID, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Key); err != nil {
 		return nil, err
 	} else if keyWithMyID == "" {
 		return nil, errors.New("no key")
 
 		//key must contain @me
-	} else if keyWithMyID == scvCtx.Key || !(keyWithMyID[0] >= 'A' && keyWithMyID[0] <= 'Z') {
-		return nil, errors.New("Unauthorized deletion!")
+	} else if keyWithMyID == svcCtx.Key || !(keyWithMyID[0] >= 'A' && keyWithMyID[0] <= 'Z') {
+		return nil, errors.New("unauthorized deletion")
 	}
-	if scvCtx.Field, err = replaceUID(scvCtx, scvCtx.Field); err != nil {
+	if svcCtx.Field, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Field); err != nil {
 		return nil, err
 	}
-	if scvCtx.Field == "" {
-		cmd := config.ParamRds.Del(scvCtx.Ctx, keyWithMyID)
+	if svcCtx.Field == "" {
+		cmd := config.ParamRds.Del(svcCtx.Ctx, keyWithMyID)
 		if err = cmd.Err(); err != nil {
 			return nil, err
 		}
-		return "{deleted:true,key:" + scvCtx.Key + "} ", nil
+		return "{deleted:true,key:" + svcCtx.Key + "} ", nil
 	}
-	cmd := config.ParamRds.HDel(scvCtx.Ctx, keyWithMyID, scvCtx.Field)
+	cmd := config.ParamRds.HDel(svcCtx.Ctx, keyWithMyID, svcCtx.Field)
 	if err = cmd.Err(); err != nil {
 		return nil, err
 	}
-	return "{deleted:true,key:" + scvCtx.Key + ",field:" + scvCtx.Field + "} ", nil
+	return "{deleted:true,key:" + svcCtx.Key + ",field:" + svcCtx.Field + "} ", nil
 }
