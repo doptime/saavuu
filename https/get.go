@@ -44,15 +44,22 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, errors.New("no auth")
 	}
 	//case Is a member of a set
-	if strings.Index(svcCtx.Key, "SIsMember:") == 0 {
-		svcCtx.Key = svcCtx.Key[10:]
+	if strings.Index(svcCtx.Key, "SMember:") == 0 {
 		dc := redisContext.DataContext{Ctx: svcCtx.Ctx, Rds: DataRds}
-		if ok := dc.SIsMember(svcCtx.Key[9:], svcCtx.Field); ok {
+		if ok := dc.SIsMember(svcCtx.Key[8:], svcCtx.Field); ok {
 			return "{member:true}", nil
 		}
 		return "{member:false}", nil
 
 	}
+	if strings.Index(svcCtx.Key, "HEXISTS:") == 0 {
+		dc := redisContext.DataContext{Ctx: svcCtx.Ctx, Rds: DataRds}
+		if ok := dc.HExists(svcCtx.Key[8:], svcCtx.Field); ok {
+			return "{member:true}", nil
+		}
+		return "{member:false}", nil
+	}
+
 	//return list of keys
 	if svcCtx.Field == "" {
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)

@@ -45,6 +45,11 @@ func (dc *DataContext) HSet(key string, field string, param interface{}) (err er
 	status := dc.Rds.HSet(dc.Ctx, key, field, bytes)
 	return status.Err()
 }
+func (dc *DataContext) HExists(key string, field string) (ok bool) {
+	cmd := dc.Rds.HExists(dc.Ctx, key, field)
+	return cmd.Val()
+}
+
 func (dc *DataContext) RPush(key string, param interface{}) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
@@ -74,7 +79,7 @@ func (dc *DataContext) LLen(key string) (length int64) {
 	return cmd.Val()
 }
 
-//append to Set
+// append to Set
 func (dc *DataContext) SAdd(key string, members ...interface{}) (err error) {
 	status := dc.Rds.SAdd(dc.Ctx, key, members)
 	return status.Err()
