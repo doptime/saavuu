@@ -60,14 +60,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return "{member:false}", nil
 	}
 
-	//return list of keys
-	if svcCtx.Field == "" {
-		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
-		if err = cmd.Err(); err != nil {
-			return nil, err
-		}
-		return msgpack.Marshal(cmd.Val())
-	}
 	cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 	if data, err = cmd.Bytes(); err != nil {
 		return "", nil
