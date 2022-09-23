@@ -7,7 +7,15 @@ import (
 	"github.com/yangkequn/saavuu/redisContext"
 )
 
-func NewRedisContext() *redisContext.RedisContext {
-	var ctx context.Context = context.Background()
-	return &redisContext.RedisContext{Ctx: ctx, ParamRds: config.ParamRds, DataRds: config.DataRds}
+func NewParamContext(ctx context.Context) *redisContext.ParamContext {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return &redisContext.ParamContext{Ctx: ctx, Rds: config.ParamRds}
+}
+func NewDataContext(ctx context.Context) *redisContext.DataContext {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return &redisContext.DataContext{Ctx: ctx, Rds: config.DataRds}
 }

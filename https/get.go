@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/redisContext"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -42,6 +43,16 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	if len(svcCtx.Key) <= 0 || !(svcCtx.Key[0] >= 'A' && svcCtx.Key[0] <= 'Z') {
 		return nil, errors.New("no auth")
 	}
+	//case Is a member of a set
+	if strings.Index(svcCtx.Key, "SIsMember:") == 0 {
+		svcCtx.Key = svcCtx.Key[10:]
+		dc := redisContext.DataContext{Ctx: svcCtx.Ctx, Rds: DataRds}
+		if ok := dc.SIsMember(svcCtx.Key[9:], svcCtx.Field); ok {
+			return "{member:true}", nil
+		}
+		return "{member:false}", nil
+
+	}
 	//return list of keys
 	if svcCtx.Field == "" {
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
@@ -50,11 +61,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return msgpack.Marshal(cmd.Val())
 	}
-
-	//return item
 	cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 	if data, err = cmd.Bytes(); err != nil {
-		return nil, err
+		return "", nil
 	}
 	//fill content type, to support binary or json response
 	if svcCtx.ResponseContentType != "application/json" {

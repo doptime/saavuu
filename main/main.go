@@ -19,11 +19,13 @@ import (
 // listten to a port and start http server
 func RedisHttpStart(path string, port int) {
 	var (
-		result interface{}
-		b      []byte
-		s      string
-		ok     bool
-		err    error
+		result      interface{}
+		b           []byte
+		s           string
+		ok          bool
+		isByteArray bool
+		isString    bool
+		err         error
 	)
 	//get item
 	router := http.NewServeMux()
@@ -58,9 +60,9 @@ func RedisHttpStart(path string, port int) {
 			w.Header().Set("Content-Type", svcContext.ResponseContentType)
 		}
 		w.WriteHeader(http.StatusOK)
-		if b, ok = result.([]byte); ok {
+		if b, isByteArray = result.([]byte); isByteArray {
 			w.Write(b)
-		} else if s, ok = result.(string); ok {
+		} else if s, isString = result.(string); isString && len(b) > 0 {
 			w.Write([]byte(s))
 		} else {
 			//keep fields exits in svcContext.QueryFields

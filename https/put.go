@@ -24,8 +24,8 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 	svcCtx.MergeJwtField(paramIn)
 
-	rc := redisContext.RedisContext{Ctx: svcCtx.Ctx, ParamRds: ParamRds, DataRds: DataRds}
-	if resultBytes, err = rc.RdsApiBasic(svcCtx.Service, paramIn); err != nil {
+	pc := redisContext.ParamContext{Ctx: svcCtx.Ctx, Rds: ParamRds}
+	if resultBytes, err = pc.RdsApiBasic(svcCtx.Service, paramIn); err != nil {
 		return nil, err
 	}
 
