@@ -52,7 +52,7 @@ func LoadConfigFromEnv() {
 
 func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := redisContext.DataContext{Ctx: context.Background(), Rds: ParamServer}
+	rc := redisContext.DataCtx{Ctx: context.Background(), Rds: ParamServer}
 	if err = rc.Get(keyName, &Cfg); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) 
 }
 func SaveConfigToRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := redisContext.DataContext{Ctx: context.Background(), Rds: ParamServer}
+	rc := redisContext.DataCtx{Ctx: context.Background(), Rds: ParamServer}
 	if err = rc.Set(keyName, &Cfg, -1); err != nil {
 		return err
 	}

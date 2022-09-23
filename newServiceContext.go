@@ -7,15 +7,15 @@ import (
 	"github.com/yangkequn/saavuu/redisContext"
 )
 
-func NewParamContext(ctx context.Context) *redisContext.ParamContext {
+func NewParamContext(ctx context.Context) *redisContext.ParamCtx {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &redisContext.ParamContext{Ctx: ctx, Rds: config.ParamRds}
+	return &redisContext.ParamCtx{Ctx: ctx, Rds: config.ParamRds}
 }
-func NewDataContext(ctx context.Context) *redisContext.DataContext {
+func NewDataContext(ctx context.Context) *redisContext.DataCtx {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &redisContext.DataContext{Ctx: ctx, Rds: config.DataRds}
+	return &redisContext.DataCtx{Ctx: ctx, Rds: config.DataRds}
 }

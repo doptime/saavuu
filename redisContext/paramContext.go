@@ -10,14 +10,14 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-type ParamContext struct {
+type ParamCtx struct {
 	Ctx context.Context
 	Rds *redis.Client
 }
 
-//RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
-//return: error
-func (sc *ParamContext) RdsApiBasic(ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
+// RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
+// return: error
+func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn map[string]interface{}) (result []byte, err error) {
 	var (
 		b       []byte
 		BackTo  string = fmt.Sprintf("%x", rand.Int63())
@@ -41,7 +41,7 @@ func (sc *ParamContext) RdsApiBasic(ServiceKey string, paramIn map[string]interf
 	}
 	return []byte(results[1]), nil
 }
-func (sc *ParamContext) RdsApi(ServiceKey string, structIn interface{}, out interface{}) (err error) {
+func (sc *ParamCtx) RdsApi(ServiceKey string, structIn interface{}, out interface{}) (err error) {
 	var (
 		paramIn = map[string]interface{}{}
 		ok      bool

@@ -45,7 +45,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	}
 	//case Is a member of a set
 	if strings.Index(svcCtx.Key, "SMember:") == 0 {
-		dc := redisContext.DataContext{Ctx: svcCtx.Ctx, Rds: DataRds}
+		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.SIsMember(svcCtx.Key[8:], svcCtx.Field); ok {
 			return "{member:true}", nil
 		}
@@ -53,7 +53,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	}
 	if strings.Index(svcCtx.Key, "HEXISTS:") == 0 {
-		dc := redisContext.DataContext{Ctx: svcCtx.Ctx, Rds: DataRds}
+		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.HExists(svcCtx.Key[8:], svcCtx.Field); ok {
 			return "{member:true}", nil
 		}

@@ -12,7 +12,7 @@ import (
 	"github.com/yangkequn/saavuu/redisContext"
 )
 
-type fn func(dc *redisContext.DataContext, pc *redisContext.ParamContext, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(dc *redisContext.DataCtx, pc *redisContext.ParamCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ServiceMap map[string]fn = map[string]fn{}
 
@@ -66,8 +66,8 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		}
 		delete(param, "BackTo")
 		//process one job
-		dc := &redisContext.DataContext{Ctx: context.Background(), Rds: config.DataRds}
-		pc := &redisContext.ParamContext{Ctx: context.Background(), Rds: config.ParamRds}
+		dc := &redisContext.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
+		pc := &redisContext.ParamCtx{Ctx: context.Background(), Rds: config.ParamRds}
 		if out, err = f(dc, pc, param); err != nil {
 			return err
 		}
