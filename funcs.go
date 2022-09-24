@@ -8,7 +8,16 @@ import (
 func MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
 	msgPack, ok := parmIn["MsgPack"].([]byte)
 	if ok {
-		return msgpack.Unmarshal(msgPack, outStruct)
+		delete(parmIn, "MsgPack")
 	}
-	return mapstructure.Decode(parmIn, &outStruct)
+	if err = msgpack.Unmarshal(msgPack, outStruct); err != nil {
+		return err
+	}
+	if err = mapstructure.Decode(parmIn, outStruct); err != nil {
+		return err
+	}
+	if ok {
+		parmIn["MsgPack"] = msgPack
+	}
+	return nil
 }
