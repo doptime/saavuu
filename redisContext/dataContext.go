@@ -100,3 +100,22 @@ func (dc *DataCtx) SMembers(key string, param interface{}) (members []string, er
 	}
 	return members, nil
 }
+func (dc *DataCtx) HGetAll(key string, decodeFun func(string) (obj interface{}, erro error)) (param map[string]interface{}, err error) {
+	cmd := dc.Rds.HGetAll(dc.Ctx, key)
+	data, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+	param = make(map[string]interface{})
+	//make a copoy of valueStruct
+	// unmarshal value of data to the copy
+	// store unmarshaled result to param
+	for k, v := range data {
+		if Decoded, err := decodeFun(v); err == nil {
+			param[k] = Decoded
+		} else {
+			return nil, err
+		}
+	}
+	return param, nil
+}
