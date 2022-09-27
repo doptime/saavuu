@@ -15,6 +15,7 @@ type HttpContext struct {
 	jwtToken *jwt.Token
 	Ctx      context.Context
 	// case get
+	Cmd   string
 	Key   string
 	Field string
 	// case post
@@ -27,6 +28,7 @@ type HttpContext struct {
 func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) *HttpContext {
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	//for get
+	svcContext.Cmd = svcContext.Req.FormValue("Cmd")
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
 	//for post

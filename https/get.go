@@ -1,7 +1,9 @@
 package https
 
 import (
+	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 
 	. "github.com/yangkequn/saavuu/config"
@@ -37,6 +39,7 @@ func replaceAtUseJwt(scvCtx *HttpContext, jwts map[string]interface{}, s string)
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
 		jwts         map[string]interface{} = map[string]interface{}{}
+		maps         map[string]interface{} = map[string]interface{}{}
 		data         []byte
 		resultBytes  []byte                 = []byte{}
 		resultString string                 = ""
@@ -57,40 +60,82 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	//check auth. only Key start with upper case are allowed to access
 	if len(svcCtx.Key) <= 0 || !(svcCtx.Key[0] >= 'A' && svcCtx.Key[0] <= 'Z') {
-		return nil, errors.New("no auth")
+		return nil, errors.New("private Key")
 	}
 	//case Is a member of a set
-	if strings.Index(svcCtx.Key, "SMember:") == 0 {
+	switch svcCtx.Cmd {
+	case "HGET":
+		cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
+		if data, err = cmd.Bytes(); err != nil {
+			return "", nil
+		}
+		//fill content type, to support binary or json response
+		if svcCtx.ResponseContentType != "application/json" {
+			if msgpack.Unmarshal(data, &resultBytes) == nil {
+				return resultBytes, err
+			}
+			if msgpack.Unmarshal(data, &resultString) == nil {
+				return resultString, err
+			}
+		}
+		if err = msgpack.Unmarshal(data, &result); err != nil {
+			return nil, errors.New("unsupported data type")
+		}
+		return result, nil
+	case "HGETALL":
+		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
+		if err = cmd.Err(); err != nil {
+			return "", nil
+		}
+		for k, v := range cmd.Val() {
+			var _v interface{}
+			if err = msgpack.Unmarshal([]byte(v), &_v); err != nil {
+				continue
+			}
+			maps[k] = _v
+		}
+		return json.Marshal(maps)
+	case "HKEYS":
+		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
+		if err = cmd.Err(); err != nil {
+			return "", nil
+		}
+		return json.Marshal(cmd.Val())
+	case "HEXISTS":
 		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
-		if ok := dc.SIsMember(svcCtx.Key[8:], svcCtx.Field); ok {
+		if ok := dc.HExists(svcCtx.Key, svcCtx.Field); ok {
+			return "{member:true}", nil
+		}
+		return "{member:false}", nil
+	case "HLEN":
+		cmd := DataRds.HLen(svcCtx.Ctx, svcCtx.Key)
+		if err = cmd.Err(); err != nil {
+			return "", nil
+		}
+		return strconv.FormatInt(cmd.Val(), 10), nil
+	case "HVALS":
+		cmd := DataRds.HVals(svcCtx.Ctx, svcCtx.Key)
+		if err = cmd.Err(); err != nil {
+			return "", nil
+		}
+		result := []interface{}{}
+		for _, v := range cmd.Val() {
+
+			var _v interface{}
+			if err = msgpack.Unmarshal([]byte(v), &_v); err != nil {
+				continue
+			}
+			result = append(result, _v)
+		}
+		return json.Marshal(result)
+	case "SISMEMBER":
+		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
+		if ok := dc.SIsMember(svcCtx.Key, svcCtx.Field); ok {
 			return "{member:true}", nil
 		}
 		return "{member:false}", nil
 
 	}
-	if strings.Index(svcCtx.Key, "HEXISTS:") == 0 {
-		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
-		if ok := dc.HExists(svcCtx.Key[8:], svcCtx.Field); ok {
-			return "{member:true}", nil
-		}
-		return "{member:false}", nil
-	}
+	return nil, errors.New("unsupported command")
 
-	cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
-	if data, err = cmd.Bytes(); err != nil {
-		return "", nil
-	}
-	//fill content type, to support binary or json response
-	if svcCtx.ResponseContentType != "application/json" {
-		if msgpack.Unmarshal(data, &resultBytes) == nil {
-			return resultBytes, err
-		}
-		if msgpack.Unmarshal(data, &resultString) == nil {
-			return resultString, err
-		}
-	}
-	if err = msgpack.Unmarshal(data, &result); err != nil {
-		return nil, errors.New("unsupported data type")
-	}
-	return result, nil
 }
