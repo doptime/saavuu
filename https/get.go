@@ -41,9 +41,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		jwts         map[string]interface{} = map[string]interface{}{}
 		maps         map[string]interface{} = map[string]interface{}{}
 		data         []byte
-		resultBytes  []byte                 = []byte{}
-		resultString string                 = ""
-		result       map[string]interface{} = map[string]interface{}{}
+		resultBytes  []byte = []byte{}
+		resultString string = ""
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -78,10 +77,12 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 				return resultString, err
 			}
 		}
-		if err = msgpack.Unmarshal(data, &result); err != nil {
+
+		var _v interface{}
+		if err = msgpack.Unmarshal(data, &_v); err != nil {
 			return nil, errors.New("unsupported data type")
 		}
-		return result, nil
+		return json.Marshal(_v)
 	case "HGETALL":
 		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
