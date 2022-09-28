@@ -96,6 +96,23 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			maps[k] = _v
 		}
 		return json.Marshal(maps)
+
+	case "HMGET":
+		cmd := DataRds.HMGet(svcCtx.Ctx, svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
+		if err = cmd.Err(); err != nil {
+			return "", nil
+		}
+		for i, v := range cmd.Val() {
+			if v == nil {
+				continue
+			}
+			var _v interface{}
+			if err = msgpack.Unmarshal([]byte(v.(string)), &_v); err != nil {
+				continue
+			}
+			maps[strings.Split(svcCtx.Field, ",")[i]] = _v
+		}
+		return json.Marshal(maps)
 	case "HKEYS":
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
