@@ -98,12 +98,16 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 				data = cmd[0].(*redis.StringSliceCmd).Val()
 				//try use BLPop to get 1 data
 				if len(data) == 0 {
-					rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
+					rlt := config.ParamRds.BLPop(c, time.Second, serviceName)
 					if rlt.Err() != nil {
 						time.Sleep(time.Millisecond * 100)
 						continue
 					}
-					data = rlt.Val()
+					if data = rlt.Val(); len(data) != 2 {
+						time.Sleep(time.Millisecond * 100)
+						continue
+					}
+					data = data[1:]
 				}
 				if len(data) == 0 {
 					time.Sleep(time.Millisecond * 100)
