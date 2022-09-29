@@ -84,22 +84,31 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	}
 	loop := func() {
 		var data []string
+		c := context.Background()
 		for {
 			//fetch datas from redis
-			c := context.Background()
 			pipline := config.ParamRds.Pipeline()
 			pipline.LRange(c, serviceName, 0, DataRcvBatchSize-1)
 			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
 			cmd, err := pipline.Exec(c)
-			if err != nil || len(cmd) < 2 {
-				rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
-				if rlt.Err() != nil || len(rlt.Val()) == 0 {
-					time.Sleep(time.Millisecond * 10)
-					continue
-				}
-				data = rlt.Val()
+			if err != nil {
+				time.Sleep(time.Millisecond * 100)
+				continue
 			} else {
 				data = cmd[0].(*redis.StringSliceCmd).Val()
+				//try use BLPop to get 1 data
+				if len(data) == 0 {
+					rlt := config.ParamRds.BLPop(c, time.Minute, serviceName)
+					if rlt.Err() != nil {
+						time.Sleep(time.Millisecond * 100)
+						continue
+					}
+					data = rlt.Val()
+				}
+				if len(data) == 0 {
+					time.Sleep(time.Millisecond * 100)
+					continue
+				}
 			}
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
