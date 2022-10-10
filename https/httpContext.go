@@ -31,6 +31,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	svcContext.Cmd = svcContext.Req.FormValue("Cmd")
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
+
 	//for post
 	svcContext.Service = svcContext.Req.FormValue("Service")
 

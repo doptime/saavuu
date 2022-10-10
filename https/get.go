@@ -147,6 +147,10 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return json.Marshal(result)
 	case "SISMEMBER":
+		Member := svcCtx.Req.FormValue("Member")
+		if Member == "" {
+			return "", errors.New("no Member")
+		}
 		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.SIsMember(svcCtx.Key, svcCtx.Field); ok {
 			return "{member:true}", nil

@@ -119,3 +119,21 @@ func (dc *DataCtx) HGetAll(key string, decodeFun func(string) (obj interface{}, 
 	}
 	return param, nil
 }
+func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
+	cmd := dc.Rds.HGetAll(dc.Ctx, key)
+	data, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+	param = make(map[string]interface{})
+	//make a copoy of valueStruct
+	// unmarshal value of data to the copy
+	// store unmarshaled result to param
+	for k, v := range data {
+		var obj interface{}
+		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
+			param[k] = obj
+		}
+	}
+	return param, nil
+}
