@@ -1,4 +1,4 @@
-package redisContext
+package rCtx
 
 import (
 	"github.com/go-redis/redis/v8"
@@ -44,10 +44,6 @@ func (dc *DataCtx) ZCount(key string, min, max string) (length int64) {
 	cmd := dc.Rds.ZCount(dc.Ctx, key, min, max)
 	return cmd.Val()
 }
-func (dc *DataCtx) ZRangeByScore(key string, opt *redis.ZRangeBy) (members []string, err error) {
-	cmd := dc.Rds.ZRangeByScore(dc.Ctx, key, opt)
-	return cmd.Result()
-}
 func (dc *DataCtx) ZRangeByScoreWithScores(key string, opt *redis.ZRangeBy) (members []redis.Z, err error) {
 	cmd := dc.Rds.ZRangeByScoreWithScores(dc.Ctx, key, opt)
 	return cmd.Result()
@@ -87,18 +83,6 @@ func (dc *DataCtx) ZPopMax(key string, count int64) (members []redis.Z, err erro
 func (dc *DataCtx) ZPopMin(key string, count int64) (members []redis.Z, err error) {
 	cmd := dc.Rds.ZPopMin(dc.Ctx, key, count)
 	return cmd.Result()
-}
-func (dc *DataCtx) ZRangeByLex(key string, opt *redis.ZRangeBy) (members []string, err error) {
-	cmd := dc.Rds.ZRangeByLex(dc.Ctx, key, opt)
-	return cmd.Result()
-}
-func (dc *DataCtx) ZRevRangeByLex(key string, opt *redis.ZRangeBy) (members []string, err error) {
-	cmd := dc.Rds.ZRevRangeByLex(dc.Ctx, key, opt)
-	return cmd.Result()
-}
-func (dc *DataCtx) ZRemRangeByLex(key string, min, max string) (err error) {
-	status := dc.Rds.ZRemRangeByLex(dc.Ctx, key, min, max)
-	return status.Err()
 }
 func (dc *DataCtx) ZLexCount(key string, min, max string) (length int64) {
 	cmd := dc.Rds.ZLexCount(dc.Ctx, key, min, max)

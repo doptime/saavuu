@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/yangkequn/saavuu/redisContext"
+	"github.com/yangkequn/saavuu/rCtx"
 )
 
 func LoadConfigFromEnv() {
@@ -52,7 +52,7 @@ func LoadConfigFromEnv() {
 
 func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := redisContext.DataCtx{Ctx: context.Background(), Rds: ParamServer}
+	rc := rCtx.DataCtx{Ctx: context.Background(), Rds: ParamServer}
 	if err = rc.Get(keyName, &Cfg); err != nil {
 		return err
 	}
@@ -61,7 +61,7 @@ func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) 
 }
 func SaveConfigToRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := redisContext.DataCtx{Ctx: context.Background(), Rds: ParamServer}
+	rc := rCtx.DataCtx{Ctx: context.Background(), Rds: ParamServer}
 	if err = rc.Set(keyName, &Cfg, -1); err != nil {
 		return err
 	}

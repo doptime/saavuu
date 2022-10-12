@@ -1,4 +1,4 @@
-package redisContext
+package rCtx
 
 import "github.com/vmihailenco/msgpack/v5"
 

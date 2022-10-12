@@ -1,4 +1,4 @@
-package redisContext
+package rCtx
 
 import (
 	"context"

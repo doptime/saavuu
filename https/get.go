@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	. "github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/redisContext"
+	"github.com/yangkequn/saavuu/rCtx"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -120,7 +120,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return json.Marshal(cmd.Val())
 	case "HEXISTS":
-		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
+		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.HExists(svcCtx.Key, svcCtx.Field); ok {
 			return "{member:true}", nil
 		}
@@ -151,7 +151,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		if Member == "" {
 			return "", errors.New("no Member")
 		}
-		dc := redisContext.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
+		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.SIsMember(svcCtx.Key, svcCtx.Field); ok {
 			return "{member:true}", nil
 		}

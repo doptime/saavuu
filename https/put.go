@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	. "github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/redisContext"
+	"github.com/yangkequn/saavuu/rCtx"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -24,7 +24,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 	svcCtx.MergeJwtField(paramIn)
 
-	pc := redisContext.ParamCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+	pc := rCtx.ParamCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
 	if resultBytes, err = pc.RdsApiBasic(svcCtx.Service, paramIn); err != nil {
 		return nil, err
 	}

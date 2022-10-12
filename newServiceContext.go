@@ -4,18 +4,18 @@ import (
 	"context"
 
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/redisContext"
+	"github.com/yangkequn/saavuu/rCtx"
 )
 
-func NewParamContext(ctx context.Context) *redisContext.ParamCtx {
+func NewParamContext(ctx context.Context) *rCtx.ParamCtx {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &redisContext.ParamCtx{Ctx: ctx, Rds: config.ParamRds}
+	return &rCtx.ParamCtx{Ctx: ctx, Rds: config.ParamRds}
 }
-func NewDataContext(ctx context.Context) *redisContext.DataCtx {
+func NewDataContext(ctx context.Context) *rCtx.DataCtx {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return &redisContext.DataCtx{Ctx: ctx, Rds: config.DataRds}
+	return &rCtx.DataCtx{Ctx: ctx, Rds: config.DataRds}
 }
