@@ -122,9 +122,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HEXISTS":
 		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.HExists(svcCtx.Key, svcCtx.Field); ok {
-			return "{member:true}", nil
+			return "true", nil
 		}
-		return "{member:false}", nil
+		return "false", nil
 	case "HLEN":
 		cmd := DataRds.HLen(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
@@ -153,9 +153,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 		if ok := dc.SIsMember(svcCtx.Key, svcCtx.Field); ok {
-			return "{member:true}", nil
+			return "true", nil
 		}
-		return "{member:false}", nil
+		return "false", nil
 
 	}
 	return nil, errors.New("unsupported command")
