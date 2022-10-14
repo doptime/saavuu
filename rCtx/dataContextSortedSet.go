@@ -1,10 +1,10 @@
 package rCtx
 
 import (
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis/v9"
 )
 
-func (dc *DataCtx) ZAdd(key string, members ...*redis.Z) (err error) {
+func (dc *DataCtx) ZAdd(key string, members ...redis.Z) (err error) {
 	status := dc.Rds.ZAdd(dc.Ctx, key, members...)
 	return status.Err()
 }

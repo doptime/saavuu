@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-redis/redis/v9"
 	. "github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/rCtx"
 
@@ -66,7 +67,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGET":
 		cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 		if data, err = cmd.Bytes(); err != nil {
-			return "", nil
+			return "", err
 		}
 		//fill content type, to support binary or json response
 		if svcCtx.ResponseContentType != "application/json" {
@@ -86,7 +87,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGETALL":
 		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
-			return "", nil
+			return "", err
 		}
 		for k, v := range cmd.Val() {
 			var _v interface{}
@@ -100,7 +101,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HMGET":
 		cmd := DataRds.HMGet(svcCtx.Ctx, svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
 		if err = cmd.Err(); err != nil {
-			return "", nil
+			return "", err
 		}
 		for i, v := range cmd.Val() {
 			if v == nil {
@@ -116,7 +117,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HKEYS":
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
-			return "", nil
+			return "", err
 		}
 		return json.Marshal(cmd.Val())
 	case "HEXISTS":
@@ -128,13 +129,13 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HLEN":
 		cmd := DataRds.HLen(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
-			return "", nil
+			return "", err
 		}
 		return strconv.FormatInt(cmd.Val(), 10), nil
 	case "HVALS":
 		cmd := DataRds.HVals(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
-			return "", nil
+			return "", err
 		}
 		result := []interface{}{}
 		for _, v := range cmd.Val() {
@@ -156,6 +157,110 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			return "true", nil
 		}
 		return "false", nil
+	case "ZRANGE":
+		var (
+			Start, Stop, WITHSCORES string
+			start, stop             int64
+			withScores              bool = false
+		)
+		if Start := svcCtx.Req.FormValue("Start"); Start == "" {
+			return "", errors.New("no Start")
+		}
+		if Stop := svcCtx.Req.FormValue("Stop"); Stop == "" {
+			return "", errors.New("no Stop")
+		}
+		if WITHSCORES := svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
+			return "", errors.New("no WITHSCORES")
+		}
+		if start, err = strconv.ParseInt(Start, 10, 64); err != nil {
+			return "", err
+		}
+		if stop, err = strconv.ParseInt(Stop, 10, 64); err != nil {
+			return "", err
+		}
+		if WITHSCORES == "true" {
+			withScores = true
+		}
+		result := []interface{}{}
+		if withScores {
+			cmd := DataRds.ZRangeWithScores(svcCtx.Ctx, svcCtx.Key, start, stop)
+			if err = cmd.Err(); err != nil {
+				return "", err
+			}
+			for _, v := range cmd.Val() {
+				result = append(result, v.Member)
+				result = append(result, v.Score)
+			}
+		} else {
+			cmd := DataRds.ZRange(svcCtx.Ctx, svcCtx.Key, start, stop)
+			if err = cmd.Err(); err != nil {
+				return "", err
+			}
+			for _, v := range cmd.Val() {
+				result = append(result, v)
+			}
+		}
+		//marshal result to json
+		return json.Marshal(result)
+	case "ZRANGEBYSCORE":
+		var (
+			Min, Max, WITHSCORES string
+			min, max             float64
+			withScores           bool = false
+		)
+		if Min = svcCtx.Req.FormValue("Min"); Min == "" {
+			return "", errors.New("no Min")
+		}
+		if Max = svcCtx.Req.FormValue("Max"); Max == "" {
+			return "", errors.New("no Max")
+		}
+		if WITHSCORES := svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
+			return "", errors.New("no WITHSCORES")
+		}
+		if WITHSCORES == "true" {
+			withScores = true
+		}
+		result := []interface{}{}
+		if withScores {
+			cmd := DataRds.ZRangeByScoreWithScores(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
+				Min:    Min,
+				Max:    Max,
+				Offset: 0,
+				Count:  0,
+			})
+			if err = cmd.Err(); err != nil {
+				return "", err
+			}
+			for _, v := range cmd.Val() {
+				result = append(result, v.Member)
+				result = append(result, v.Score)
+			}
+		} else {
+			cmd := DataRds.ZRangeByScore(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
+				Min:    strconv.FormatFloat(min, 'f', -1, 64),
+				Max:    strconv.FormatFloat(max, 'f', -1, 64),
+				Offset: 0,
+				Count:  0,
+			})
+			if err = cmd.Err(); err != nil {
+				return "", err
+			}
+			for _, v := range cmd.Val() {
+				result = append(result, v)
+			}
+		}
+		//marshal result to json
+		return json.Marshal(result)
+	case "ZRANK":
+		Member := svcCtx.Req.FormValue("Member")
+		if Member == "" {
+			return "", errors.New("no Member")
+		}
+		cmd := DataRds.ZRank(svcCtx.Ctx, svcCtx.Key, Member)
+		if err = cmd.Err(); err != nil {
+			return "", err
+		}
+		return strconv.FormatInt(cmd.Val(), 10), nil
 
 	}
 	return nil, errors.New("unsupported command")

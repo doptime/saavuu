@@ -1,6 +1,6 @@
 package config
 
-import "github.com/go-redis/redis/v8"
+import "github.com/go-redis/redis/v9"
 
 func UseConfig() {
 	ParamRedisOption := &redis.Options{
