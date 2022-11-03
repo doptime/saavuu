@@ -161,15 +161,14 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		var (
 			Start, Stop, WITHSCORES string
 			start, stop             int64
-			withScores              bool = false
 		)
-		if Start := svcCtx.Req.FormValue("Start"); Start == "" {
+		if Start = svcCtx.Req.FormValue("Start"); Start == "" {
 			return "", errors.New("no Start")
 		}
-		if Stop := svcCtx.Req.FormValue("Stop"); Stop == "" {
+		if Stop = svcCtx.Req.FormValue("Stop"); Stop == "" {
 			return "", errors.New("no Stop")
 		}
-		if WITHSCORES := svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
+		if WITHSCORES = svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
 			return "", errors.New("no WITHSCORES")
 		}
 		if start, err = strconv.ParseInt(Start, 10, 64); err != nil {
@@ -178,11 +177,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		if stop, err = strconv.ParseInt(Stop, 10, 64); err != nil {
 			return "", err
 		}
-		if WITHSCORES == "true" {
-			withScores = true
-		}
 		result := []interface{}{}
-		if withScores {
+		if WITHSCORES == "true" {
 			cmd := DataRds.ZRangeWithScores(svcCtx.Ctx, svcCtx.Key, start, stop)
 			if err = cmd.Err(); err != nil {
 				return "", err
@@ -206,7 +202,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		var (
 			Min, Max, WITHSCORES string
 			min, max             float64
-			withScores           bool = false
 		)
 		if Min = svcCtx.Req.FormValue("Min"); Min == "" {
 			return "", errors.New("no Min")
@@ -214,14 +209,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		if Max = svcCtx.Req.FormValue("Max"); Max == "" {
 			return "", errors.New("no Max")
 		}
-		if WITHSCORES := svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
+		if WITHSCORES = svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
 			return "", errors.New("no WITHSCORES")
 		}
-		if WITHSCORES == "true" {
-			withScores = true
-		}
 		result := []interface{}{}
-		if withScores {
+		if WITHSCORES == "true" {
 			cmd := DataRds.ZRangeByScoreWithScores(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
 				Min:    Min,
 				Max:    Max,
