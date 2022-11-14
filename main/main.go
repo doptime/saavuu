@@ -116,9 +116,8 @@ func RedisHttpStart(path string, port int) {
 
 func main() {
 
-	fmt.Println("start load config from OS env")
+	fmt.Println("Start load config from OS env")
 	config.LoadConfigFromEnv()
 
-	fmt.Println("start http server on port 8080")
 	RedisHttpStart("/rSvc", 8080)
 }

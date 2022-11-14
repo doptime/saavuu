@@ -10,13 +10,13 @@ WORKDIR /go/release
 # 把全部文件添加到/go/release目录
 ADD https://api.github.com/repos/yangkequn/saavuu/git/refs/heads/master version.json
 RUN git clone -b master https://github.com/yangkequn/saavuu
-RUN mv ./saavuu/* .
+WORKDIR /go/release/saavuu
 RUN go mod download
 #ADD . .
 
 
 # 编译：把cmd/main.go编译成可执行的二进制文件，命名为app
-RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -ldflags="-s -w" -installsuffix cgo -o saavuu ./main/main.go
+RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -ldflags="-s -w" -installsuffix cgo -o /go/release/saavuuapp ./main/main.go
 
 # 运行：使用scratch作为基础镜像
 FROM scratch as prod
@@ -24,5 +24,5 @@ FROM scratch as prod
 # 在build阶段复制时区到
 COPY --from=build /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 # 在build阶段复制可执行的go二进制文件app
-COPY --from=build /go/release/saavuu /
-CMD ["./saavuu"]
+COPY --from=build /go/release/saavuuapp /
+CMD ["./saavuuapp"]
