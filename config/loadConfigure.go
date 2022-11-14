@@ -46,6 +46,8 @@ func LoadConfigFromEnv() (err error) {
 
 	UseConfig()
 	SaveConfigToRedis(ParamRds, loadOSEnv("SAAVUU_CONFIG_KEY", "Error: Can not load SAAVUU_CONFIG_KEY from env"))
+
+	fmt.Println("Load config from env success")
 	return nil
 }
 
