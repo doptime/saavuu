@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -10,44 +11,42 @@ import (
 	"github.com/yangkequn/saavuu/rCtx"
 )
 
-func LoadConfigFromEnv() {
-	var (
-		ConfigKey string
-		err       error
-	)
+func loadOSEnv(key string, panicString string) (value string) {
+	if value = os.Getenv(key); panicString != "" && value == "" {
+		fmt.Println(panicString)
+		os.Exit(1)
+	}
+	return value
+}
+
+func LoadConfigFromEnv() (err error) {
 
 	//try load from env
-	if Cfg.RedisAddressParam = os.Getenv("REDIS_ADDR_PARAM"); Cfg.RedisAddressParam == "" {
-		panic("Error: Can not load REDIS_ADDR_PARAM from env")
+	Cfg.RedisAddressParam = loadOSEnv("REDIS_ADDR_PARAM", "Error: Can not load REDIS_ADDR_PARAM from env")
+	Cfg.RedisPasswordParam = loadOSEnv("REDIS_PASSWORD_PARAM", "")
+	if Cfg.RedisDbParam, err = strconv.Atoi(loadOSEnv("REDIS_DB_PARAM", "Error: REDIS_DB_PARAM is not set ")); err != nil {
+		fmt.Println("Error: REDIS_DB_PARAM is not a number")
+		os.Exit(1)
 	}
-	if Cfg.RedisPasswordParam = os.Getenv("REDIS_PASSWORD_PARAM"); Cfg.RedisPasswordParam == "" {
+
+	Cfg.RedisAddressData = loadOSEnv("REDIS_ADDR_DATA", "Error: Can not load REDIS_ADDR_DATA from env")
+	Cfg.RedisPasswordData = loadOSEnv("REDIS_PASSWORD_DATA", "")
+	if Cfg.RedisDbData, err = strconv.Atoi(loadOSEnv("REDIS_DB_DATA", "Error: REDIS_DB_DATA is not set ")); err != nil {
+		fmt.Println("Error: REDIS_DB_DATA is not a number")
+		os.Exit(1)
 	}
-	if Cfg.RedisDbParam, err = strconv.Atoi(os.Getenv("REDIS_DB_PARAM")); err != nil {
-		panic("Error: Can not load REDIS_DB_PARAM from env")
-	}
-	if Cfg.RedisAddressData = os.Getenv("REDIS_ADDR_DATA"); Cfg.RedisAddressData == "" {
-		panic("Error: Can not load REDIS_ADDR_DATA from env")
-	}
-	if Cfg.RedisPasswordData = os.Getenv("REDIS_PASSWORD_DATA"); Cfg.RedisPasswordData == "" {
-	}
-	if Cfg.RedisDbData, err = strconv.Atoi(os.Getenv("REDIS_DB_DATA")); err != nil {
-		panic("Error: Can not load REDIS_DB_DATA from env")
-	}
-	if Cfg.JwtSecret = os.Getenv("JWT_SECRET"); Cfg.JwtSecret == "" {
-		panic("Error: Can not load JWT_SECRET from env")
-	}
-	if Cfg.JwtIgnoreFields = os.Getenv("JWT_IGNORE_FIELDS"); Cfg.JwtIgnoreFields != "" {
-		//to lower
+	Cfg.JwtSecret = loadOSEnv("JWT_SECRET", "Error: JWT_SECRET Can not load from env")
+	if Cfg.JwtIgnoreFields = loadOSEnv("JWT_IGNORE_FIELDS", ""); Cfg.JwtIgnoreFields != "" {
 		Cfg.JwtIgnoreFields = strings.ToLower(Cfg.JwtIgnoreFields)
 	}
-	if Cfg.MaxBufferSize, err = strconv.ParseInt(os.Getenv("MAX_BUFFER_SIZE"), 10, 64); err != nil {
-		panic("Error: Can not load MAX_BUFFER_SIZE from env")
+	if Cfg.MaxBufferSize, err = strconv.ParseInt(loadOSEnv("MAX_BUFFER_SIZE", "Error: MAX_BUFFER_SIZE is not set "), 10, 64); err != nil {
+		fmt.Println("Error: MAX_BUFFER_SIZE is not a number")
+		os.Exit(1)
 	}
-	if ConfigKey = os.Getenv("SAAVUU_CONFIG_KEY"); ConfigKey == "" {
-		panic("Error: Can not load SAAVUU_CONFIG_KEY from env")
-	}
+
 	UseConfig()
-	SaveConfigToRedis(ParamRds, ConfigKey)
+	SaveConfigToRedis(ParamRds, loadOSEnv("SAAVUU_CONFIG_KEY", "Error: Can not load SAAVUU_CONFIG_KEY from env"))
+	return nil
 }
 
 func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) {
