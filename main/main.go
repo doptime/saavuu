@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"encoding/json"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/https"
+	"github.com/yangkequn/saavuu/logger"
+	"github.com/yangkequn/saavuu/permission"
 
 	"github.com/vmihailenco/msgpack/v5"
 )
@@ -101,7 +102,7 @@ func RedisHttpStart(path string, port int) {
 			}
 		}
 	})
-	fmt.Println("http server started on port " + strconv.Itoa(port) + " , path is " + path)
+	logger.Lshortfile.Println("http server started on port " + strconv.Itoa(port) + " , path is " + path)
 
 	server := &http.Server{
 		Addr:              ":" + strconv.Itoa(port),
@@ -116,8 +117,9 @@ func RedisHttpStart(path string, port int) {
 
 func main() {
 
-	fmt.Println("Start load config from OS env")
+	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
+	go permission.RefreshDataItemBatchPermissions()
 
 	RedisHttpStart("/rSvc", 8080)
 }

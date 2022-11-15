@@ -3,6 +3,7 @@ module github.com/yangkequn/saavuu
 go 1.19
 
 require (
+	github.com/cespare/xxhash v1.1.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis/v9 v9.0.0-beta.3
 	github.com/mitchellh/mapstructure v1.5.0

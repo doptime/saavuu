@@ -1,7 +1,7 @@
 package https
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
@@ -20,7 +20,7 @@ func (svc *HttpContext) JwtToken() (token *jwt.Token) {
 		keyFunction := func(token *jwt.Token) (value interface{}, err error) {
 			_, ok := token.Method.(*jwt.SigningMethodHMAC)
 			if !ok {
-				return nil, fmt.Errorf("Invalid signing method")
+				return nil, errors.New("Invalid signing method")
 			}
 			return []byte(Cfg.JwtSecret), nil
 		}

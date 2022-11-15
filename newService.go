@@ -2,13 +2,14 @@ package saavuu
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/rCtx"
 )
 
@@ -24,19 +25,19 @@ func PrintServiceStates() {
 	for k := range ServiceMap {
 		serviceNames = append(serviceNames, k)
 	}
-	fmt.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
+	logger.Lshortfile.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
 	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
 		for _, serviceName := range serviceNames {
 			num, _ := counter.Get(serviceName)
-			fmt.Println(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+			logger.Lshortfile.Println(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
 			counter.DeleteAndGetLastValue(serviceName)
 		}
 	}
 }
 
-var ErrBackTo = fmt.Errorf("param[\"backTo\"] is not a string")
+var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
 func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	//check configureation is loaded

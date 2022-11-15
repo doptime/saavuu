@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/permission"
 	"github.com/yangkequn/saavuu/rCtx"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -85,6 +86,10 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return json.Marshal(_v)
 	case "HGETALL":
+		// check batch operation permission
+		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hgetall") {
+			return nil, errors.New("batch operation HGETALL not permitted")
+		}
 		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
 			return "", err
@@ -99,6 +104,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(maps)
 
 	case "HMGET":
+		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hmget") {
+			return nil, errors.New("batch operation HMGET not permitted")
+		}
 		cmd := DataRds.HMGet(svcCtx.Ctx, svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
 		if err = cmd.Err(); err != nil {
 			return "", err
@@ -115,6 +123,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return json.Marshal(maps)
 	case "HKEYS":
+		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hkeys") {
+			return nil, errors.New("batch operation HKEYS not permitted")
+		}
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
 			return "", err
@@ -133,6 +144,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return strconv.FormatInt(cmd.Val(), 10), nil
 	case "HVALS":
+		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hvals") {
+			return nil, errors.New("batch operation HVALS not permitted")
+		}
 		cmd := DataRds.HVals(svcCtx.Ctx, svcCtx.Key)
 		if err = cmd.Err(); err != nil {
 			return "", err
