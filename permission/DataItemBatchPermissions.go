@@ -23,7 +23,7 @@ func LoadDataItemBatchPermissionsFromRedis() (err error) {
 	// split each value of DataItemBatchPermissions into string[] and store in PermittedBatchOp
 	Permissions_TMP, err = config.ParamRds.HGetAll(context.Background(), "DataItemBatchPermissions").Result()
 	if err != nil || KeyNum > 0 {
-		logger.Lshortfile.Println("warning: can not load DataItemBatchPermissions from redis in param server. Consider Add hash item  DataItemBatchPermissions in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
+		logger.Lshortfile.Println("error: " + err.Error() + ". Consider Add hash item  DataItemBatchPermissions in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 		return err
 	}
 	for k, v := range Permissions_TMP {
