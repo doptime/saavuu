@@ -23,6 +23,10 @@ func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn map[string]interface{
 		BackTo  string = fmt.Sprintf("%x", rand.Int63())
 		results []string
 	)
+	//ensure ServiceKey start with "svc:"
+	if ServiceKey[:4] != "svc:" {
+		ServiceKey = "svc:" + ServiceKey
+	}
 	paramIn["BackTo"] = BackTo
 
 	if b, err = msgpack.Marshal(paramIn); err != nil {

@@ -40,6 +40,7 @@ func PrintServiceStates() {
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
 func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
+	serviceName = "svc:" + serviceName
 	//check configureation is loaded
 	if config.DataRds == nil {
 		panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
