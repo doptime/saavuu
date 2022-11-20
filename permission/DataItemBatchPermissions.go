@@ -2,6 +2,7 @@ package permission
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 var PermittedBatchOp map[uint64]interface{} = map[uint64]interface{}{}
+var lastLoadDataItemBatchPermissionsInfo string = ""
 
 func LoadDataItemBatchPermissionsFromRedis() (err error) {
 	var (
@@ -36,13 +38,18 @@ func LoadDataItemBatchPermissionsFromRedis() (err error) {
 			PermittedBatchOp[xxhash.Sum64String(keyLower)] = nil
 		}
 	}
-	logger.Lshortfile.Println("loading DataItemBatchPermissions success. num keys:", KeyNum, " PermittedBatchOp size:", len(PermittedBatchOp))
+	//print info like this: info := fmt.Sprint("loading DataItemBatchPermissions success. num keys:%d PermittedBatchOp size:%d", KeyNum, len(PermittedBatchOp))
+	info := fmt.Sprint("loading DataItemBatchPermissions success. num keys:", KeyNum, " PermittedBatchOp size:", len(PermittedBatchOp))
+	if info != lastLoadDataItemBatchPermissionsInfo {
+		logger.Lshortfile.Println()
+		lastLoadDataItemBatchPermissionsInfo = info
+	}
 	return nil
 }
 func RefreshDataItemBatchPermissions() {
 	for {
 		LoadDataItemBatchPermissionsFromRedis()
-		time.Sleep(5 * time.Minute)
+		time.Sleep(time.Second * 10)
 	}
 }
 func IsPermittedBatchOperation(dataKey string, operation string) bool {
