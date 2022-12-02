@@ -40,6 +40,11 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	svcContext.ResponseContentType = svcContext.Req.FormValue("RspType")
 	return svcContext
 }
+func (svc *HttpContext) SetContentType() {
+	if len(svc.ResponseContentType) > 0 && len(svc.QueryFields) > 0 {
+		svc.Rsb.Header().Set("Content-Type", svc.ResponseContentType)
+	}
+}
 
 func (svc *HttpContext) BodyMessage() (param map[string]interface{}, err error) {
 	var (

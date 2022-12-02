@@ -36,13 +36,13 @@ func RedisHttpStart(path string, port int) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
 		defer cancel()
-		svcContext := https.NewHttpContext(ctx, r, w)
+		svcCtx := https.NewHttpContext(ctx, r, w)
 		if r.Method == "GET" {
-			result, err = svcContext.GetHandler()
+			result, err = svcCtx.GetHandler()
 		} else if r.Method == "POST" {
-			result, err = svcContext.PutHandler()
+			result, err = svcCtx.PutHandler()
 		} else if r.Method == "DELETE" {
-			result, err = svcContext.DelHandler()
+			result, err = svcCtx.DelHandler()
 		}
 		if len(config.Cfg.CORS) > 0 {
 			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
@@ -57,17 +57,17 @@ func RedisHttpStart(path string, port int) {
 			w.Write([]byte(errStr))
 			return
 		}
-		if len(svcContext.ResponseContentType) > 0 && len(svcContext.QueryFields) > 0 {
-			w.Header().Set("Content-Type", svcContext.ResponseContentType)
-		}
-		w.WriteHeader(http.StatusOK)
 		if b, isByteArray = result.([]byte); isByteArray {
+			svcCtx.SetContentType()
+			w.WriteHeader(http.StatusOK)
 			w.Write(b)
 		} else if s, isString = result.(string); isString {
+			svcCtx.SetContentType()
+			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(s))
 		} else {
 			//keep fields exits in svcContext.QueryFields
-			if len(svcContext.QueryFields) > 0 {
+			if len(svcCtx.QueryFields) > 0 {
 				_map := map[string]interface{}{}
 				//check if type of result is not map[string]interface{}
 				if _map, ok = result.(map[string]interface{}); !ok {
@@ -84,9 +84,9 @@ func RedisHttpStart(path string, port int) {
 					}
 				}
 				//remove fields not exits in svcContext.QueryFields
-				if svcContext.QueryFields != "*" {
+				if svcCtx.QueryFields != "*" {
 					for k := range _map {
-						if !strings.Contains(svcContext.QueryFields, k) {
+						if !strings.Contains(svcCtx.QueryFields, k) {
 							delete(_map, k)
 						}
 					}
@@ -98,7 +98,13 @@ func RedisHttpStart(path string, port int) {
 					w.Write([]byte(err.Error()))
 					return
 				}
-				w.Write(b)
+				//set content-type to json
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+				l, er := w.Write(b)
+				//write back and close connection
+
+				logger.Std.Println("write length:", l, er, string(b))
 			}
 		}
 	})

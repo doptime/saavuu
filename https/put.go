@@ -29,13 +29,17 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		return nil, err
 	}
 
-	//fill content type, to support binary or json response
+	//if resultBytes is msgpack byte array, return it directly
+	if err = msgpack.Unmarshal(resultBytes, &responseBytes); err == nil {
+		return responseBytes, err
+	}
+	//if resultBytes is msgpack string, return it directly
+	if err = msgpack.Unmarshal(resultBytes, &responseString); err == nil {
+		return responseString, err
+	}
+	//if resultBytes is msgpack map, return it directly
 	if err = msgpack.Unmarshal(resultBytes, &result); err != nil {
 		return nil, errors.New("unsupported data type")
-	} else if err = msgpack.Unmarshal(resultBytes, &responseBytes); err == nil {
-		return responseBytes, err
-	} else if err = msgpack.Unmarshal(resultBytes, &responseString); err == nil {
-		return responseString, err
 	}
 	return result, nil
 }
