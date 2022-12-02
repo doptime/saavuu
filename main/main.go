@@ -101,10 +101,7 @@ func RedisHttpStart(path string, port int) {
 				//set content-type to json
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				l, er := w.Write(b)
-				//write back and close connection
-
-				logger.Std.Println("write length:", l, er, string(b))
+				w.Write(b)
 			}
 		}
 	})
