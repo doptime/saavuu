@@ -122,7 +122,7 @@ func main() {
 
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
-	go permission.RefreshDataItemBatchPermissions()
+	go permission.LoadRedisBatchOpPermissionFromRedis()
 
 	RedisHttpStart("/rSvc", 8080)
 }
