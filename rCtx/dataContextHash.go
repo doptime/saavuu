@@ -257,7 +257,10 @@ func (dc *DataCtx) UpdateSchemaViaFunc(match string, dataStruct interface{}, Str
 	return nil
 }
 
-func (dc *DataCtx) DataIterator(match string, dataStruct interface{}, StructOldToNew func(interface{})) (err error) {
+// iterate redis value , send each value to DataProcess,
+// DataProcess is a function with 3 parameters, key, field, dataStruct
+// the dataStruct should be a pointer to  struct
+func (dc *DataCtx) DataIterator(match string, dataStruct interface{}, DataProcess func(string, string, interface{})) (err error) {
 	var (
 		val  []byte
 		keys []string = []string{match}
@@ -280,11 +283,11 @@ func (dc *DataCtx) DataIterator(match string, dataStruct interface{}, StructOldT
 			if data, err = cmd.Result(); err != nil {
 				return err
 			}
-			for _, v := range data {
+			for field, v := range data {
 				if msgpack.Unmarshal([]byte(v), dataStruct) != nil {
 					return err
 				}
-				StructOldToNew(dataStruct)
+				DataProcess(key, field, dataStruct)
 			}
 		} else if dc.Rds.Type(dc.Ctx, key).Val() == "string" {
 			if val, err = dc.Rds.Get(dc.Ctx, key).Bytes(); err != nil {
@@ -293,7 +296,7 @@ func (dc *DataCtx) DataIterator(match string, dataStruct interface{}, StructOldT
 			if msgpack.Unmarshal(val, dataStruct) != nil {
 				return err
 			}
-			StructOldToNew(dataStruct)
+			DataProcess(key, "", dataStruct)
 		} else if dc.Rds.Type(dc.Ctx, key).Val() == "list" {
 			//not impleted yet
 			return fmt.Errorf("not impleted yet")
