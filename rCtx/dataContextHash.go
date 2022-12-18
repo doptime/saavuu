@@ -186,6 +186,22 @@ func (dc *DataCtx) UpdateSchema(match string, dataStruct interface{}) (err error
 
 // update redis value schema, the value should be a pointer to  struct of msgpack
 // match is the key pattern, if match end with *, scan all keys start with match
+// demo :
+// dc := saavuu.NewDataContext(context.Background())
+// var meditEpisode *MeditationEpisode = &MeditationEpisode{}
+// StructureOldToNew := func(old interface{}) interface{} {
+
+//		type Bar struct {
+//			Duration uint32 `msgpack:"D"`
+//		}
+//		var oldMeditEpisode *MeditationEpisode = old.(*MeditationEpisode)
+//		_newStruct := Bar{
+//			Duration:     uint32(oldMeditEpisode.Duration) * 1000,
+//		}
+//		return _newStruct
+//	}
+//
+// dc.UpdateSchemaViaFunc("TrajMedit:ekebmgfi24g6:*", meditEpisode, StructureOldToNew)
 func (dc *DataCtx) UpdateSchemaViaFunc(match string, dataStruct interface{}, StructOldToNew func(interface{}) interface{}) (err error) {
 	var (
 		val  []byte
