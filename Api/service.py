@@ -1,3 +1,4 @@
+
 #provide service via redis API
 import redis
 import msgpack
@@ -9,7 +10,10 @@ class service_base():
         self.fields = set(fields) | set(["BackTo"])
         self.batch_size = batch_size
         self.service_name = service_name
+        if not service_name.startswith("svc:"):
+            self.service_name = "svc:" + service_name
         self.task_num_in_60s= datetime.datetime.now().minute << 32
+        print(f"service {self.service_name } initialed, fields:{self.fields} batch_size:{self.batch_size} host:{host} port:{port} db:{db}")
 
     def get_task(self):
         while True:
@@ -47,11 +51,11 @@ class service_base():
             inputs = self.get_task()
             self.process(inputs)
 #use like this:
-class service_xxx(service_base):            
-    def __init__(self):
-        service_base.__init__(self,"service_xxx",["value"],1,"docker.vm",6379,15,)        
+# class service_xxx(service_base):            
+#     def __init__(self):
+#         service_base.__init__(self,"xxx",["value"],1,"docker.vm",6379,15,)        
 
-    def process(self,items):
-        # your logic here
-        for i in items:
-            self.send_back(i,{"Result":input.value})
+#     def process(self,items):
+#         # your logic here
+#         for i in items:
+#             self.send_back(i,{"Result":input.value})
