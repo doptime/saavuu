@@ -1,4 +1,4 @@
-# saavuu, the most concise, convinient, redis based microservice framework
+# saavuu, the most concise, redis based framework
 * All HTTP requests are transferd as binary msgpack data. It's compact and fast.
 * No API version related problem. Just use redis api.
 * Use msgpack to support structure data by default. Easily to upgrade data sturecture.
