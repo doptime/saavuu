@@ -9,6 +9,7 @@
 * redis pipeline  brings heavy batch process performance.  
 
 # demo usage
+  ### serverside, go example:
 ```
 package main
 
@@ -35,6 +36,27 @@ func init() {
 		return data, nil
 	})
 }
+```
+    ### serverside, python example:
+```
+
+class service_textToMp3(service_base):
+    def __init__(self):
+        service_base.__init__(self, "textToMp3", ["text"], 1, "keydb2.vm", 6379, 0,)
+    def process(self, items):
+        # your logic here
+        for i in items:
+            mp3 = GetFromHivoice(i["text"])
+            self.send_back(i, {"mp3": mp3})
+service_textToMp3().start()
+```
+
+    ### for web client side:
+```
+HGET("UserInfo", id).then((data) => {
+    data.update=Date.now()
+    Service("MyMeditInstruction",data)
+})
 ```
 
 # abstract    
