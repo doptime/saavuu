@@ -9,7 +9,7 @@
 * redis pipeline  brings heavy batch process performance.  
 
 # demo usage
-  ### serverside, go example:
+### serverside, go example:
 ```
 package main
 
@@ -37,7 +37,8 @@ func init() {
 	})
 }
 ```
-    ### serverside, python example:
+
+### serverside, python example:
 ```
 
 class service_textToMp3(service_base):
@@ -51,7 +52,7 @@ class service_textToMp3(service_base):
 service_textToMp3().start()
 ```
 
-    ### for web client side:
+### web client side, javascript /typescript example:
 ```
 HGET("UserInfo", id).then((data) => {
     data.update=Date.now()
