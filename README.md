@@ -8,43 +8,6 @@
 * You can use any programming language you like. python or go or not.
 * redis pipeline  brings heavy batch process performance.  
 
-# abstract    
-    for query, saavuu will query  result from redis and return to client.
-    for modification, saavuu will put request data to redis queue, and the service listening the queue will process the data.
-    saavuu means kill bad wisdom, which borrow from "杀悟"。 I hate bad tools.
-
-# feature
-* specify content-type in header,response fields etc. in client side
-* support JWT for authorization
-* convient privacy control for redis batch operation.
-
-# congifuration is read from environment variables
-### make sure enviroment variables are added to your IDE or docker. 
-### for example, if you are using vscode, add this to your launch.json
-```
-    "configurations": [
-        {
-            "name": "Launch Package",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${fileDirname}/main.go",
-            "env": {
-                "REDIS_ADDR_PARAM": "docker.vm:6379",
-                "REDIS_PASSWORD_PARAM": "",
-                "REDIS_DB_PARAM": "0",
-                "REDIS_ADDR_DATA": "docker.vm:6379",
-                "REDIS_PASSWORD_DATA": "",
-                "REDIS_DB_DATA": "0",
-                "JWT_SECRET": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
-                "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
-                "CORS": "*",
-                "SAAVUU_CONFIG_KEY": "saavuu_service_config",
-                "MAX_BUFFER_SIZE": "3145728",
-            },
-        }
-```
-
 # demo usage
 ```
 package main
@@ -72,5 +35,43 @@ func init() {
 		return data, nil
 	})
 }
+```
 
+# abstract    
+    for query, saavuu will query  result from redis and return to client.
+    for modification, saavuu will put request data to redis queue, and the service listening the queue will process the data.
+    saavuu means kill bad wisdom, which borrow from "杀悟"。 I hate bad tools.
+
+
+# feature
+* specify content-type in header,response fields etc. in client side
+* support JWT for authorization
+* convient privacy control for redis batch operation.
+
+
+# about configuration 
+### make sure enviroment variables are added to your IDE or docker. 
+### for example, if you are using vscode, add this to your launch.json
+```
+    "configurations": [
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}/main.go",
+            "env": {
+                "REDIS_ADDR_PARAM": "docker.vm:6379",
+                "REDIS_PASSWORD_PARAM": "",
+                "REDIS_DB_PARAM": "0",
+                "REDIS_ADDR_DATA": "docker.vm:6379",
+                "REDIS_PASSWORD_DATA": "",
+                "REDIS_DB_DATA": "0",
+                "JWT_SECRET": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
+                "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
+                "CORS": "*",
+                "SAAVUU_CONFIG_KEY": "saavuu_service_config",
+                "MAX_BUFFER_SIZE": "3145728",
+            },
+        }
 ```
