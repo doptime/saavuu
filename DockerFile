@@ -8,12 +8,9 @@ ENV GOPROXY=https://goproxy.cn,direct
 WORKDIR /go/release
 
 # 把全部文件添加到/go/release目录
-ADD https://api.github.com/repos/yangkequn/saavuu/git/refs/heads/master version.json
-RUN git clone -b master https://github.com/yangkequn/saavuu
-WORKDIR /go/release/saavuu
+#ADD https://api.github.com/repos/yangkequn/saavuu/git/refs/heads/master version.json
+RUN git clone -b master --single-branch https://github.com/yangkequn/saavuu .
 RUN go mod download
-#ADD . .
-
 
 # 编译：把cmd/main.go编译成可执行的二进制文件，命名为app
 RUN GOOS=linux CGO_ENABLED=0 GOARCH=amd64 go build -ldflags="-s -w" -installsuffix cgo -o /go/release/saavuuapp ./main/main.go
