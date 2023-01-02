@@ -12,6 +12,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	var (
 		paramIn map[string]interface{} = map[string]interface{}{}
 		result  map[string]interface{} = map[string]interface{}{}
+		bytes   []byte
 	)
 	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
@@ -27,8 +28,8 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
 			return "false", errors.New("permission denied")
 		}
-		var val interface{} = paramIn["value"]
-		cmd := DataRds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, val)
+		bytes, err = svcCtx.BodyBytes()
+		cmd := DataRds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
 		}

@@ -47,15 +47,28 @@ func (svc *HttpContext) SetContentType() {
 }
 
 func (svc *HttpContext) BodyMessage() (param map[string]interface{}, err error) {
+	var data []byte = nil
+	if data, err = svc.BodyBytes(); err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		return nil, errors.New("empty body")
+	}
+	return map[string]interface{}{"MsgPack": data}, nil
+}
+
+func (svc *HttpContext) BodyBytes() (data []byte, err error) {
 	var (
-		data  []byte = make([]byte, svc.Req.ContentLength)
 		ctype string = svc.Req.Header.Get("Content-Type")
 	)
 	if ctype != "application/octet-stream" {
 		return nil, errors.New("unsupported content type")
 	}
+	if svc.Req.ContentLength == 0 {
+		return nil, errors.New("empty body")
+	}
 	if data, err = ioutil.ReadAll(svc.Req.Body); err != nil {
 		return nil, err
 	}
-	return map[string]interface{}{"MsgPack": data}, nil
+	return data, nil
 }
