@@ -14,30 +14,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func replaceAtUseJwt(scvCtx *HttpContext, jwts map[string]interface{}, s string) (r string, err error) {
-	var (
-		jwtValue    interface{}
-		ok          bool
-		jwtFieldStr string
-	)
-	for i := strings.Index(s, "@"); i >= 0; i = strings.Index(s, "@") {
-		ie := i + 1
-		for ; ie < len(s) && ((s[ie] >= '0' && s[ie] <= '9') || (s[ie] >= 'a' && s[ie] <= 'z') || (s[ie] >= 'A' && s[ie] <= 'Z')); ie++ {
-		}
-		if ie == i+1 {
-			return "", errors.New("invalid field")
-		}
-		label := s[i+1 : ie]
-		if jwtValue, ok = jwts["JWT_"+label]; !ok {
-			return "", errors.New("invalid jwt field")
-		}
-		if jwtFieldStr, ok = jwtValue.(string); !ok {
-			return "", errors.New("invalid jwt field")
-		}
-		s = s[:i] + jwtFieldStr + s[ie:]
-	}
-	return s, nil
-}
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
 		jwts         map[string]interface{} = map[string]interface{}{}
@@ -49,14 +25,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	svcCtx.MergeJwtField(jwts)
 
-	if svcCtx.Key, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Key); err != nil {
-		return nil, err
-	} else if len(svcCtx.Key) == 0 {
+	if len(svcCtx.Key) == 0 {
 		return nil, errors.New("no key")
-	}
-
-	if svcCtx.Field, err = replaceAtUseJwt(svcCtx, jwts, svcCtx.Field); err != nil {
-		return nil, err
 	}
 
 	//check auth. only Key start with upper case are allowed to access
