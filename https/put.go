@@ -4,9 +4,7 @@ import (
 	"errors"
 
 	. "github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/rCtx"
-
-	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/permission"
 )
 
 func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
@@ -14,32 +12,40 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	var (
 		paramIn map[string]interface{} = map[string]interface{}{}
 		result  map[string]interface{} = map[string]interface{}{}
-
-		resultBytes    []byte = []byte{}
-		responseBytes  []byte = []byte{}
-		responseString string = ""
 	)
 	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
 	svcCtx.MergeJwtField(paramIn)
 
-	pc := rCtx.ParamCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
-	if resultBytes, err = pc.RdsApiBasic(svcCtx.Service, paramIn); err != nil {
-		return nil, err
-	}
-
-	//if resultBytes is msgpack byte array, return it directly
-	if err = msgpack.Unmarshal(resultBytes, &responseBytes); err == nil {
-		return responseBytes, err
-	}
-	//if resultBytes is msgpack string, return it directly
-	if err = msgpack.Unmarshal(resultBytes, &responseString); err == nil {
-		return responseString, err
-	}
-	//if resultBytes is msgpack map, return it directly
-	if err = msgpack.Unmarshal(resultBytes, &result); err != nil {
-		return nil, errors.New("unsupported data type")
+	switch svcCtx.Cmd {
+	case "HSET":
+		//error if empty Key or Field
+		if svcCtx.Key == "" || svcCtx.Field == "" {
+			return "false", errors.New("empty key or field")
+		}
+		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
+			return "false", errors.New("permission denied")
+		}
+		var val interface{} = paramIn["value"]
+		cmd := DataRds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, val)
+		if err = cmd.Err(); err != nil {
+			return "false", err
+		}
+		return "true", nil
+	case "HDEL":
+		//error if empty Key or Field
+		if svcCtx.Key == "" || svcCtx.Field == "" {
+			return "false", errors.New("empty key or field")
+		}
+		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
+			return "false", errors.New("permission denied")
+		}
+		cmd := DataRds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
+		if err = cmd.Err(); err != nil {
+			return "false", err
+		}
+		return "true", nil
 	}
 	return result, nil
 }

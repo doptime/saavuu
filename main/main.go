@@ -40,7 +40,7 @@ func RedisHttpStart(path string, port int) {
 		if r.Method == "GET" {
 			result, err = svcCtx.GetHandler()
 		} else if r.Method == "POST" {
-			result, err = svcCtx.PutHandler()
+			result, err = svcCtx.PostHandler()
 		} else if r.Method == "DELETE" {
 			result, err = svcCtx.DelHandler()
 		}
@@ -122,7 +122,8 @@ func main() {
 
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
-	go permission.LoadRedisBatchOpPermissionFromRedis()
+	go permission.RefreshRedisBatchOpPermission()
+	go permission.RefreshPutPermission()
 
 	RedisHttpStart("/rSvc", 8080)
 }
