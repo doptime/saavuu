@@ -28,7 +28,9 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
 			return "false", errors.New("permission denied")
 		}
-		bytes, err = svcCtx.BodyBytes()
+		if bytes, err = svcCtx.BodyBytes(); err != nil {
+			return "false", err
+		}
 		cmd := DataRds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
