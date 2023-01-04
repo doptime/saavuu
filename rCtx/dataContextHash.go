@@ -30,7 +30,7 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 	return cmd.Val()
 }
 
-func (dc *DataCtx) HGetAll(key string, decodeFun func(string) (obj interface{}, erro error)) (param map[string]interface{}, err error) {
+func (dc *DataCtx) HGetAll(key string, genObj func() (obj interface{})) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
 	if err != nil {
@@ -41,14 +41,14 @@ func (dc *DataCtx) HGetAll(key string, decodeFun func(string) (obj interface{}, 
 	// unmarshal value of data to the copy
 	// store unmarshaled result to param
 	for k, v := range data {
-		if Decoded, err := decodeFun(v); err == nil {
-			param[k] = Decoded
-		} else {
-			return nil, err
+		var obj interface{} = genObj()
+		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
+			param[k] = obj
 		}
 	}
 	return param, nil
 }
+
 func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
