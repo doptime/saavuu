@@ -6,9 +6,15 @@ import (
 	"strings"
 
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/logger"
 )
 
 func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error) {
+	//use reflect to check if param is a pointer
+	if reflect.TypeOf(param).Kind() != reflect.Ptr {
+		logger.Lshortfile.Fatal("param must be a pointer")
+	}
+
 	cmd := dc.Rds.HGet(dc.Ctx, key, field)
 	data, err := cmd.Bytes()
 	if err != nil {
@@ -30,18 +36,34 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 	return cmd.Val()
 }
 
-func (dc *DataCtx) HGetAll(key string, genObj func() (obj interface{})) (param map[string]interface{}, err error) {
+//	func (dc *DataCtx) HGetAll_(key string, genObj func() (obj interface{})) (param map[string]interface{}, err error) {
+//		cmd := dc.Rds.HGetAll(dc.Ctx, key)
+//		data, err := cmd.Result()
+//		if err != nil {
+//			return nil, err
+//		}
+//		param = make(map[string]interface{})
+//		//make a copoy of valueStruct
+//		// unmarshal value of data to the copy
+//		// store unmarshaled result to param
+//		for k, v := range data {
+//			var obj interface{} = genObj()
+//			if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
+//				param[k] = obj
+//			}
+//		}
+//		return param, nil
+//	}
+func (dc *DataCtx) HGetAll(key string, stru interface{}) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
 	if err != nil {
 		return nil, err
 	}
 	param = make(map[string]interface{})
-	//make a copoy of valueStruct
-	// unmarshal value of data to the copy
-	// store unmarshaled result to param
 	for k, v := range data {
-		var obj interface{} = genObj()
+		//make a copy of stru , to obj
+		obj := reflect.New(reflect.TypeOf(stru).Elem()).Interface()
 		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
 			param[k] = obj
 		}
