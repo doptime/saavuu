@@ -7,6 +7,8 @@ import (
 	"github.com/yangkequn/saavuu/permission"
 )
 
+var ErrEmptyKeyOrField = errors.New("empty key or field")
+
 func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	//use remote service map to handle request
 	var (
@@ -23,7 +25,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	case "HSET":
 		//error if empty Key or Field
 		if svcCtx.Key == "" || svcCtx.Field == "" {
-			return "false", errors.New("empty key or field")
+			return "false", ErrEmptyKeyOrField
 		}
 		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
 			return "false", errors.New("permission denied")
@@ -39,7 +41,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	case "HDEL":
 		//error if empty Key or Field
 		if svcCtx.Key == "" || svcCtx.Field == "" {
-			return "false", errors.New("empty key or field")
+			return "false", ErrEmptyKeyOrField
 		}
 		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
 			return "false", errors.New("permission denied")

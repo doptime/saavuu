@@ -41,6 +41,8 @@ func RedisHttpStart(path string, port int) {
 			result, err = svcCtx.GetHandler()
 		} else if r.Method == "POST" {
 			result, err = svcCtx.PostHandler()
+		} else if r.Method == "PUT" {
+			result, err = svcCtx.PutHandler()
 		} else if r.Method == "DELETE" {
 			result, err = svcCtx.DelHandler()
 		}

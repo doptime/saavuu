@@ -36,24 +36,6 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 	return cmd.Val()
 }
 
-//	func (dc *DataCtx) HGetAll_(key string, genObj func() (obj interface{})) (param map[string]interface{}, err error) {
-//		cmd := dc.Rds.HGetAll(dc.Ctx, key)
-//		data, err := cmd.Result()
-//		if err != nil {
-//			return nil, err
-//		}
-//		param = make(map[string]interface{})
-//		//make a copoy of valueStruct
-//		// unmarshal value of data to the copy
-//		// store unmarshaled result to param
-//		for k, v := range data {
-//			var obj interface{} = genObj()
-//			if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
-//				param[k] = obj
-//			}
-//		}
-//		return param, nil
-//	}
 func (dc *DataCtx) HGetAll(key string, stru interface{}) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
