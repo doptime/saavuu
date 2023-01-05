@@ -36,6 +36,35 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 	return cmd.Val()
 }
 
+func (dc *DataCtx) HGetAllToMap(key string, mapOut interface{}) (err error) {
+	//if mapOut is not map[string] struct , return error
+	if reflect.TypeOf(mapOut).Kind() != reflect.Ptr {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
+	}
+	mapElem := reflect.TypeOf(mapOut).Elem()
+	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
+	}
+	structSupposed := mapElem.Elem()
+	if structSupposed.Kind() != reflect.Struct {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
+	}
+	cmd := dc.Rds.HGetAll(dc.Ctx, key)
+	data, err := cmd.Result()
+	if err != nil {
+		return err
+	}
+	//append all data to mapOut
+	for k, v := range data {
+		//make a copy of stru , to obj
+		obj := reflect.New(structSupposed).Interface()
+		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
+			reflect.ValueOf(mapOut).Elem().SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
+		}
+	}
+	return nil
+}
+
 func (dc *DataCtx) HGetAll(key string, stru interface{}) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
