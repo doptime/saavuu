@@ -4,7 +4,8 @@
 * Use msgpack to support structure data by default. Easily to upgrade data sturecture.
 * Use no database but KEYDB which is redis compatible. Flash storage supportion brings both memory speed and whole disk capacity
 * You don't need to write any GET Logic. Just use redis to query.
-* You can focus only and alway on Modification logic (POST PUT DEL) logic. 
+* You don't need to write any DELETE Logic. Just use redis to remove.
+* You can focus only and alway on POST & PUT logic. 
 * You can use any programming language you like. python or go or not.
 * redis pipeline  brings heavy batch process performance.  
 
