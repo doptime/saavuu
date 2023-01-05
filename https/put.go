@@ -38,19 +38,6 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 			return "false", err
 		}
 		return "true", nil
-	case "HDEL":
-		//error if empty Key or Field
-		if svcCtx.Key == "" || svcCtx.Field == "" {
-			return "false", ErrEmptyKeyOrField
-		}
-		if !permission.IsPermittedPutOperation(svcCtx.Key, svcCtx.Field) {
-			return "false", errors.New("permission denied")
-		}
-		cmd := DataRds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
-		if err = cmd.Err(); err != nil {
-			return "false", err
-		}
-		return "true", nil
 	}
 	return result, nil
 }

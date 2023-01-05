@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -11,47 +12,50 @@ import (
 	"github.com/yangkequn/saavuu/rCtx"
 )
 
-type PutPermission struct {
+type Permission struct {
 	Key       string
 	CreateAt  int64
 	WhiteList []string
 	BlackList []string
 }
 
-var PermittedPutOp map[string]Permission = make(map[string]Permission)
-var lastLoadPutPermissionInfo string = ""
+var PermittedDelOp map[string]Permission = make(map[string]Permission)
+var lastLoadDelPermissionInfo string = ""
 
-func LoadPutPermissionFromRedis() {
-	// read RedisPutPermission usiing ParamRds
-	// RedisPutPermission is a hash
-	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
-
+func LoadDelPermissionFromRedis() {
+	// read RedisDelPermission usiing ParamRds
+	// RedisDelPermission is a hash
+	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
 	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
-	if err := paramCtx.HGetAllToMap("RedisPutPermission", &PermittedPutOp); err != nil {
-		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error() + ". Consider Add hash item  RedisPutPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
+	if err := paramCtx.HGetAllToMap("RedisDelPermission", &PermittedDelOp); err != nil {
+		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error() + ". Consider Add hash item  RedisDelPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
+
 		time.Sleep(time.Second * 10)
 		go LoadPutPermissionFromRedis()
 		return
 	}
-	//print info like this: info := fmt.Sprint("loading RedisPutPermission success. num keys:%d PermittedPutOp size:%d", KeyNum, len(PermittedPutOp))
-	info := fmt.Sprint("loading RedisPutPermission success. num keys:", len(PermittedPutOp))
-	if info != lastLoadPutPermissionInfo {
+	//print info like this: info := fmt.Sprint("loading RedisDelPermission success. num keys:%d PermittedDelOp size:%d", KeyNum, len(PermittedDelOp))
+	info := fmt.Sprint("loading RedisDelPermission success. num keys:", len(PermittedDelOp))
+	if info != lastLoadDelPermissionInfo {
 		logger.Lshortfile.Println(info)
-		lastLoadPutPermissionInfo = info
+		lastLoadDelPermissionInfo = info
 	}
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }
-func IsPermittedPutOperation(dataKey string, operation string) bool {
-	batchPermission, ok := PermittedPutOp[dataKey]
+func IsPermittedDelOperation(dataKey string, operation string) bool {
+	// remove :... from dataKey
+	dataKey = strings.Split(dataKey, ":")[0]
+
+	batchPermission, ok := PermittedDelOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
 		//auto set default permission, the operation is dis-allowed
 		batchPermission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{operation}}
-		PermittedPutOp[dataKey] = batchPermission
+		PermittedDelOp[dataKey] = batchPermission
 		//save to redis
 		paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
-		paramCtx.HSet("RedisPutPermission", dataKey, batchPermission)
+		paramCtx.HSet("RedisDelPermission", dataKey, batchPermission)
 		return false
 	}
 	//caes ok
@@ -72,7 +76,7 @@ func IsPermittedPutOperation(dataKey string, operation string) bool {
 	batchPermission.BlackList = append(batchPermission.BlackList, operation)
 	//save to redis
 	if b, err := msgpack.Marshal(batchPermission); err == nil {
-		config.ParamRds.HSet(context.Background(), "RedisPutPermission", dataKey, string(b))
+		config.ParamRds.HSet(context.Background(), "RedisDelPermission", dataKey, string(b))
 	}
 	return false
 }
