@@ -39,11 +39,7 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
-	}
-	structSupposed := mapElem.Elem()
-	if structSupposed.Kind() != reflect.Struct {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
 	}
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
@@ -52,6 +48,7 @@ func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 	}
 	//append all data to mapOut
 	var result error
+	structSupposed := mapElem.Elem()
 	for k, v := range data {
 		//make a copy of stru , to obj
 		obj := reflect.New(structSupposed).Interface()
