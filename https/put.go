@@ -38,6 +38,22 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 			return "false", err
 		}
 		return "true", nil
+	case "RPUSH":
+		//error if empty Key or Field
+		if svcCtx.Key == "" {
+			return "false", ErrEmptyKeyOrField
+		}
+		if !permission.IsPermittedPutOperation(svcCtx.Key, "rpush") {
+			return "false", errors.New("permission denied")
+		}
+		if bytes, err = svcCtx.BodyBytes(); err != nil {
+			return "false", err
+		}
+		cmd := DataRds.RPush(svcCtx.Ctx, svcCtx.Key, bytes)
+		if err = cmd.Err(); err != nil {
+			return "false", err
+		}
+		return "true", nil
 	}
 	return result, nil
 }
