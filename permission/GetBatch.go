@@ -26,7 +26,7 @@ func LoadGetBatchPermissionFromRedis() {
 	// split each value of RedisBatchOpPermission into string[] and store in PermittedBatchOp
 
 	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
-	if err := paramCtx.HGetAllToMap("RedisBatchOpPermission", &PermittedBatchOp); err != nil {
+	if err := paramCtx.HGetAll("RedisBatchOpPermission", &PermittedBatchOp); err != nil {
 		logger.Lshortfile.Println("loading RedisBatchOpPermission  error: " + err.Error() + ". Consider Add hash item  RedisBatchOpPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 		time.Sleep(time.Second * 10)
 		go LoadGetBatchPermissionFromRedis()

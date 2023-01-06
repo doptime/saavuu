@@ -27,7 +27,7 @@ func LoadPutPermissionFromRedis() {
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
 
 	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
-	if err := paramCtx.HGetAllToMap("RedisPutPermission", &PermittedPutOp); err != nil {
+	if err := paramCtx.HGetAll("RedisPutPermission", &PermittedPutOp); err != nil {
 		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error() + ". Consider Add hash item  RedisPutPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 		time.Sleep(time.Second * 10)
 		go LoadPutPermissionFromRedis()
