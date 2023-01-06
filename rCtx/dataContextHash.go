@@ -37,11 +37,7 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool) {
 }
 
 func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
-	//if mapOut is not map[string] struct , return error
-	if reflect.TypeOf(mapOut).Kind() != reflect.Ptr {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
-	}
-	mapElem := reflect.TypeOf(mapOut).Elem()
+	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Fatal("mapOut must be a map[string] struct")
 	}
@@ -62,7 +58,7 @@ func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 		if err = msgpack.Unmarshal([]byte(v), &obj); err != nil {
 			result = err
 		} else {
-			reflect.ValueOf(mapOut).Elem().SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
 		}
 	}
 	return result

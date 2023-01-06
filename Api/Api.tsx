@@ -21,7 +21,6 @@ const JwtRequest = (headers: any = {}) => {
     req.interceptors.response.use(
         (response: any) => {
             if ("data" in response) return response.data;
-            debugger
             return response
         },
         (error: any) => {

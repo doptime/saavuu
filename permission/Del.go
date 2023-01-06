@@ -27,7 +27,7 @@ func LoadDelPermissionFromRedis() {
 	// RedisDelPermission is a hash
 	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
 	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
-	if err := paramCtx.HGetAll("RedisDelPermission", &PermittedDelOp); err != nil {
+	if err := paramCtx.HGetAll("RedisDelPermission", PermittedDelOp); err != nil {
 		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error() + ". Consider Add hash item  RedisDelPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 
 		time.Sleep(time.Second * 10)
