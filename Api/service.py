@@ -6,14 +6,16 @@ import time
 
 
 class Service():
-    def __init__(self, service_name, batch_size, host, port=6379, db=0):
+    def __init__(self,  hostPortDb):
+        portDb=hostPortDb.split(":")[1].split("/")
+        host, port, db = hostPortDb.split(":")[0], int(portDb[0]), int(portDb[1])
         connpool = redis.ConnectionPool(
             host=host, port=port, db=db, decode_responses=False)
         self.rds = redis.Redis(connection_pool=connpool)
-        self.batch_size = batch_size
-        self.service_name = service_name
-        if not service_name.startswith("svc:"):
-            self.service_name = "svc:" + service_name
+        self.batch_size = 64
+        self.service_name=type(self).__name__.split("_")[1]
+        if not self.service_name.startswith("svc:"):
+            self.service_name = "svc:" + self.service_name
         self.task_num_in_60s = datetime.datetime.now().minute << 32
         print(f"service {self.service_name } initialed, batch_size:{self.batch_size} host:{host} port:{port} db:{db}")
 
@@ -60,13 +62,12 @@ class Service():
 ## use like this:
 # class Service_xxx(Service):
 #     def __init__(self):
-#         Service.__init__(self,"xxx",1,"docker.vm",6379,15,)
-
-#     def process(self,items):
-#         # your logic here
-#         for i in items:
-#             self.send_back(i,{"Result":input.value})
+#         Service.__init__(self,"redis.vm:6379/0")
 #     def check_input_item(self, i):
 #             if "BackTo" not in i:
 #                 return False
 #             return True
+#     def process(self,items):
+#         # your logic here
+#         for i in items:
+#             self.send_back(i,{"Result":input.value})
