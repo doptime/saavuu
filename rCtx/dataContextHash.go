@@ -1,9 +1,7 @@
 package rCtx
 
 import (
-	"fmt"
 	"reflect"
-	"strings"
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/logger"
@@ -58,6 +56,25 @@ func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
 		}
 	}
+	return result
+}
+func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
+	mapElem := reflect.TypeOf(_map)
+	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
+	}
+	//HSet each element of _map to redis
+	var result error
+	pipe := dc.Rds.Pipeline()
+	for _, k := range reflect.ValueOf(_map).MapKeys() {
+		v := reflect.ValueOf(_map).MapIndex(k)
+		if bytes, err := msgpack.Marshal(v.Interface()); err != nil {
+			result = err
+		} else {
+			pipe.HSet(dc.Ctx, key, k.String(), bytes)
+		}
+	}
+	pipe.Exec(dc.Ctx)
 	return result
 }
 
@@ -118,218 +135,54 @@ func (dc *DataCtx) Scan(match string, cursor uint64, count int64) (keys []string
 	return keys, err
 }
 
-// update redis value schema, the value should be a pointer to  struct of msgpack
-// match is the key pattern, if match end with *, scan all keys start with match
-// example: rename field "V" to "VAL"
-//
-//	demoStruct struct {
-//		//use client's time
-//		Val           int64 `msgpack:"V,alias:VAL"`
-//	}
-func (dc *DataCtx) UpdateSchema(match string, dataStruct interface{}) (err error) {
+// get all keys that match the pattern, and return a map of key->value
+func (dc *DataCtx) GetAll(match string, mapOut interface{}) (err error) {
 	var (
-		val  []byte
 		keys []string = []string{match}
-		data map[string]string
+		val  []byte
 	)
-	//error check, error if reflect of dataStruct is not a pointer
-	if reflect.TypeOf(dataStruct).Kind() != reflect.Ptr {
-		return fmt.Errorf("dataStruct must be a pointer")
+	mapElem := reflect.TypeOf(mapOut)
+	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
 	}
-	//if keyStart end with *,iter scan all key start with keyStart
-	if strings.HasSuffix(match, "*") {
-		if keys, err = dc.Scan(match, 0, 1024*1024*1024); err != nil {
-			return err
-		}
+	if keys, err = dc.Scan(match, 0, 1024*1024*1024); err != nil {
+		return err
 	}
-	//check type of redis value
+	var result error
+	structSupposed := mapElem.Elem()
 	for _, key := range keys {
-		if dc.Rds.Type(dc.Ctx, key).Val() == "hash" {
-			cmd := dc.Rds.HGetAll(dc.Ctx, key)
-			if data, err = cmd.Result(); err != nil {
-				return err
-			}
-			pipe := dc.Rds.Pipeline()
-			for field, v := range data {
-				if msgpack.Unmarshal([]byte(v), dataStruct) != nil {
-					return err
-				}
-				bytes, err := msgpack.Marshal(dataStruct)
-				if err != nil {
-					return err
-				}
-				if status := pipe.HSet(dc.Ctx, key, field, bytes); status.Err() != nil {
-					return status.Err()
-				}
-			}
-			if _, err := pipe.Exec(dc.Ctx); err != nil {
-				return err
-			}
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "string" {
-			if val, err = dc.Rds.Get(dc.Ctx, key).Bytes(); err != nil {
-				return err
-			}
-			if msgpack.Unmarshal(val, dataStruct) != nil {
-				return err
-			}
-			bytes, err := msgpack.Marshal(dataStruct)
-			if err != nil {
-				return err
-			}
-			if err = dc.Rds.Set(dc.Ctx, key, bytes, 0).Err(); err != nil {
-				return err
-			}
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "list" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
-
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "set" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "zset" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
+		if val, result = dc.Rds.Get(dc.Ctx, key).Bytes(); result != nil {
+			err = result
+			continue
+		}
+		obj := reflect.New(structSupposed).Interface()
+		if msgpack.Unmarshal(val, obj) != nil {
+			err = result
+			continue
 		} else {
-			return fmt.Errorf("unknown type")
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(obj).Elem())
 		}
 	}
-	return nil
+	return result
 }
 
-// update redis value schema, the value should be a pointer to  struct of msgpack
-// match is the key pattern, if match end with *, scan all keys start with match
-// demo :
-// dc := saavuu.NewDataContext(context.Background())
-// var meditEpisode *MeditationEpisode = &MeditationEpisode{}
-// StructureOldToNew := func(old interface{}) interface{} {
-
-//		type Bar struct {
-//			Duration uint32 `msgpack:"D"`
-//		}
-//		var oldMeditEpisode *MeditationEpisode = old.(*MeditationEpisode)
-//		_newStruct := Bar{
-//			Duration:     uint32(oldMeditEpisode.Duration) * 1000,
-//		}
-//		return _newStruct
-//	}
-//
-// dc.UpdateSchemaViaFunc("TrajMedit:ekebmgfi24g6:*", meditEpisode, StructureOldToNew)
-func (dc *DataCtx) UpdateSchemaViaFunc(match string, dataStruct interface{}, StructOldToNew func(interface{}) interface{}) (err error) {
-	var (
-		val  []byte
-		keys []string = []string{match}
-		data map[string]string
-	)
-	//error check, error if reflect of dataStruct is not a pointer
-	if reflect.TypeOf(dataStruct).Kind() != reflect.Ptr {
-		return fmt.Errorf("dataStruct must be a pointer")
+// set each key value of _map to redis string type key value
+func (dc *DataCtx) SetAll(_map interface{}) (err error) {
+	mapElem := reflect.TypeOf(_map)
+	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
 	}
-	//if keyStart end with *,iter scan all key start with keyStart
-	if strings.HasSuffix(match, "*") {
-		if keys, err = dc.Scan(match, 0, 1024*1024*1024); err != nil {
-			return err
-		}
-	}
-	//check type of redis value
-	for _, key := range keys {
-		if dc.Rds.Type(dc.Ctx, key).Val() == "hash" {
-			cmd := dc.Rds.HGetAll(dc.Ctx, key)
-			if data, err = cmd.Result(); err != nil {
-				return err
-			}
-			pipe := dc.Rds.Pipeline()
-			for field, v := range data {
-				if msgpack.Unmarshal([]byte(v), dataStruct) != nil {
-					return err
-				}
-				newStruct := StructOldToNew(dataStruct)
-				bytes, err := msgpack.Marshal(newStruct)
-				if err != nil {
-					return err
-				}
-				if status := pipe.HSet(dc.Ctx, key, field, bytes); status.Err() != nil {
-					return status.Err()
-				}
-			}
-			if _, err := pipe.Exec(dc.Ctx); err != nil {
-				return err
-			}
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "string" {
-			if val, err = dc.Rds.Get(dc.Ctx, key).Bytes(); err != nil {
-				return err
-			}
-			if msgpack.Unmarshal(val, dataStruct) != nil {
-				return err
-			}
-			bytes, err := msgpack.Marshal(dataStruct)
-			if err != nil {
-				return err
-			}
-			if err = dc.Rds.Set(dc.Ctx, key, bytes, 0).Err(); err != nil {
-				return err
-			}
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "list" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
-
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "set" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "zset" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
+	//HSet each element of _map to redis
+	var result error
+	pipe := dc.Rds.Pipeline()
+	for _, k := range reflect.ValueOf(_map).MapKeys() {
+		v := reflect.ValueOf(_map).MapIndex(k)
+		if bytes, err := msgpack.Marshal(v.Interface()); err != nil {
+			result = err
 		} else {
-			return fmt.Errorf("unknown type")
+			pipe.Set(dc.Ctx, k.String(), bytes, -1)
 		}
 	}
-	return nil
-}
-
-// iterate redis value , send each value to DataProcess,
-// DataProcess is a function with 3 parameters, key, field, dataStruct
-// the dataStruct should be a pointer to  struct
-func (dc *DataCtx) DataIterator(match string, dataStruct interface{}, DataProcess func(string, string, interface{})) (err error) {
-	var (
-		val  []byte
-		keys []string = []string{match}
-		data map[string]string
-	)
-	//error check, error if reflect of dataStruct is not a pointer
-	if reflect.TypeOf(dataStruct).Kind() != reflect.Ptr {
-		return fmt.Errorf("dataStruct must be a pointer")
-	}
-	//if keyStart end with *,iter scan all key start with keyStart
-	if strings.HasSuffix(match, "*") {
-		if keys, err = dc.Scan(match, 0, 1024*1024*1024); err != nil {
-			return err
-		}
-	}
-	//check type of redis value
-	for _, key := range keys {
-		if dc.Rds.Type(dc.Ctx, key).Val() == "hash" {
-			cmd := dc.Rds.HGetAll(dc.Ctx, key)
-			if data, err = cmd.Result(); err != nil {
-				return err
-			}
-			for field, v := range data {
-				if msgpack.Unmarshal([]byte(v), dataStruct) != nil {
-					return err
-				}
-				DataProcess(key, field, dataStruct)
-			}
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "string" {
-			if val, err = dc.Rds.Get(dc.Ctx, key).Bytes(); err != nil {
-				return err
-			}
-			if msgpack.Unmarshal(val, dataStruct) != nil {
-				return err
-			}
-			DataProcess(key, "", dataStruct)
-		} else if dc.Rds.Type(dc.Ctx, key).Val() == "list" {
-			//not impleted yet
-			return fmt.Errorf("not impleted yet")
-
-		}
-	}
-	return nil
+	pipe.Exec(dc.Ctx)
+	return result
 }
