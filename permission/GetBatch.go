@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vmihailenco/msgpack/v5"
-	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu"
 	"github.com/yangkequn/saavuu/logger"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
 type BatchPermission struct {
@@ -25,7 +23,7 @@ func LoadGetBatchPermissionFromRedis() {
 	// RedisBatchOpPermission is a hash
 	// split each value of RedisBatchOpPermission into string[] and store in PermittedBatchOp
 
-	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
+	paramCtx := saavuu.NewParamContext(context.Background())
 	if err := paramCtx.HGetAll("RedisBatchOpPermission", PermittedBatchOp); err != nil {
 		logger.Lshortfile.Println("loading RedisBatchOpPermission  error: " + err.Error() + ". Consider Add hash item  RedisBatchOpPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 		time.Sleep(time.Second * 10)
@@ -49,9 +47,8 @@ func IsPermittedBatchOperation(dataKey string, operation string) bool {
 		batchPermission = BatchPermission{Key: dataKey, CreateAt: time.Now().Unix(), Actions: []string{operation}}
 		PermittedBatchOp[dataKey] = batchPermission
 		//save to redis
-		if b, err := msgpack.Marshal(batchPermission); err == nil {
-			config.ParamRds.HSet(context.Background(), "RedisBatchOpPermission", dataKey, string(b))
-		}
+		paramCtx := saavuu.NewParamContext(context.Background())
+		paramCtx.HSet("RedisBatchOpPermission", dataKey, batchPermission)
 		return true
 	}
 
@@ -69,7 +66,7 @@ func IsPermittedBatchOperation(dataKey string, operation string) bool {
 		batchPermission.Actions = append(batchPermission.Actions, operation)
 		PermittedBatchOp[dataKey] = batchPermission
 		//save to redis
-		paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
+		paramCtx := saavuu.NewParamContext(context.Background())
 		paramCtx.HSet("RedisBatchOpPermission", dataKey, batchPermission)
 		return true
 	}

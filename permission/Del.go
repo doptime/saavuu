@@ -6,10 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmihailenco/msgpack/v5"
-	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu"
 	"github.com/yangkequn/saavuu/logger"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
 type Permission struct {
@@ -26,7 +24,7 @@ func LoadDelPermissionFromRedis() {
 	// read RedisDelPermission usiing ParamRds
 	// RedisDelPermission is a hash
 	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
-	paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
+	paramCtx := saavuu.NewParamContext(context.Background())
 	if err := paramCtx.HGetAll("RedisDelPermission", PermittedDelOp); err != nil {
 		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error() + ". Consider Add hash item  RedisDelPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 
@@ -54,7 +52,7 @@ func IsPermittedDelOperation(dataKey string, operation string) bool {
 		batchPermission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{operation}}
 		PermittedDelOp[dataKey] = batchPermission
 		//save to redis
-		paramCtx := rCtx.DataCtx{Ctx: context.Background(), Rds: config.ParamRds}
+		paramCtx := saavuu.NewParamContext(context.Background())
 		paramCtx.HSet("RedisDelPermission", dataKey, batchPermission)
 		return false
 	}
@@ -75,8 +73,7 @@ func IsPermittedDelOperation(dataKey string, operation string) bool {
 	//add operation to black list for convenient modification
 	batchPermission.BlackList = append(batchPermission.BlackList, operation)
 	//save to redis
-	if b, err := msgpack.Marshal(batchPermission); err == nil {
-		config.ParamRds.HSet(context.Background(), "RedisDelPermission", dataKey, string(b))
-	}
+	paramCtx := saavuu.NewParamContext(context.Background())
+	paramCtx.HSet("RedisDelPermission", dataKey, batchPermission)
 	return false
 }
