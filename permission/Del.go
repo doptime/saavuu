@@ -25,7 +25,8 @@ func LoadDelPermissionFromRedis() {
 	// RedisDelPermission is a hash
 	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
 	paramCtx := saavuu.NewParamContext(context.Background())
-	if err := paramCtx.HGetAll("RedisDelPermission", PermittedDelOp); err != nil {
+	var mapTmp map[string]Permission = make(map[string]Permission)
+	if err := paramCtx.HGetAll("RedisDelPermission", mapTmp); err != nil {
 		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error() + ". Consider Add hash item  RedisDelPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
 
 		time.Sleep(time.Second * 10)
@@ -33,11 +34,12 @@ func LoadDelPermissionFromRedis() {
 		return
 	}
 	//print info like this: info := fmt.Sprint("loading RedisDelPermission success. num keys:%d PermittedDelOp size:%d", KeyNum, len(PermittedDelOp))
-	info := fmt.Sprint("loading RedisDelPermission success. num keys:", len(PermittedDelOp))
+	info := fmt.Sprint("loading RedisDelPermission success. num keys:", len(mapTmp))
 	if info != lastLoadDelPermissionInfo {
 		logger.Lshortfile.Println(info)
 		lastLoadDelPermissionInfo = info
 	}
+	PermittedDelOp = mapTmp
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }
