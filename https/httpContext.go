@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 type HttpContext struct {
@@ -71,4 +72,23 @@ func (svc *HttpContext) BodyBytes() (data []byte, err error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+// Ensure the body is msgpack format
+func (svc *HttpContext) MsgpackBody() (bytes []byte, err error) {
+	var (
+		data interface{}
+	)
+	if bytes, err = svc.BodyBytes(); err != nil {
+		return nil, err
+	}
+	//should make sure the data is msgpack format
+	if err = msgpack.Unmarshal(bytes, &data); err != nil {
+		return nil, err
+	}
+	if bytes, err = msgpack.Marshal(data); err != nil {
+		return nil, err
+	}
+	//return remarshaled bytes, because golang msgpack is better fullfill than javascript msgpack
+	return bytes, nil
 }
