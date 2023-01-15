@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/yangkequn/saavuu"
@@ -43,6 +44,7 @@ func LoadGetBatchPermissionFromRedis() {
 	go LoadGetBatchPermissionFromRedis()
 }
 func IsPermittedBatchOperation(dataKey string, operation string) bool {
+	dataKey = strings.Split(dataKey, ":")[0]
 	batchPermission, ok := PermittedBatchOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
