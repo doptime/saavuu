@@ -13,6 +13,7 @@ type Configuration struct {
 	RedisPasswordData string
 	RedisDbData       int
 
+	DevelopMode     bool
 	JwtSecret       string
 	JwtIgnoreFields string
 	MaxBufferSize   int64

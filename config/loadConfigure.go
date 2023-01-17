@@ -39,6 +39,12 @@ func LoadConfigFromEnv() (err error) {
 	if Cfg.MaxBufferSize, err = strconv.ParseInt(loadOSEnv("MAX_BUFFER_SIZE", "Error: MAX_BUFFER_SIZE is not set "), 10, 64); err != nil {
 		logger.Lshortfile.Panicln("Error: MAX_BUFFER_SIZE is not a number")
 	}
+	if dev := loadOSEnv("DEVELOP_MODE", ""); len(dev) > 0 {
+		if Cfg.DevelopMode, err = strconv.ParseBool(dev); err != nil {
+			logger.Lshortfile.Println("Error: bad string of env: DEVELOP_MODE")
+		}
+		logger.Std.Println("DEVELOP_MODE is set to ", Cfg.DevelopMode)
+	}
 
 	UseConfig()
 	SaveConfigToRedis(ParamRds, loadOSEnv("SAAVUU_CONFIG_KEY", "Error: Can not load SAAVUU_CONFIG_KEY from env"))

@@ -7,15 +7,9 @@ import (
 	"time"
 
 	"github.com/yangkequn/saavuu"
+	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
 )
-
-type PutPermission struct {
-	Key       string
-	CreateAt  int64
-	WhiteList []string
-	BlackList []string
-}
 
 var PermittedPutOp map[string]Permission = make(map[string]Permission)
 var lastLoadPutPermissionInfo string = ""
@@ -45,35 +39,34 @@ func LoadPutPermissionFromRedis() {
 }
 func IsPermittedPutOperation(dataKey string, operation string) bool {
 	dataKey = strings.Split(dataKey, ":")[0]
-	batchPermission, ok := PermittedPutOp[dataKey]
+	permission, ok := PermittedPutOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
-		//auto set default permission, the operation is dis-allowed
-		batchPermission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{operation}}
-		PermittedPutOp[dataKey] = batchPermission
-		//save to redis
-		paramCtx := saavuu.NewParamContext(context.Background())
-		paramCtx.HSet("RedisPutPermission", dataKey, batchPermission)
-		return false
+		permission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{}}
 	}
-	//caes ok
 
 	//return true if allowed
-	for _, v := range batchPermission.WhiteList {
+	for _, v := range permission.WhiteList {
 		if v == operation {
 			return true
 		}
 	}
 	// if operation not in black list, then add it to black list
-	for _, v := range batchPermission.BlackList {
+	for _, v := range permission.BlackList {
 		if v == operation {
 			return false
 		}
 	}
-	//add operation to black list for convenient modification
-	batchPermission.BlackList = append(batchPermission.BlackList, operation)
+
+	// if using develop mode, then add operation to white list; else add operation to black list
+	if config.Cfg.DevelopMode {
+		permission.WhiteList = append(permission.WhiteList, operation)
+	} else {
+		permission.BlackList = append(permission.BlackList, operation)
+	}
+	PermittedPutOp[dataKey] = permission
 	//save to redis
 	paramCtx := saavuu.NewParamContext(context.Background())
-	paramCtx.HSet("RedisPutPermission", dataKey, batchPermission)
-	return false
+	paramCtx.HSet("RedisPutPermission", dataKey, permission)
+	return config.Cfg.DevelopMode
 }
