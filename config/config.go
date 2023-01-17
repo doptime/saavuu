@@ -13,6 +13,7 @@ type Configuration struct {
 	RedisPasswordData string
 	RedisDbData       int
 
+	//DevelopMode should never be true in production
 	DevelopMode     bool
 	JwtSecret       string
 	JwtIgnoreFields string
