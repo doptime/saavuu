@@ -14,7 +14,7 @@ import (
 type Permission struct {
 	Key       string
 	CreateAt  int64
-	WhiteList []string `msgpack:"alias:Actions"`
+	WhiteList []string
 	BlackList []string
 }
 
