@@ -57,7 +57,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(_v)
 	case "HGETALL":
 		// check batch operation permission
-		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hgetall") {
+		if !permission.IsGetPermitted(svcCtx.Key, "hgetall") {
 			return nil, errors.New("batch operation HGETALL not permitted")
 		}
 		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
@@ -74,7 +74,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(maps)
 
 	case "HMGET":
-		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hmget") {
+		if !permission.IsGetPermitted(svcCtx.Key, "hmget") {
 			return nil, errors.New("batch operation HMGET not permitted")
 		}
 		cmd := DataRds.HMGet(svcCtx.Ctx, svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
@@ -93,7 +93,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return json.Marshal(maps)
 	case "HKEYS":
-		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hkeys") {
+		if !permission.IsGetPermitted(svcCtx.Key, "hkeys") {
 			return nil, errors.New("batch operation HKEYS not permitted")
 		}
 		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
@@ -114,7 +114,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return strconv.FormatInt(cmd.Val(), 10), nil
 	case "HVALS":
-		if !permission.IsPermittedBatchOperation(svcCtx.Key, "hvals") {
+		if !permission.IsGetPermitted(svcCtx.Key, "hvals") {
 			return nil, errors.New("batch operation HVALS not permitted")
 		}
 		cmd := DataRds.HVals(svcCtx.Ctx, svcCtx.Key)

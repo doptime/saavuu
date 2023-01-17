@@ -22,7 +22,7 @@ func LoadPutPermissionFromRedis() {
 	paramCtx := saavuu.NewParamContext(context.Background())
 	var mapTmp map[string]Permission = make(map[string]Permission)
 	if err := paramCtx.HGetAll("RedisPutPermission", mapTmp); err != nil {
-		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error() + ". Consider Add hash item  RedisPutPermission in redis,with key redis key before ':' and value as permitted batch operations seperated by ','")
+		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error())
 		time.Sleep(time.Second * 10)
 		go LoadPutPermissionFromRedis()
 		return
@@ -37,7 +37,7 @@ func LoadPutPermissionFromRedis() {
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }
-func IsPermittedPutOperation(dataKey string, operation string) bool {
+func IsPutPermitted(dataKey string, operation string) bool {
 	dataKey = strings.Split(dataKey, ":")[0]
 	permission, ok := PermittedPutOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis

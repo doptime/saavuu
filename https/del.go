@@ -19,7 +19,7 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		if svcCtx.Key == "" || svcCtx.Field == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		if !permission.IsPermittedDelOperation(svcCtx.Key, "hdel") {
+		if !permission.IsDelPermitted(svcCtx.Key, "hdel") {
 			return "false", errors.New("permission denied")
 		}
 		cmd := config.DataRds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)

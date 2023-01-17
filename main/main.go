@@ -124,7 +124,7 @@ func main() {
 
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
-	go permission.LoadGetBatchPermissionFromRedis()
+	go permission.LoadGetPermissionFromRedis()
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
