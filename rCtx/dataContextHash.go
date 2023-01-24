@@ -38,9 +38,9 @@ func (pc *ParamCtx) HSet(key string, field string, param interface{}) (err error
 	return HSet(pc.Ctx, pc.Rds, key, field, param)
 }
 
-func (dc *DataCtx) HExists(key string, field string) (ok bool) {
+func (dc *DataCtx) HExists(key string, field string) (ok bool, err error) {
 	cmd := dc.Rds.HExists(dc.Ctx, key, field)
-	return cmd.Val()
+	return cmd.Val(), cmd.Err()
 }
 func HGetAll(ctx context.Context, rds *redis.Client, key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
@@ -91,6 +91,20 @@ func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
 	pipe.Exec(dc.Ctx)
 	return result
 }
+func (dc *DataCtx) HMGET(key string, fields ...string) (values []interface{}, err error) {
+	if cmd := dc.Rds.HMGet(dc.Ctx, key, fields...); cmd.Err() == nil {
+		//unmarshal each value of cmd.Val() to interface{}, using msgpack
+		for _, v := range cmd.Val() {
+			var obj interface{}
+			if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
+				values = append(values, obj)
+			}
+		}
+		return values, nil
+	} else {
+		return nil, cmd.Err()
+	}
+}
 
 func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
@@ -110,21 +124,29 @@ func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err
 	}
 	return param, nil
 }
-func (dc *DataCtx) HLen(key string) (length int64) {
+func (dc *DataCtx) HLen(key string) (length int64, err error) {
 	cmd := dc.Rds.HLen(dc.Ctx, key)
-	return cmd.Val()
+	return cmd.Val(), cmd.Err()
 }
 func (dc *DataCtx) HDel(key string, field string) (err error) {
 	status := dc.Rds.HDel(dc.Ctx, key, field)
 	return status.Err()
 }
-func (dc *DataCtx) HKeys(key string) (fields []string) {
+func (dc *DataCtx) HKeys(key string) (fields []string, err error) {
 	cmd := dc.Rds.HKeys(dc.Ctx, key)
-	return cmd.Val()
+	return cmd.Val(), cmd.Err()
 }
-func (dc *DataCtx) HVals(key string) (values []string) {
+func (dc *DataCtx) HVals(key string) (values []interface{}, err error) {
 	cmd := dc.Rds.HVals(dc.Ctx, key)
-	return cmd.Val()
+	data := cmd.Val()
+	//unmarshal each value of cmd.Val() to interface{}, using msgpack
+	for _, v := range data {
+		var obj interface{}
+		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
+			values = append(values, obj)
+		}
+	}
+	return values, nil
 }
 func (dc *DataCtx) HIncrBy(key string, field string, increment int64) (err error) {
 	status := dc.Rds.HIncrBy(dc.Ctx, key, field, increment)

@@ -10,17 +10,13 @@ import (
 	. "github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/permission"
 	"github.com/yangkequn/saavuu/rCtx"
-
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		jwts         map[string]interface{} = map[string]interface{}{}
-		maps         map[string]interface{} = map[string]interface{}{}
-		data         []byte
-		resultBytes  []byte = []byte{}
-		resultString string = ""
+		jwts       map[string]interface{} = map[string]interface{}{}
+		maps       map[string]interface{} = map[string]interface{}{}
+		_interface interface{}
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -33,114 +29,47 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	if len(svcCtx.Key) <= 0 || !(svcCtx.Key[0] >= 'A' && svcCtx.Key[0] <= 'Z') {
 		return nil, errors.New("private Key")
 	}
+	dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
-		cmd := DataRds.HGet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
-		if data, err = cmd.Bytes(); err != nil {
-			return "", err
-		}
-		//fill content type, to support binary or json response
-		if svcCtx.ResponseContentType != "application/json" {
-			if msgpack.Unmarshal(data, &resultBytes) == nil {
-				return resultBytes, err
-			}
-			if msgpack.Unmarshal(data, &resultString) == nil {
-				return resultString, err
-			}
-		}
-
-		var _v interface{}
-		if err = msgpack.Unmarshal(data, &_v); err != nil {
-			return nil, errors.New("unsupported data type")
-		}
-		return json.Marshal(_v)
+		return _interface, dc.HGet(svcCtx.Key, svcCtx.Field, &_interface)
 	case "HGETALL":
 		// check batch operation permission
 		if !permission.IsGetPermitted(svcCtx.Key, "hgetall") {
 			return nil, errors.New("batch operation HGETALL not permitted")
 		}
-		cmd := DataRds.HGetAll(svcCtx.Ctx, svcCtx.Key)
-		if err = cmd.Err(); err != nil {
-			return "", err
-		}
-		for k, v := range cmd.Val() {
-			var _v interface{}
-			if err = msgpack.Unmarshal([]byte(v), &_v); err != nil {
-				continue
-			}
-			maps[k] = _v
-		}
-		return json.Marshal(maps)
+		return maps, dc.HGetAll(svcCtx.Key, maps)
 
 	case "HMGET":
 		if !permission.IsGetPermitted(svcCtx.Key, "hmget") {
 			return nil, errors.New("batch operation HMGET not permitted")
 		}
-		cmd := DataRds.HMGet(svcCtx.Ctx, svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
-		if err = cmd.Err(); err != nil {
-			return "", err
-		}
-		for i, v := range cmd.Val() {
-			if v == nil {
-				continue
-			}
-			var _v interface{}
-			if err = msgpack.Unmarshal([]byte(v.(string)), &_v); err != nil {
-				continue
-			}
-			maps[strings.Split(svcCtx.Field, ",")[i]] = _v
-		}
-		return json.Marshal(maps)
+		return dc.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
 		if !permission.IsGetPermitted(svcCtx.Key, "hkeys") {
 			return nil, errors.New("batch operation HKEYS not permitted")
 		}
-		cmd := DataRds.HKeys(svcCtx.Ctx, svcCtx.Key)
-		if err = cmd.Err(); err != nil {
+		if keys, err := dc.HKeys(svcCtx.Key); err != nil {
 			return "", err
+		} else {
+			return json.Marshal(keys)
 		}
-		return json.Marshal(cmd.Val())
 	case "HEXISTS":
-		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
-		if ok := dc.HExists(svcCtx.Key, svcCtx.Field); ok {
-			return "true", nil
-		}
-		return "false", nil
+		return dc.HExists(svcCtx.Key, svcCtx.Field)
 	case "HLEN":
-		cmd := DataRds.HLen(svcCtx.Ctx, svcCtx.Key)
-		if err = cmd.Err(); err != nil {
-			return "", err
-		}
-		return strconv.FormatInt(cmd.Val(), 10), nil
+		return dc.HLen(svcCtx.Key)
 	case "HVALS":
 		if !permission.IsGetPermitted(svcCtx.Key, "hvals") {
 			return nil, errors.New("batch operation HVALS not permitted")
 		}
-		cmd := DataRds.HVals(svcCtx.Ctx, svcCtx.Key)
-		if err = cmd.Err(); err != nil {
-			return "", err
-		}
-		result := []interface{}{}
-		for _, v := range cmd.Val() {
-
-			var _v interface{}
-			if err = msgpack.Unmarshal([]byte(v), &_v); err != nil {
-				continue
-			}
-			result = append(result, _v)
-		}
-		return json.Marshal(result)
+		return dc.HVals(svcCtx.Key)
 	case "SISMEMBER":
 		Member := svcCtx.Req.FormValue("Member")
 		if Member == "" {
 			return "", errors.New("no Member")
 		}
-		dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
-		if ok := dc.SIsMember(svcCtx.Key, svcCtx.Field); ok {
-			return "true", nil
-		}
-		return "false", nil
+		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
 	case "ZRANGE":
 		var (
 			Start, Stop, WITHSCORES string
@@ -232,12 +161,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		if Member == "" {
 			return "", errors.New("no Member")
 		}
-		cmd := DataRds.ZRank(svcCtx.Ctx, svcCtx.Key, Member)
-		if err = cmd.Err(); err != nil {
-			return "", err
-		}
-		return strconv.FormatInt(cmd.Val(), 10), nil
-
+		return dc.ZRank(svcCtx.Key, Member)
 	}
 	return nil, errors.New("unsupported command")
 

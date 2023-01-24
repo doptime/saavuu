@@ -24,9 +24,9 @@ func (dc *DataCtx) ZRevRangeWithScores(key string, start, stop int64) (members [
 	cmd := dc.Rds.ZRevRangeWithScores(dc.Ctx, key, start, stop)
 	return cmd.Result()
 }
-func (dc *DataCtx) ZRank(key string, member string) (rank int64) {
+func (dc *DataCtx) ZRank(key string, member string) (rank int64, err error) {
 	cmd := dc.Rds.ZRank(dc.Ctx, key, member)
-	return cmd.Val()
+	return cmd.Val(), cmd.Err()
 }
 func (dc *DataCtx) ZRevRank(key string, member string) (rank int64) {
 	cmd := dc.Rds.ZRevRank(dc.Ctx, key, member)

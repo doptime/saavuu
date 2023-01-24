@@ -13,8 +13,6 @@ import (
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
-
-	"github.com/vmihailenco/msgpack/v5"
 )
 
 // listten to a port and start http server
@@ -23,7 +21,6 @@ func RedisHttpStart(path string, port int) {
 		result      interface{}
 		b           []byte
 		s           string
-		ok          bool
 		isByteArray bool
 		isString    bool
 		err         error
@@ -34,7 +31,7 @@ func RedisHttpStart(path string, port int) {
 		if https.CorsChecked(r, w) {
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*120)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*12000)
 		defer cancel()
 		svcCtx := https.NewHttpContext(ctx, r, w)
 		if r.Method == "GET" {
@@ -70,30 +67,6 @@ func RedisHttpStart(path string, port int) {
 		} else {
 			//keep fields exits in svcContext.QueryFields
 			if len(svcCtx.QueryFields) > 0 {
-				_map := map[string]interface{}{}
-				//check if type of result is not map[string]interface{}
-				if _map, ok = result.(map[string]interface{}); !ok {
-					//convert result to map[string]interface{} using msgpack
-					if b, err = msgpack.Marshal(result); err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte(err.Error()))
-						return
-					}
-					if err = msgpack.Unmarshal(b, &_map); err != nil {
-						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte(err.Error()))
-						return
-					}
-				}
-				//remove fields not exits in svcContext.QueryFields
-				if svcCtx.QueryFields != "*" {
-					for k := range _map {
-						if !strings.Contains(svcCtx.QueryFields, k) {
-							delete(_map, k)
-						}
-					}
-				}
-				result = _map
 				//reponse result json to client
 				if b, err = json.Marshal(result); err != nil {
 					w.WriteHeader(http.StatusInternalServerError)

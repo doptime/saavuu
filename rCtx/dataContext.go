@@ -68,9 +68,9 @@ func (dc *DataCtx) SRem(key string, members ...interface{}) (err error) {
 	status := dc.Rds.SRem(dc.Ctx, key, members)
 	return status.Err()
 }
-func (dc *DataCtx) SIsMember(key string, param interface{}) (ok bool) {
+func (dc *DataCtx) SIsMember(key string, param interface{}) (ok bool, err error) {
 	cmd := dc.Rds.SIsMember(dc.Ctx, key, param)
-	return cmd.Val()
+	return cmd.Result()
 }
 func (dc *DataCtx) SMembers(key string, param interface{}) (members []string, err error) {
 	cmd := dc.Rds.SMembers(dc.Ctx, key)
