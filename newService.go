@@ -93,20 +93,11 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 			pipline.LRange(c, serviceName, 0, DataRcvBatchSize-1)
 			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
 			cmd, err := pipline.Exec(c)
-			if data = cmd[0].(*redis.StringSliceCmd).Val(); err != nil {
+			if data = cmd[0].(*redis.StringSliceCmd).Val(); err != nil || len(data) == 0 {
 				time.Sleep(time.Millisecond * 100)
 				continue
 			}
-
-			//try to receive another 1 data, using BLPop
-			// 10秒阻塞连接
-			if len(data) == 0 {
-				rlt := config.ParamRds.BLPop(c, time.Second*10, serviceName)
-				if data = rlt.Val(); rlt.Err() == nil && len(data) == 2 {
-					data = data[1:]
-				}
-			}
-
+			//nolonger using BLPop to receive another 1 data, avoid sockert timeout as service increase
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
 				counter.Add(serviceName, 1)
