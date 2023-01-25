@@ -3,6 +3,7 @@ package https
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,33 +24,21 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	if len(svcCtx.Key) == 0 {
 		return nil, errors.New("no key")
+	} else if act := strings.ToLower(svcCtx.Cmd); !permission.IsGetPermitted(svcCtx.Key, act) {
+		// check operation permission
+		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	//check auth. only Key start with upper case are allowed to access
-	if len(svcCtx.Key) <= 0 || !(svcCtx.Key[0] >= 'A' && svcCtx.Key[0] <= 'Z') {
-		return nil, errors.New("private Key")
-	}
 	dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
 		return _interface, dc.HGet(svcCtx.Key, svcCtx.Field, &_interface)
 	case "HGETALL":
-		// check batch operation permission
-		if !permission.IsGetPermitted(svcCtx.Key, "hgetall") {
-			return nil, errors.New("batch operation HGETALL not permitted")
-		}
 		return maps, dc.HGetAll(svcCtx.Key, maps)
-
 	case "HMGET":
-		if !permission.IsGetPermitted(svcCtx.Key, "hmget") {
-			return nil, errors.New("batch operation HMGET not permitted")
-		}
 		return dc.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
-		if !permission.IsGetPermitted(svcCtx.Key, "hkeys") {
-			return nil, errors.New("batch operation HKEYS not permitted")
-		}
 		if keys, err := dc.HKeys(svcCtx.Key); err != nil {
 			return "", err
 		} else {
@@ -60,9 +49,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HLEN":
 		return dc.HLen(svcCtx.Key)
 	case "HVALS":
-		if !permission.IsGetPermitted(svcCtx.Key, "hvals") {
-			return nil, errors.New("batch operation HVALS not permitted")
-		}
 		return dc.HVals(svcCtx.Key)
 	case "SISMEMBER":
 		Member := svcCtx.Req.FormValue("Member")
