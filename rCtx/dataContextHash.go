@@ -2,6 +2,7 @@ package rCtx
 
 import (
 	"context"
+	"errors"
 	"reflect"
 
 	"github.com/go-redis/redis/v9"
@@ -12,7 +13,8 @@ import (
 func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error) {
 	//use reflect to check if param is a pointer
 	if reflect.TypeOf(param).Kind() != reflect.Ptr {
-		logger.Lshortfile.Fatal("param must be a pointer")
+		logger.Lshortfile.Println("param must be a pointer")
+		return errors.New("param must be a pointer")
 	}
 
 	cmd := dc.Rds.HGet(dc.Ctx, key, field)
@@ -45,7 +47,8 @@ func (dc *DataCtx) HExists(key string, field string) (ok bool, err error) {
 func HGetAll(ctx context.Context, rds *redis.Client, key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
+		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
+		return errors.New("mapOut must be a map[string] struct/interface{}")
 	}
 	cmd := rds.HGetAll(ctx, key)
 	data, err := cmd.Result()
@@ -75,7 +78,8 @@ func (pc *ParamCtx) HGetAll(key string, mapOut interface{}) (err error) {
 func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
+		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
+		return errors.New("mapOut must be a map[string] struct/interface{}")
 	}
 	//HSet each element of _map to redis
 	var result error
