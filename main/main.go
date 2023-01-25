@@ -17,17 +17,17 @@ import (
 
 // listten to a port and start http server
 func RedisHttpStart(path string, port int) {
-	var (
-		result     interface{}
-		b          []byte
-		s          string
-		ok         bool
-		err        error
-		httpStatus int = http.StatusOK
-	)
 	//get item
 	router := http.NewServeMux()
 	router.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+		var (
+			result     interface{}
+			b          []byte
+			s          string
+			ok         bool
+			err        error
+			httpStatus int = http.StatusOK
+		)
 		if https.CorsChecked(r, w) {
 			return
 		}
