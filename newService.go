@@ -43,10 +43,10 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	serviceName = "svc:" + serviceName
 	//check configureation is loaded
 	if config.DataRds == nil {
-		panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
+		logger.Lshortfile.Panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
 	if config.ParamRds == nil {
-		panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
+		logger.Lshortfile.Panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
 
 	ServiceMap[serviceName] = f
@@ -88,34 +88,25 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		var data []string
 		c := context.Background()
 		for {
-			//fetch datas from redis
+			//fetch datas from redis,using LRange
 			pipline := config.ParamRds.Pipeline()
 			pipline.LRange(c, serviceName, 0, DataRcvBatchSize-1)
 			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
 			cmd, err := pipline.Exec(c)
-			if err != nil {
+			if data = cmd[0].(*redis.StringSliceCmd).Val(); err != nil {
 				time.Sleep(time.Millisecond * 100)
 				continue
-			} else {
-				data = cmd[0].(*redis.StringSliceCmd).Val()
-				//try use BLPop to get 1 data
-				if len(data) == 0 {
-					rlt := config.ParamRds.BLPop(c, time.Second, serviceName)
-					if rlt.Err() != nil {
-						time.Sleep(time.Millisecond * 100)
-						continue
-					}
-					if data = rlt.Val(); len(data) != 2 {
-						time.Sleep(time.Millisecond * 100)
-						continue
-					}
+			}
+
+			//try to receive another 1 data, using BLPop
+			// 10秒阻塞连接
+			if len(data) == 0 {
+				rlt := config.ParamRds.BLPop(c, time.Second*10, serviceName)
+				if data = rlt.Val(); rlt.Err() == nil && len(data) == 2 {
 					data = data[1:]
 				}
-				if len(data) == 0 {
-					time.Sleep(time.Millisecond * 100)
-					continue
-				}
 			}
+
 			for _, s := range data {
 				go ProcessOneJob([]byte(s))
 				counter.Add(serviceName, 1)
