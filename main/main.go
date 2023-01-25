@@ -18,12 +18,12 @@ import (
 // listten to a port and start http server
 func RedisHttpStart(path string, port int) {
 	var (
-		result      interface{}
-		b           []byte
-		s           string
-		isByteArray bool
-		isString    bool
-		err         error
+		result     interface{}
+		b          []byte
+		s          string
+		ok         bool
+		err        error
+		httpStatus int = http.StatusOK
 	)
 	//get item
 	router := http.NewServeMux()
@@ -46,39 +46,30 @@ func RedisHttpStart(path string, port int) {
 		if len(config.Cfg.CORS) > 0 {
 			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
 		}
+
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "JWT") {
-				w.WriteHeader(http.StatusUnauthorized)
+				httpStatus = http.StatusUnauthorized
 			} else {
-				w.WriteHeader(http.StatusInternalServerError)
+				httpStatus = http.StatusInternalServerError
 			}
-			w.Write([]byte(errStr))
-			return
-		}
-		if b, isByteArray = result.([]byte); isByteArray {
-			svcCtx.SetContentType()
-			w.WriteHeader(http.StatusOK)
-			w.Write(b)
-		} else if s, isString = result.(string); isString {
-			svcCtx.SetContentType()
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(s))
-		} else {
-			//keep fields exits in svcContext.QueryFields
-			if len(svcCtx.QueryFields) > 0 {
+			b = []byte(err.Error())
+		} else if b, ok = result.([]byte); ok {
+		} else if s, ok = result.(string); ok {
+			b = []byte(s)
+		} else if len(svcCtx.QueryFields) > 0 {
+			//keep fields exits in svcContext.QueryFields only
+			if b, err = json.Marshal(result); err != nil {
 				//reponse result json to client
-				if b, err = json.Marshal(result); err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(err.Error()))
-					return
-				}
-				//set content-type to json
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				w.Write(b)
+				httpStatus = http.StatusInternalServerError
+				b = []byte(err.Error())
 			}
 		}
+
+		svcCtx.SetContentType()
+		w.WriteHeader(httpStatus)
+		w.Write(b)
 	})
 	logger.Lshortfile.Println("http server started on port " + strconv.Itoa(port) + " , path is " + path)
 
@@ -94,7 +85,6 @@ func RedisHttpStart(path string, port int) {
 }
 
 func main() {
-
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
 	go permission.LoadGetPermissionFromRedis()
