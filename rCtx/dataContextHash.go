@@ -56,18 +56,15 @@ func HGetAll(ctx context.Context, rds *redis.Client, key string, mapOut interfac
 		return err
 	}
 	//append all data to mapOut
-	var result error
 	structSupposed := mapElem.Elem()
 	for k, v := range data {
 		//make a copy of stru , to obj
 		obj := reflect.New(structSupposed).Interface()
-		if err = msgpack.Unmarshal([]byte(v), &obj); err != nil {
-			result = err
-		} else {
+		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
 			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
 		}
 	}
-	return result
+	return err
 }
 func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 	return HGetAll(dc.Ctx, dc.Rds, key, mapOut)
@@ -95,19 +92,29 @@ func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
 	pipe.Exec(dc.Ctx)
 	return result
 }
-func (dc *DataCtx) HMGET(key string, fields ...string) (values []interface{}, err error) {
-	if cmd := dc.Rds.HMGet(dc.Ctx, key, fields...); cmd.Err() == nil {
+func (dc *DataCtx) HMGET(key string, _map interface{}, fields ...string) (err error) {
+	mapElem := reflect.TypeOf(_map)
+	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
+		return errors.New("mapOut must be a map[string] struct/interface{}")
+	}
+	structSupposed := mapElem.Elem()
+	cmd := dc.Rds.HMGet(dc.Ctx, key, fields...)
+	if cmd.Err() == nil {
 		//unmarshal each value of cmd.Val() to interface{}, using msgpack
-		for _, v := range cmd.Val() {
-			var obj interface{}
+		for i, v := range cmd.Val() {
+			if v == nil {
+				//set _map with nil
+				reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.Zero(structSupposed))
+				continue
+			}
+			obj := reflect.New(structSupposed).Interface()
 			if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
-				values = append(values, obj)
+				reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.ValueOf(obj).Elem())
 			}
 		}
-		return values, nil
-	} else {
-		return nil, cmd.Err()
 	}
+	return cmd.Err()
 }
 
 func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err error) {

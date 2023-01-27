@@ -37,7 +37,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGETALL":
 		return maps, dc.HGetAll(svcCtx.Key, maps)
 	case "HMGET":
-		return dc.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ",")...)
+		return maps, dc.HMGET(svcCtx.Key, maps, strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
 		if keys, err := dc.HKeys(svcCtx.Key); err != nil {
 			return "", err
