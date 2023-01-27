@@ -15,26 +15,20 @@ var PermittedBatchOp map[string]Permission = make(map[string]Permission)
 var lastLoadRedisGetPermissionInfo string = ""
 
 func LoadGetPermissionFromRedis() {
+	var _map map[string]Permission = make(map[string]Permission)
 	// read RedisGetPermission usiing ParamRds
 	// RedisGetPermission is a hash
 	// split each value of RedisGetPermission into string[] and store in PermittedBatchOp
-
-	var mapTmp map[string]Permission = make(map[string]Permission)
 	paramCtx := saavuu.NewParamContext(context.Background())
-	if err := paramCtx.HGetAll("RedisGetPermission", mapTmp); err != nil {
+	if err := paramCtx.HGetAll("RedisGetPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisGetPermission  error: " + err.Error())
-		time.Sleep(time.Second * 10)
-		go LoadGetPermissionFromRedis()
-		return
+	} else {
+		if info := fmt.Sprint("loading RedisGetPermission success. num keys:", len(_map)); info != lastLoadRedisGetPermissionInfo {
+			logger.Lshortfile.Println(info)
+			lastLoadRedisGetPermissionInfo = info
+		}
+		PermittedBatchOp = _map
 	}
-
-	//print info like this: info := fmt.Sprint("loading RedisGetPermission success. num keys:%d PermittedBatchOp size:%d", KeyNum, len(PermittedBatchOp))
-	info := fmt.Sprint("loading RedisGetPermission success. num keys:", len(mapTmp))
-	if info != lastLoadRedisGetPermissionInfo {
-		logger.Lshortfile.Println(info)
-		lastLoadRedisGetPermissionInfo = info
-	}
-	PermittedBatchOp = mapTmp
 	time.Sleep(time.Second * 10)
 	go LoadGetPermissionFromRedis()
 }

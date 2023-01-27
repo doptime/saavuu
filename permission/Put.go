@@ -15,25 +15,21 @@ var PermittedPutOp map[string]Permission = make(map[string]Permission)
 var lastLoadPutPermissionInfo string = ""
 
 func LoadPutPermissionFromRedis() {
+	var _map map[string]Permission = make(map[string]Permission)
 	// read RedisPutPermission usiing ParamRds
 	// RedisPutPermission is a hash
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
 
 	paramCtx := saavuu.NewParamContext(context.Background())
-	var mapTmp map[string]Permission = make(map[string]Permission)
-	if err := paramCtx.HGetAll("RedisPutPermission", mapTmp); err != nil {
+	if err := paramCtx.HGetAll("RedisPutPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error())
-		time.Sleep(time.Second * 10)
-		go LoadPutPermissionFromRedis()
-		return
+	} else {
+		if info := fmt.Sprint("loading RedisPutPermission success. num keys:", len(_map)); info != lastLoadPutPermissionInfo {
+			logger.Lshortfile.Println(info)
+			lastLoadPutPermissionInfo = info
+		}
+		PermittedPutOp = _map
 	}
-	//print info like this: info := fmt.Sprint("loading RedisPutPermission success. num keys:%d PermittedPutOp size:%d", KeyNum, len(PermittedPutOp))
-	info := fmt.Sprint("loading RedisPutPermission success. num keys:", len(mapTmp))
-	if info != lastLoadPutPermissionInfo {
-		logger.Lshortfile.Println(info)
-		lastLoadPutPermissionInfo = info
-	}
-	PermittedPutOp = mapTmp
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }

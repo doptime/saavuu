@@ -94,7 +94,7 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
 			cmd, err := pipline.Exec(c)
 			if data = cmd[0].(*redis.StringSliceCmd).Val(); err != nil || len(data) == 0 {
-				time.Sleep(time.Millisecond * 100)
+				time.Sleep(time.Millisecond * 64)
 				continue
 			}
 			//nolonger using BLPop to receive another 1 data, avoid sockert timeout as service increase
