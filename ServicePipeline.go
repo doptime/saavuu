@@ -38,7 +38,6 @@ func pipingServiceTask() {
 		for _, serverInfo := range ServiceInfos {
 			pipline.LRange(c, serverInfo.ServiceName, 0, serverInfo.ServiceBatchSize-1)
 			pipline.LTrim(c, serverInfo.ServiceName, serverInfo.ServiceBatchSize, -1)
-			ServiceInfos = append(ServiceInfos, serverInfo)
 		}
 		cmd, err := pipline.Exec(c)
 
