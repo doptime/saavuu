@@ -25,6 +25,7 @@ func pipingServiceTask() {
 		taskReceived int
 		ServiceInfos []*ServiceInfo = make([]*ServiceInfo, 0, len(services))
 		serviceInfo  *ServiceInfo
+		delay        time.Duration = 16 * time.Millisecond
 	)
 	c := context.Background()
 	//from services to ServiceInfos
@@ -58,10 +59,15 @@ func pipingServiceTask() {
 				taskReceived++
 			}
 		}
+		//delay module
 		if taskReceived == 0 {
-			time.Sleep(time.Millisecond * 32)
+			time.Sleep(delay)
+			if delay < 1024*time.Millisecond {
+				delay += time.Millisecond
+			}
 		} else {
 			taskReceived = 0
+			delay = 8 * time.Millisecond
 		}
 	}
 }
