@@ -3,10 +3,8 @@ package saavuu
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
-	"github.com/go-redis/redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
@@ -14,28 +12,6 @@ import (
 )
 
 type fn func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
-
-var ServiceMap map[string]fn = map[string]fn{}
-
-var counter Counter = Counter{}
-
-func PrintServiceStates() {
-	// all keys of ServiceMap to []string serviceNames
-	var serviceNames []string = make([]string, 0, len(ServiceMap))
-	for k := range ServiceMap {
-		serviceNames = append(serviceNames, k)
-	}
-	logger.Lshortfile.Println("ServiceMap has", len(ServiceMap), "services:", serviceNames)
-	for {
-		time.Sleep(time.Second * 60)
-		now := time.Now().String()[11:19]
-		for _, serviceName := range serviceNames {
-			num, _ := counter.Get(serviceName)
-			logger.Lshortfile.Println(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
-			counter.DeleteAndGetLastValue(serviceName)
-		}
-	}
-}
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
@@ -48,10 +24,6 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	if config.ParamRds == nil {
 		logger.Lshortfile.Panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
-
-	ServiceMap[serviceName] = f
-	counter.DeleteAndGetLastValue(serviceName)
-
 	ProcessOneJob := func(s []byte) (err error) {
 		var (
 			BackTo         string
@@ -84,25 +56,9 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		_, err = pipline.Exec(ctx)
 		return err
 	}
-	loop := func() {
-		var data []string
-		c := context.Background()
-		for {
-			//fetch datas from redis,using LRange
-			pipline := config.ParamRds.Pipeline()
-			pipline.LRange(c, serviceName, 0, DataRcvBatchSize-1)
-			pipline.LTrim(c, serviceName, DataRcvBatchSize, -1)
-			cmd, err := pipline.Exec(c)
-			if data = cmd[0].(*redis.StringSliceCmd).Val(); err != nil || len(data) == 0 {
-				time.Sleep(time.Millisecond * 64)
-				continue
-			}
-			//nolonger using BLPop to receive another 1 data, avoid sockert timeout as service increase
-			for _, s := range data {
-				go ProcessOneJob([]byte(s))
-				counter.Add(serviceName, 1)
-			}
-		}
+	services[serviceName] = &ServiceInfo{
+		ServiceName:      serviceName,
+		ServiceBatchSize: DataRcvBatchSize,
+		ServiceFunc:      ProcessOneJob,
 	}
-	go loop()
 }
