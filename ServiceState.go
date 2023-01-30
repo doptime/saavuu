@@ -26,7 +26,7 @@ func reportServiceStates() {
 		}
 	}
 }
-func StartSaavuuService() {
+func RunningAllService() {
 	go reportServiceStates()
-	go pipingServiceTask()
+	pipingServiceTask()
 }
