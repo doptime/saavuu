@@ -24,21 +24,15 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 	if config.ParamRds == nil {
 		logger.Lshortfile.Panic("config.ParamRedis is nil. you should call config.LoadConfigFromRedis first")
 	}
-	ProcessOneJob := func(s []byte) (err error) {
+	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
-			BackTo         string
 			out            interface{}
 			marshaledBytes []byte
 			param          map[string]interface{} = map[string]interface{}{}
-			ok             bool
 		)
-		if err = msgpack.Unmarshal(s, &param); err != nil || param["BackTo"] == nil {
+		if err = msgpack.Unmarshal(s, &param); err != nil {
 			return err
 		}
-		if BackTo, ok = param["BackTo"].(string); !ok {
-			return ErrBackTo
-		}
-		delete(param, "BackTo")
 		//process one job
 		dc := &rCtx.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
 		pc := &rCtx.ParamCtx{Ctx: context.Background(), Rds: config.ParamRds}
@@ -51,8 +45,8 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		}
 		ctx := context.Background()
 		pipline := config.ParamRds.Pipeline()
-		pipline.RPush(ctx, BackTo, marshaledBytes)
-		pipline.Expire(ctx, BackTo, time.Second*6)
+		pipline.RPush(ctx, BackToID, marshaledBytes)
+		pipline.Expire(ctx, BackToID, time.Second*6)
 		_, err = pipline.Exec(ctx)
 		return err
 	}

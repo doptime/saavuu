@@ -28,5 +28,5 @@ func reportServiceStates() {
 }
 func RunningAllService() {
 	go reportServiceStates()
-	pipingServiceTask()
+	receiveServiceTask()
 }
