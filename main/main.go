@@ -9,12 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yangkequn/saavuu"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
 // listten to a port and start http server
@@ -89,14 +87,7 @@ func RedisHttpStart(path string, port int) {
 func main() {
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
-	saavuu.NewService("test", 128, func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
-		// your logic here
-		data = map[string]interface{}{"data": "ok"}
-		return data, nil
-	})
-	//pc := saavuu.NewParamContext(context.Background())
-	//go pc.RdsApiBasic("test", "message")
-	saavuu.RunningAllService()
+
 	go permission.LoadGetPermissionFromRedis()
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
