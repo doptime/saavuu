@@ -33,7 +33,7 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 	//from services to ServiceInfos
 	for i := 0; i < len(services); i++ {
 		//append default stream id
-		streams = append(streams, "<")
+		streams = append(streams, ">")
 	}
 	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: 256, NoAck: true, Group: "group0", Consumer: "saavuu"}
 	return args
@@ -42,9 +42,7 @@ func XGroupCreate(c context.Context) (err error) {
 	//if there is no group, create a group, and create a consumer
 	for _, serviceName := range serviceNames() {
 		//continue if the group already exists
-		if cmd := config.ParamRds.XInfoGroups(c, serviceName); cmd.Err() != nil {
-			return cmd.Err()
-		} else if len(cmd.Val()) > 0 {
+		if cmd := config.ParamRds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
 			continue
 		}
 		//create a group if none exists
@@ -68,8 +66,8 @@ func receiveServiceTask() {
 
 	//deprecate using list command LRange, to avoid continually query consumption
 	//use xreadgroup to receive data ,2023-01-31
-	for {
-		if cmd = config.ParamRds.XReadGroup(c, defaultXReadGroupArgs()); cmd.Err() == redis.Nil {
+	for args := defaultXReadGroupArgs(); ; {
+		if cmd = config.ParamRds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
 			logger.Lshortfile.Println("pipingServiceTask error:", cmd.Err())
