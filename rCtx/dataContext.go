@@ -72,6 +72,10 @@ func (dc *DataCtx) SIsMember(key string, param interface{}) (ok bool, err error)
 	cmd := dc.Rds.SIsMember(dc.Ctx, key, param)
 	return cmd.Result()
 }
+func (dc *DataCtx) Time() (tm time.Time, err error) {
+	cmd := dc.Rds.Time(dc.Ctx)
+	return cmd.Result()
+}
 func (dc *DataCtx) SMembers(key string, param interface{}) (members []string, err error) {
 	cmd := dc.Rds.SMembers(dc.Ctx, key)
 	members, err = cmd.Result()

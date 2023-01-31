@@ -56,6 +56,13 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			return "", errors.New("no Member")
 		}
 		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
+	case "TIME":
+		pc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+		if tm, err := pc.Time(); err != nil {
+			return "", err
+		} else {
+			return tm.UnixMilli(), nil
+		}
 	case "ZRANGE":
 		var (
 			Start, Stop, WITHSCORES string
