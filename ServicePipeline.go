@@ -62,12 +62,14 @@ func pipingServiceTask() {
 		//delay module
 		if taskReceived == 0 {
 			time.Sleep(delay)
-			if delay < 1024*time.Millisecond {
+			if delay < 128*time.Millisecond {
 				delay += time.Millisecond
 			}
 		} else {
 			taskReceived = 0
-			delay = 8 * time.Millisecond
+			if delay > time.Millisecond {
+				delay /= 2
+			}
 		}
 	}
 }
