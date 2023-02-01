@@ -15,7 +15,7 @@ type fn func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, paramIn map[string]interface{}
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
+func NewService(serviceName string, f fn) {
 	serviceName = "svc:" + serviceName
 	//check configureation is loaded
 	if config.DataRds == nil {
@@ -51,8 +51,7 @@ func NewService(serviceName string, DataRcvBatchSize int64, f fn) {
 		return err
 	}
 	services[serviceName] = &ServiceInfo{
-		ServiceName:      serviceName,
-		ServiceBatchSize: DataRcvBatchSize,
-		ServiceFunc:      ProcessOneJob,
+		ServiceName: serviceName,
+		ServiceFunc: ProcessOneJob,
 	}
 }

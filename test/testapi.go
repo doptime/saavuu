@@ -7,7 +7,7 @@ import (
 
 func testApi() {
 
-	saavuu.NewService("test", 128, func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
+	saavuu.NewService("test", func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
 		// your logic here
 		data = map[string]interface{}{"data": "ok"}
 		return data, nil

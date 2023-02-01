@@ -14,8 +14,6 @@ type ServiceInfo struct {
 	ServiceName string
 	// ServiceFunc is the function of the service
 	ServiceFunc func(backTo string, s []byte) (err error)
-	// ServiceBatchSize is the number of data to be fetched from redis at one time
-	ServiceBatchSize int64
 }
 
 var services map[string]*ServiceInfo = map[string]*ServiceInfo{}
