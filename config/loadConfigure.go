@@ -45,6 +45,12 @@ func LoadConfigFromEnv() (err error) {
 		}
 		logger.Std.Println("DEVELOP_MODE is set to ", Cfg.DevelopMode)
 	}
+	if ServiceBatchSize := loadOSEnv("SERVICE_BATCH_SIZE", ""); len(ServiceBatchSize) > 0 {
+		if Cfg.ServiceBatchSize, err = strconv.ParseInt(ServiceBatchSize, 10, 64); err != nil {
+			logger.Lshortfile.Println("Error: bad string of env: SERVICE_BATCH_SIZE")
+		}
+		logger.Std.Println("SERVICE_BATCH_SIZE is set to ", Cfg.ServiceBatchSize)
+	}
 
 	UseConfig()
 	SaveConfigToRedis(ParamRds, loadOSEnv("SAAVUU_CONFIG_KEY", "Error: Can not load SAAVUU_CONFIG_KEY from env"))

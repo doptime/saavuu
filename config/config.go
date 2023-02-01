@@ -5,6 +5,7 @@ import (
 )
 
 type Configuration struct {
+	//on redis server
 	RedisAddressParam  string
 	RedisPasswordParam string
 	RedisDbParam       int
@@ -19,12 +20,16 @@ type Configuration struct {
 	JwtIgnoreFields string
 	MaxBufferSize   int64
 	CORS            string
+
+	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
+	ServiceBatchSize int64
 }
 
 var Cfg Configuration = Configuration{
-	JwtSecret:     "",
-	MaxBufferSize: 32 << 20,
-	CORS:          "*",
+	JwtSecret:        "",
+	MaxBufferSize:    32 << 20,
+	CORS:             "*",
+	ServiceBatchSize: 256,
 }
 
 // Parameter Server Should be Memory Only server, with high bandwidth and low latency.

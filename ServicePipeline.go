@@ -33,7 +33,7 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 		//append default stream id
 		streams = append(streams, ">")
 	}
-	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: 256, NoAck: true, Group: "group0", Consumer: "saavuu"}
+	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
 	return args
 }
 func XGroupCreate(c context.Context) (err error) {
