@@ -30,7 +30,7 @@ func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}) (result 
 	if b, err = msgpack.Marshal(paramIn); err != nil {
 		return nil, err
 	}
-	args := &redis.XAddArgs{Stream: ServiceKey, Values: []string{"data", string(b)}}
+	args := &redis.XAddArgs{Stream: ServiceKey, Values: []string{"data", string(b)}, MaxLen: 4096}
 	if cmd := sc.Rds.XAdd(sc.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return nil, cmd.Err()
