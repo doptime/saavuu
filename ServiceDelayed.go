@@ -20,10 +20,10 @@ func DelayedServiceEnque(serviceName string, dueTimeStr string, bytesValue strin
 }
 func DelayedServiceStartOne(serviceName, dueTimeStr string) {
 	var (
-		cmd                                        *redis.StringCmd
 		bytesValue                                 string
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
 		err                                        error
+		cmd                                        []redis.Cmder
 	)
 	nowUnixMilliSecond = time.Now().UnixMilli()
 	if dueTimeUnixMilliSecond, err = strconv.ParseInt(dueTimeStr, 10, 64); err != nil {
@@ -31,12 +31,14 @@ func DelayedServiceStartOne(serviceName, dueTimeStr string) {
 		return
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
-	if cmd = config.ParamRds.HGet(context.Background(), serviceName+":delayed", dueTimeStr); cmd.Err() != nil {
-		logger.Lshortfile.Println(cmd.Err())
+	pipeline := config.ParamRds.Pipeline()
+	pipeline.HGet(context.Background(), serviceName+":delayed", dueTimeStr)
+	pipeline.HDel(context.Background(), serviceName+":delayed", dueTimeStr)
+	if cmd, err = pipeline.Exec(context.Background()); err != nil {
+		logger.Lshortfile.Println(err)
 		return
 	}
-	bytesValue = cmd.Val()
-	config.ParamRds.HDel(context.Background(), serviceName+":delayed", dueTimeStr)
+	bytesValue = cmd[0].(*redis.StringCmd).Val()
 	services[serviceName].ServiceFunc(serviceName, []byte(bytesValue))
 }
 
@@ -44,13 +46,19 @@ func LoadDelayedServiceTask() {
 	var (
 		services    = serviceNames()
 		dueTimeStrs []string
+		cmd         []redis.Cmder
 		err         error
 	)
-	pc := NewParamContext(context.Background())
+	pipeline := config.ParamRds.Pipeline()
 	for _, service := range services {
-		if dueTimeStrs, err = pc.HKeys(service); err != nil {
-			continue
-		}
+		pipeline.HKeys(context.Background(), service+":delayed")
+	}
+	if cmd, err = pipeline.Exec(context.Background()); err != nil {
+		logger.Lshortfile.Println("err LoadDelayedServiceTask, ", err)
+		return
+	}
+	for _, service := range services {
+		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, dueTimeStr := range dueTimeStrs {
 			go DelayedServiceStartOne(service, dueTimeStr)
 		}
