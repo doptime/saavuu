@@ -16,24 +16,46 @@ type ParamCtx struct {
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}) (result []byte, err error) {
+func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, delay time.Duration) (result []byte, err error) {
 	var (
 		b       []byte
 		results []string
 		cmd     *redis.StringCmd
+		Values  []string
+		ok      bool
 	)
 	//ensure ServiceKey start with "svc:"
 	if ServiceKey[:4] != "svc:" {
 		ServiceKey = "svc:" + ServiceKey
 	}
 
+	//ensure the paramIn is a map or struct
+	//later, paramIn will be deocded to a map in newService
+	if paramIn, ok = paramIn.(map[string]interface{}); !ok {
+		if b, err = msgpack.Marshal(paramIn); err != nil {
+			return nil, err
+		}
+		if err = msgpack.Unmarshal(b, &paramIn); err != nil {
+			logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
+			return nil, err
+		}
+	}
+
 	if b, err = msgpack.Marshal(paramIn); err != nil {
 		return nil, err
 	}
-	args := &redis.XAddArgs{Stream: ServiceKey, Values: []string{"data", string(b)}, MaxLen: 4096}
+	if delay > 0 {
+		Values = []string{"delay", delay.String(), "data", string(b)}
+	} else {
+		Values = []string{"data", string(b)}
+	}
+	args := &redis.XAddArgs{Stream: ServiceKey, Values: Values, MaxLen: 4096}
 	if cmd = sc.Rds.XAdd(sc.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return nil, cmd.Err()
+	}
+	if delay > 0 {
+		return nil, nil
 	}
 
 	//BLPop 返回结果 [key1,value1,key2,value2]
@@ -47,7 +69,7 @@ func (sc *ParamCtx) RdsApi(ServiceKey string, structIn interface{}, out interfac
 	var (
 		b []byte
 	)
-	if b, err = sc.RdsApiBasic(ServiceKey, structIn); err != nil {
+	if b, err = sc.RdsApiBasic(ServiceKey, structIn, 0); err != nil {
 		return err
 	}
 	return msgpack.Unmarshal(b, out)

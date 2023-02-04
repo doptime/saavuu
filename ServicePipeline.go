@@ -50,10 +50,16 @@ func XGroupCreate(c context.Context) (err error) {
 	}
 	return nil
 }
-
+func StartWidthDelay(delay time.Duration, serviceName string, ID string, bytesValue string) {
+	time.Sleep(delay)
+	services[serviceName].ServiceFunc(ID, []byte(bytesValue))
+}
 func receiveServiceTask() {
 	var (
-		cmd *redis.XStreamSliceCmd
+		cmd         *redis.XStreamSliceCmd
+		serviceName string
+		delay       time.Duration
+		err         error
 	)
 	c := context.Background()
 	//create group if none exists
@@ -74,10 +80,21 @@ func receiveServiceTask() {
 		}
 
 		for _, stream := range cmd.Val() {
-			serviceName := stream.Stream
+			serviceName = stream.Stream
 			for _, message := range stream.Messages {
 				bytesValue := message.Values["data"].(string)
-				go services[serviceName].ServiceFunc(message.ID, []byte(bytesValue))
+				//the delay calling will lost if the app is down
+				if delayStr, ok := message.Values["delay"]; ok {
+					//print message infomation
+					//logger.Lshortfile.Println("pipingServiceTask delay:", delayStr.(string), "serviceName:", serviceName, "messageID:", message.ID)
+					if delay, err = time.ParseDuration(delayStr.(string)); err != nil {
+						logger.Lshortfile.Println("pipingServiceTask error:", err)
+						break
+					}
+					go StartWidthDelay(delay, serviceName, message.ID, bytesValue)
+				} else {
+					go services[serviceName].ServiceFunc(message.ID, []byte(bytesValue))
+				}
 				serviceCounter.Add(serviceName, 1)
 			}
 		}
