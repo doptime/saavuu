@@ -27,6 +27,7 @@ func reportServiceStates() {
 	}
 }
 func RunningAllService() {
+	LoadDelayedServiceTask()
 	go reportServiceStates()
 	receiveServiceTask()
 }

@@ -18,6 +18,6 @@ func TestApi() {
 		return data, nil
 	})
 	pc := saavuu.NewParamContext(context.Background())
-	go pc.RdsApiBasic("test", map[string]string{"message": "ok"}, time.Second*10)
+	go pc.RdsApiBasic("test", map[string]string{"message": "ok"}, time.Now().UnixMicro()+1000)
 	saavuu.RunningAllService()
 }

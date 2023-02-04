@@ -147,6 +147,10 @@ func (dc *DataCtx) HKeys(key string) (fields []string, err error) {
 	cmd := dc.Rds.HKeys(dc.Ctx, key)
 	return cmd.Val(), cmd.Err()
 }
+func (pc *ParamCtx) HKeys(key string) (fields []string, err error) {
+	cmd := pc.Rds.HKeys(pc.Ctx, key)
+	return cmd.Val(), cmd.Err()
+}
 func (dc *DataCtx) HVals(key string) (values []interface{}, err error) {
 	cmd := dc.Rds.HVals(dc.Ctx, key)
 	data := cmd.Val()

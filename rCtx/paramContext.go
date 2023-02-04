@@ -2,6 +2,7 @@ package rCtx
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v9"
@@ -16,7 +17,7 @@ type ParamCtx struct {
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, delay time.Duration) (result []byte, err error) {
+func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, dueTime int64) (result []byte, err error) {
 	var (
 		b       []byte
 		results []string
@@ -44,8 +45,8 @@ func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, delay ti
 	if b, err = msgpack.Marshal(paramIn); err != nil {
 		return nil, err
 	}
-	if delay > 0 {
-		Values = []string{"delay", delay.String(), "data", string(b)}
+	if dueTime != 0 {
+		Values = []string{"dueTime", strconv.FormatInt(dueTime, 10), "data", string(b)}
 	} else {
 		Values = []string{"data", string(b)}
 	}
@@ -54,7 +55,7 @@ func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, delay ti
 		logger.Lshortfile.Println(cmd.Err())
 		return nil, cmd.Err()
 	}
-	if delay > 0 {
+	if dueTime != 0 {
 		return nil, nil
 	}
 
