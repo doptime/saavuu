@@ -15,7 +15,7 @@ type fn func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, paramIn map[string]interface{}
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func NewRpcService(serviceName string, f fn) {
+func NewApiService(serviceName string, f fn) {
 	serviceName = "svc:" + serviceName
 	//check configureation is loaded
 	if config.DataRds == nil {
@@ -50,8 +50,8 @@ func NewRpcService(serviceName string, f fn) {
 		_, err = pipline.Exec(ctx)
 		return err
 	}
-	rpcServices[serviceName] = &RpcInfo{
-		RpcName: serviceName,
-		RpcFunc: ProcessOneJob,
+	apiServices[serviceName] = &ApiInfo{
+		ApiName: serviceName,
+		ApiFunc: ProcessOneJob,
 	}
 }
