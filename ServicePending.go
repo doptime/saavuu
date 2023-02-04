@@ -57,7 +57,7 @@ func LoadPendingServiceTask() {
 		logger.Lshortfile.Println("err LoadPendingServiceTask, ", err)
 		return
 	}
-	for _, service := range services {
+	for i, service := range services {
 		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, dueTimeStr := range dueTimeStrs {
 			go PendingServiceStartOne(service, dueTimeStr)
