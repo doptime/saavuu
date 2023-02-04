@@ -9,24 +9,24 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-type ServiceInfo struct {
-	// ServiceName is the name of the service
-	ServiceName string
-	// ServiceFunc is the function of the service
-	ServiceFunc func(backTo string, s []byte) (err error)
+type RpcInfo struct {
+	// RpcName is the name of the service
+	RpcName string
+	// RpcFunc is the function of the service
+	RpcFunc func(backTo string, s []byte) (err error)
 }
 
-var services map[string]*ServiceInfo = map[string]*ServiceInfo{}
+var rpcServices map[string]*RpcInfo = map[string]*RpcInfo{}
 
-func serviceNames() (serviceNames []string) {
-	for _, serviceInfo := range services {
-		serviceNames = append(serviceNames, serviceInfo.ServiceName)
+func rpcServiceNames() (serviceNames []string) {
+	for _, serviceInfo := range rpcServices {
+		serviceNames = append(serviceNames, serviceInfo.RpcName)
 	}
 	return serviceNames
 }
 func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 	var streams []string
-	services := serviceNames()
+	services := rpcServiceNames()
 	streams = append(streams, services...)
 	//from services to ServiceInfos
 	for i := 0; i < len(services); i++ {
@@ -38,7 +38,7 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 }
 func XGroupCreate(c context.Context) (err error) {
 	//if there is no group, create a group, and create a consumer
-	for _, serviceName := range serviceNames() {
+	for _, serviceName := range rpcServiceNames() {
 		//continue if the group already exists
 		if cmd := config.ParamRds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
 			continue
@@ -51,15 +51,15 @@ func XGroupCreate(c context.Context) (err error) {
 	return nil
 }
 
-func receiveServiceTask() {
+func receiveRpcJobs() {
 	var (
-		cmd         *redis.XStreamSliceCmd
-		serviceName string
+		cmd     *redis.XStreamSliceCmd
+		rpcName string
 	)
 	c := context.Background()
 	//create group if none exists
 	for err := XGroupCreate(c); err != nil; err = XGroupCreate(c) {
-		logger.Lshortfile.Println("pipingServiceTask error:", err)
+		logger.Lshortfile.Println("receiveRpcJobs error:", err)
 		time.Sleep(time.Second)
 	}
 
@@ -69,22 +69,22 @@ func receiveServiceTask() {
 		if cmd = config.ParamRds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
-			logger.Lshortfile.Println("pipingServiceTask error:", cmd.Err())
+			logger.Lshortfile.Println("receiveRpcJobs error:", cmd.Err())
 			time.Sleep(time.Second)
 			continue
 		}
 
 		for _, stream := range cmd.Val() {
-			serviceName = stream.Stream
+			rpcName = stream.Stream
 			for _, message := range stream.Messages {
 				bytesValue := message.Values["data"].(string)
 				//the delay calling will lost if the app is down
 				if dueTimeStr, ok := message.Values["dueTime"]; ok {
-					go PendingServiceEnque(serviceName, dueTimeStr.(string), bytesValue)
+					go PendingRpcAddOne(rpcName, dueTimeStr.(string), bytesValue)
 				} else {
-					go services[serviceName].ServiceFunc(message.ID, []byte(bytesValue))
+					go rpcServices[rpcName].RpcFunc(message.ID, []byte(bytesValue))
 				}
-				serviceCounter.Add(serviceName, 1)
+				rpcCounter.Add(rpcName, 1)
 			}
 		}
 	}

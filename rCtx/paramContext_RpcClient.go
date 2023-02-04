@@ -17,7 +17,7 @@ type ParamCtx struct {
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, dueTime int64) (result []byte, err error) {
+func (sc *ParamCtx) RpcBasic(ServiceKey string, paramIn interface{}, dueTime int64) (result []byte, err error) {
 	var (
 		b       []byte
 		results []string
@@ -66,11 +66,11 @@ func (sc *ParamCtx) RdsApiBasic(ServiceKey string, paramIn interface{}, dueTime 
 	}
 	return []byte(results[1]), nil
 }
-func (sc *ParamCtx) RdsApi(ServiceKey string, structIn interface{}, out interface{}) (err error) {
+func (sc *ParamCtx) Rpc(ServiceKey string, structIn interface{}, out interface{}) (err error) {
 	var (
 		b []byte
 	)
-	if b, err = sc.RdsApiBasic(ServiceKey, structIn, 0); err != nil {
+	if b, err = sc.RpcBasic(ServiceKey, structIn, 0); err != nil {
 		return err
 	}
 	return msgpack.Unmarshal(b, out)

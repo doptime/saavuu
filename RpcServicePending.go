@@ -11,14 +11,14 @@ import (
 )
 
 // put parameter to redis ,make it persistent
-func PendingServiceEnque(serviceName string, dueTimeStr string, bytesValue string) {
+func PendingRpcAddOne(serviceName string, dueTimeStr string, bytesValue string) {
 	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":pending", dueTimeStr, bytesValue); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return
 	}
-	go PendingServiceStartOne(serviceName, dueTimeStr)
+	go PendingRpcRunOne(serviceName, dueTimeStr)
 }
-func PendingServiceStartOne(serviceName, dueTimeStr string) {
+func PendingRpcRunOne(serviceName, dueTimeStr string) {
 	var (
 		bytesValue                                 string
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
@@ -39,12 +39,12 @@ func PendingServiceStartOne(serviceName, dueTimeStr string) {
 		return
 	}
 	bytesValue = cmd[0].(*redis.StringCmd).Val()
-	services[serviceName].ServiceFunc(serviceName, []byte(bytesValue))
+	rpcServices[serviceName].RpcFunc(serviceName, []byte(bytesValue))
 }
 
-func LoadPendingServiceTask() {
+func PendingRpcFromRedisToLoal() {
 	var (
-		services    = serviceNames()
+		services    = rpcServiceNames()
 		dueTimeStrs []string
 		cmd         []redis.Cmder
 		err         error
@@ -54,13 +54,13 @@ func LoadPendingServiceTask() {
 		pipeline.HKeys(context.Background(), service+":pending")
 	}
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
-		logger.Lshortfile.Println("err LoadPendingServiceTask, ", err)
+		logger.Lshortfile.Println("err LoadPendingRpcTask, ", err)
 		return
 	}
 	for i, service := range services {
 		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, dueTimeStr := range dueTimeStrs {
-			go PendingServiceStartOne(service, dueTimeStr)
+			go PendingRpcRunOne(service, dueTimeStr)
 		}
 	}
 }

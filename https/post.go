@@ -25,7 +25,7 @@ func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
 	svcCtx.MergeJwtField(paramIn)
 
 	pc := rCtx.ParamCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
-	if resultBytes, err = pc.RdsApiBasic(svcCtx.Service, paramIn, 0); err != nil {
+	if resultBytes, err = pc.RpcBasic(svcCtx.Service, paramIn, 0); err != nil {
 		return nil, err
 	}
 

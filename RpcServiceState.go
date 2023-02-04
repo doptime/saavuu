@@ -7,12 +7,12 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-var serviceCounter Counter = Counter{}
+var rpcCounter Counter = Counter{}
 
-func reportServiceStates() {
+func reportRpcStates() {
 	// all keys of ServiceMap to []string serviceNames
-	var serviceNames []string = make([]string, 0, len(services))
-	for serviceName := range services {
+	var serviceNames []string = make([]string, 0, len(rpcServices))
+	for serviceName := range rpcServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
 	logger.Lshortfile.Println("service has", len(serviceNames), "services:", serviceNames)
@@ -20,14 +20,14 @@ func reportServiceStates() {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
 		for _, serviceName := range serviceNames {
-			num, _ := serviceCounter.Get(serviceName)
+			num, _ := rpcCounter.Get(serviceName)
 			logger.Lshortfile.Println(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
-			serviceCounter.DeleteAndGetLastValue(serviceName)
+			rpcCounter.DeleteAndGetLastValue(serviceName)
 		}
 	}
 }
-func RunningAllService() {
-	LoadPendingServiceTask()
-	go reportServiceStates()
-	receiveServiceTask()
+func RunningAllRpcs() {
+	PendingRpcFromRedisToLoal()
+	go reportRpcStates()
+	receiveRpcJobs()
 }
