@@ -11,14 +11,14 @@ import (
 )
 
 // put parameter to redis ,make it persistent
-func DelayedServiceEnque(serviceName string, dueTimeStr string, bytesValue string) {
-	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":delayed", dueTimeStr, bytesValue); cmd.Err() != nil {
+func PendingServiceEnque(serviceName string, dueTimeStr string, bytesValue string) {
+	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":pending", dueTimeStr, bytesValue); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return
 	}
-	go DelayedServiceStartOne(serviceName, dueTimeStr)
+	go PendingServiceStartOne(serviceName, dueTimeStr)
 }
-func DelayedServiceStartOne(serviceName, dueTimeStr string) {
+func PendingServiceStartOne(serviceName, dueTimeStr string) {
 	var (
 		bytesValue                                 string
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
@@ -32,8 +32,8 @@ func DelayedServiceStartOne(serviceName, dueTimeStr string) {
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
 	pipeline := config.ParamRds.Pipeline()
-	pipeline.HGet(context.Background(), serviceName+":delayed", dueTimeStr)
-	pipeline.HDel(context.Background(), serviceName+":delayed", dueTimeStr)
+	pipeline.HGet(context.Background(), serviceName+":pending", dueTimeStr)
+	pipeline.HDel(context.Background(), serviceName+":pending", dueTimeStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
 		logger.Lshortfile.Println(err)
 		return
@@ -42,7 +42,7 @@ func DelayedServiceStartOne(serviceName, dueTimeStr string) {
 	services[serviceName].ServiceFunc(serviceName, []byte(bytesValue))
 }
 
-func LoadDelayedServiceTask() {
+func LoadPendingServiceTask() {
 	var (
 		services    = serviceNames()
 		dueTimeStrs []string
@@ -51,16 +51,16 @@ func LoadDelayedServiceTask() {
 	)
 	pipeline := config.ParamRds.Pipeline()
 	for _, service := range services {
-		pipeline.HKeys(context.Background(), service+":delayed")
+		pipeline.HKeys(context.Background(), service+":pending")
 	}
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
-		logger.Lshortfile.Println("err LoadDelayedServiceTask, ", err)
+		logger.Lshortfile.Println("err LoadPendingServiceTask, ", err)
 		return
 	}
 	for _, service := range services {
 		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, dueTimeStr := range dueTimeStrs {
-			go DelayedServiceStartOne(service, dueTimeStr)
+			go PendingServiceStartOne(service, dueTimeStr)
 		}
 	}
 }

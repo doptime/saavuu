@@ -80,7 +80,7 @@ func receiveServiceTask() {
 				bytesValue := message.Values["data"].(string)
 				//the delay calling will lost if the app is down
 				if dueTimeStr, ok := message.Values["dueTime"]; ok {
-					go DelayedServiceEnque(serviceName, dueTimeStr.(string), bytesValue)
+					go PendingServiceEnque(serviceName, dueTimeStr.(string), bytesValue)
 				} else {
 					go services[serviceName].ServiceFunc(message.ID, []byte(bytesValue))
 				}
