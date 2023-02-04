@@ -13,7 +13,6 @@ import (
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
-	"github.com/yangkequn/saavuu/test"
 )
 
 // listten to a port and start http server
@@ -93,6 +92,6 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	test.TestApi()
+	//test.TestApi()
 	RedisHttpStart("/rSvc", 8080)
 }
