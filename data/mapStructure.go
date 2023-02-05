@@ -1,4 +1,4 @@
-package tools
+package data
 
 import (
 	"github.com/mitchellh/mapstructure"
