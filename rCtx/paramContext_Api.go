@@ -2,6 +2,7 @@ package rCtx
 
 import (
 	"context"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -23,7 +24,6 @@ func (sc *ParamCtx) ApiBasic(ServiceKey string, paramIn interface{}, dueTime int
 		results []string
 		cmd     *redis.StringCmd
 		Values  []string
-		ok      bool
 	)
 	//ensure ServiceKey start with "svc:"
 	if ServiceKey[:4] != "svc:" {
@@ -31,15 +31,14 @@ func (sc *ParamCtx) ApiBasic(ServiceKey string, paramIn interface{}, dueTime int
 	}
 
 	//ensure the paramIn is a map or struct
-	//later, paramIn will be deocded to a map in newService
-	if paramIn, ok = paramIn.(map[string]interface{}); !ok {
-		if b, err = msgpack.Marshal(paramIn); err != nil {
-			return nil, err
-		}
-		if err = msgpack.Unmarshal(b, &paramIn); err != nil {
-			logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
-			return nil, err
-		}
+
+	paramType := reflect.TypeOf(paramIn)
+	if paramType.Kind() == reflect.Struct {
+	} else if paramType.Kind() == reflect.Map {
+	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
+	} else {
+		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
+		return nil, err
 	}
 
 	if b, err = msgpack.Marshal(paramIn); err != nil {
