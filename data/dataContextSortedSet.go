@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 func (dc *Ctx) ZAdd(key string, members ...redis.Z) (err error) {

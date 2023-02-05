@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-redis/redis/v9"
-	. "github.com/yangkequn/saavuu/config"
+	"github.com/redis/go-redis/v9"
+	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
 )
@@ -29,7 +29,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	dc := data.Ctx{Ctx: svcCtx.Ctx, Rds: DataRds}
+	dc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
@@ -57,7 +57,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
 	case "TIME":
-		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
 		if tm, err := pc.Time(); err != nil {
 			return "", err
 		} else {
@@ -85,7 +85,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		result := []interface{}{}
 		if WITHSCORES == "true" {
-			cmd := DataRds.ZRangeWithScores(svcCtx.Ctx, svcCtx.Key, start, stop)
+			cmd := config.DataRds.ZRangeWithScores(svcCtx.Ctx, svcCtx.Key, start, stop)
 			if err = cmd.Err(); err != nil {
 				return "", err
 			}
@@ -94,7 +94,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 				result = append(result, v.Score)
 			}
 		} else {
-			cmd := DataRds.ZRange(svcCtx.Ctx, svcCtx.Key, start, stop)
+			cmd := config.DataRds.ZRange(svcCtx.Ctx, svcCtx.Key, start, stop)
 			if err = cmd.Err(); err != nil {
 				return "", err
 			}
@@ -120,7 +120,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		result := []interface{}{}
 		if WITHSCORES == "true" {
-			cmd := DataRds.ZRangeByScoreWithScores(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
+			cmd := config.DataRds.ZRangeByScoreWithScores(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
 				Min:    Min,
 				Max:    Max,
 				Offset: 0,
@@ -134,7 +134,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 				result = append(result, v.Score)
 			}
 		} else {
-			cmd := DataRds.ZRangeByScore(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
+			cmd := config.DataRds.ZRangeByScore(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
 				Min:    strconv.FormatFloat(min, 'f', -1, 64),
 				Max:    strconv.FormatFloat(max, 'f', -1, 64),
 				Offset: 0,
