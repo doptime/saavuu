@@ -25,7 +25,8 @@ package main
 
 import (
 	"github.com/yangkequn/saavuu"
-	"github.com/yangkequn/saavuu/rCtx"
+	"github.com/yangkequn/saavuu/api"
+	"github.com/yangkequn/saavuu/data"
 )
 
 type Input struct {
@@ -34,9 +35,9 @@ type Input struct {
 }
 
 func init() {
-	saavuu.NewService("demo", 128, func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
+	saavuu.NewService("demo", 128, func(dc *data.DataCtx, pc *api.ParamCtx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
 		var req *Input = &Input{}
-		if err = saavuu.MapsToStructure(parmIn, req); err != nil {
+		if err = api.MapsToStructure(parmIn, req); err != nil {
 			return nil, err
 		} else if req.JWT_id == "" || len(req.data) == 0 {
 			return nil, saavuu.ErrInvalidInput
