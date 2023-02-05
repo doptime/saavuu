@@ -51,7 +51,7 @@ func XGroupCreate(c context.Context) (err error) {
 	return nil
 }
 
-func receiveApiJobs() {
+func apiReceiveJobs() {
 	var (
 		cmd     *redis.XStreamSliceCmd
 		apiName string

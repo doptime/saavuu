@@ -20,7 +20,7 @@ func LoadPutPermissionFromRedis() {
 	// RedisPutPermission is a hash
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
 
-	paramCtx := api.NewApiContext(context.Background())
+	paramCtx := api.NewContext(context.Background())
 	if err := paramCtx.HGetAll("RedisPutPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisPutPermission  error: " + err.Error())
 	} else {
@@ -62,7 +62,7 @@ func IsPutPermitted(dataKey string, operation string) bool {
 	}
 	PermittedPutOp[dataKey] = permission
 	//save to redis
-	paramCtx := api.NewApiContext(context.Background())
+	paramCtx := api.NewContext(context.Background())
 	paramCtx.HSet("RedisPutPermission", dataKey, permission)
 	return config.Cfg.DevelopMode
 }

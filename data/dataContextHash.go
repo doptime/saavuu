@@ -9,7 +9,7 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error) {
+func (dc *Ctx) HGet(key string, field string, param interface{}) (err error) {
 	//use reflect to check if param is a pointer
 	if reflect.TypeOf(param).Kind() != reflect.Ptr {
 		logger.Lshortfile.Println("param must be a pointer")
@@ -24,18 +24,18 @@ func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error)
 	return msgpack.Unmarshal(data, param)
 }
 
-func (dc *DataCtx) HSet(key string, field string, param interface{}) (err error) {
+func (dc *Ctx) HSet(key string, field string, param interface{}) (err error) {
 	return rds.HSet(dc.Ctx, dc.Rds, key, field, param)
 }
 
-func (dc *DataCtx) HExists(key string, field string) (ok bool, err error) {
+func (dc *Ctx) HExists(key string, field string) (ok bool, err error) {
 	cmd := dc.Rds.HExists(dc.Ctx, key, field)
 	return cmd.Val(), cmd.Err()
 }
-func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
+func (dc *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
 	return rds.HGetAll(dc.Ctx, dc.Rds, key, mapOut)
 }
-func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
+func (dc *Ctx) HSetAll(key string, _map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
@@ -55,7 +55,7 @@ func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
 	pipe.Exec(dc.Ctx)
 	return result
 }
-func (dc *DataCtx) HMGET(key string, _map interface{}, fields ...string) (err error) {
+func (dc *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
@@ -80,7 +80,7 @@ func (dc *DataCtx) HMGET(key string, _map interface{}, fields ...string) (err er
 	return cmd.Err()
 }
 
-func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
+func (dc *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
 	cmd := dc.Rds.HGetAll(dc.Ctx, key)
 	data, err := cmd.Result()
 	if err != nil {
@@ -98,18 +98,18 @@ func (dc *DataCtx) HGetAllDefault(key string) (param map[string]interface{}, err
 	}
 	return param, nil
 }
-func (dc *DataCtx) HLen(key string) (length int64, err error) {
+func (dc *Ctx) HLen(key string) (length int64, err error) {
 	cmd := dc.Rds.HLen(dc.Ctx, key)
 	return cmd.Val(), cmd.Err()
 }
-func (dc *DataCtx) HDel(key string, field string) (err error) {
+func (dc *Ctx) HDel(key string, field string) (err error) {
 	status := dc.Rds.HDel(dc.Ctx, key, field)
 	return status.Err()
 }
-func (dc *DataCtx) HKeys(key string) (fields []string, err error) {
+func (dc *Ctx) HKeys(key string) (fields []string, err error) {
 	return rds.HKeys(dc.Ctx, dc.Rds, key)
 }
-func (dc *DataCtx) HVals(key string) (values []interface{}, err error) {
+func (dc *Ctx) HVals(key string) (values []interface{}, err error) {
 	cmd := dc.Rds.HVals(dc.Ctx, key)
 	data := cmd.Val()
 	//unmarshal each value of cmd.Val() to interface{}, using msgpack
@@ -121,15 +121,15 @@ func (dc *DataCtx) HVals(key string) (values []interface{}, err error) {
 	}
 	return values, nil
 }
-func (dc *DataCtx) HIncrBy(key string, field string, increment int64) (err error) {
+func (dc *Ctx) HIncrBy(key string, field string, increment int64) (err error) {
 	status := dc.Rds.HIncrBy(dc.Ctx, key, field, increment)
 	return status.Err()
 }
-func (dc *DataCtx) HIncrByFloat(key string, field string, increment float64) (err error) {
+func (dc *Ctx) HIncrByFloat(key string, field string, increment float64) (err error) {
 	status := dc.Rds.HIncrByFloat(dc.Ctx, key, field, increment)
 	return status.Err()
 }
-func (dc *DataCtx) HSetNX(key string, field string, param interface{}) (err error) {
+func (dc *Ctx) HSetNX(key string, field string, param interface{}) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (dc *DataCtx) HSetNX(key string, field string, param interface{}) (err erro
 }
 
 // golang version of python scan_iter
-func (dc *DataCtx) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
+func (dc *Ctx) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
 	keys, _, err = dc.Rds.Scan(dc.Ctx, cursor, match, count).Result()
 	return keys, err
 }

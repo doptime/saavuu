@@ -11,12 +11,12 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-type fn func(dc *data.DataCtx, pc *ApiCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(dc *data.Ctx, pc *Ctx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func NewApiService(serviceName string, f fn) {
-	serviceName = "svc:" + serviceName
+func NewApi(serviceName string, f fn) {
+	serviceName = "api:" + serviceName
 	//check configureation is loaded
 	if config.DataRds == nil {
 		logger.Lshortfile.Panic("config.DataRedis is nil. you should call config.LoadConfigFromRedis first")
@@ -34,8 +34,8 @@ func NewApiService(serviceName string, f fn) {
 			return err
 		}
 		//process one job
-		dc := &data.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
-		pc := &ApiCtx{Ctx: context.Background(), Rds: config.ParamRds}
+		dc := &data.Ctx{Ctx: context.Background(), Rds: config.DataRds}
+		pc := &Ctx{Ctx: context.Background(), Rds: config.ParamRds}
 		if out, err = f(dc, pc, param); err != nil {
 			return err
 		}

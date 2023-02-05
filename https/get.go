@@ -29,7 +29,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	dc := data.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
+	dc := data.Ctx{Ctx: svcCtx.Ctx, Rds: DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
@@ -57,7 +57,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
 	case "TIME":
-		pc := data.DataCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: ParamRds}
 		if tm, err := pc.Time(); err != nil {
 			return "", err
 		} else {

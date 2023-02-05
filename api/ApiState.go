@@ -30,5 +30,5 @@ func reportApiStates() {
 func RunningAllApis() {
 	PendingApiFromRedisToLoal()
 	go reportApiStates()
-	receiveApiJobs()
+	apiReceiveJobs()
 }

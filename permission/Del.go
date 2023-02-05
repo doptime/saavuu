@@ -26,7 +26,7 @@ func LoadDelPermissionFromRedis() {
 	// read RedisDelPermission usiing ParamRds
 	// RedisDelPermission is a hash
 	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
-	paramCtx := api.NewApiContext(context.Background())
+	paramCtx := api.NewContext(context.Background())
 	if err := paramCtx.HGetAll("RedisDelPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error())
 	} else {
@@ -71,7 +71,7 @@ func IsDelPermitted(dataKey string, operation string) bool {
 	}
 	PermittedDelOp[dataKey] = permission
 	//save to redis
-	paramCtx := api.NewApiContext(context.Background())
+	paramCtx := api.NewContext(context.Background())
 	paramCtx.HSet("RedisDelPermission", dataKey, permission)
 	return config.Cfg.DevelopMode
 }

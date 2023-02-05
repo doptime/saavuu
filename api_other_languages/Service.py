@@ -14,8 +14,8 @@ class Service():
         self.rds = redis.Redis(connection_pool=connpool)
         self.batch_size = 64
         self.service_name=type(self).__name__.split("_")[1]
-        if not self.service_name.startswith("svc:"):
-            self.service_name = "svc:" + self.service_name
+        if not self.service_name.startswith("api:"):
+            self.service_name = "api:" + self.service_name
         self.task_num_in_60s = datetime.datetime.now().minute << 32
         print(f"service {self.service_name } initialed, batch_size:{self.batch_size} host:{host} port:{port} db:{db}")
 
