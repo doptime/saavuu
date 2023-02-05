@@ -10,7 +10,7 @@ type Counter struct {
 	m sync.Map
 }
 
-// Get Retrieves the count without modifying it
+// Get Retrieves the count without modifying it.
 func (c *Counter) Get(key string) (int64, bool) {
 	count, ok := c.m.Load(key)
 	if ok {
