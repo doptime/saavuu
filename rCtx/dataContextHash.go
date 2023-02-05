@@ -36,7 +36,7 @@ func HSet(ctx context.Context, rds *redis.Client, key string, field string, valu
 func (dc *DataCtx) HSet(key string, field string, param interface{}) (err error) {
 	return HSet(dc.Ctx, dc.Rds, key, field, param)
 }
-func (pc *ParamCtx) HSet(key string, field string, param interface{}) (err error) {
+func (pc *ApiCtx) HSet(key string, field string, param interface{}) (err error) {
 	return HSet(pc.Ctx, pc.Rds, key, field, param)
 }
 
@@ -69,7 +69,7 @@ func HGetAll(ctx context.Context, rds *redis.Client, key string, mapOut interfac
 func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
 	return HGetAll(dc.Ctx, dc.Rds, key, mapOut)
 }
-func (pc *ParamCtx) HGetAll(key string, mapOut interface{}) (err error) {
+func (pc *ApiCtx) HGetAll(key string, mapOut interface{}) (err error) {
 	return HGetAll(pc.Ctx, pc.Rds, key, mapOut)
 }
 func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
@@ -147,7 +147,7 @@ func (dc *DataCtx) HKeys(key string) (fields []string, err error) {
 	cmd := dc.Rds.HKeys(dc.Ctx, key)
 	return cmd.Val(), cmd.Err()
 }
-func (pc *ParamCtx) HKeys(key string) (fields []string, err error) {
+func (pc *ApiCtx) HKeys(key string) (fields []string, err error) {
 	cmd := pc.Rds.HKeys(pc.Ctx, key)
 	return cmd.Val(), cmd.Err()
 }

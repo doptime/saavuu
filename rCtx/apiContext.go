@@ -11,14 +11,14 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-type ParamCtx struct {
+type ApiCtx struct {
 	Ctx context.Context
 	Rds *redis.Client
 }
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *ParamCtx) ApiBasic(ServiceKey string, paramIn interface{}, dueTime int64) (result []byte, err error) {
+func (sc *ApiCtx) Api(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -38,11 +38,11 @@ func (sc *ParamCtx) ApiBasic(ServiceKey string, paramIn interface{}, dueTime int
 	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
 	} else {
 		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
-		return nil, err
+		return err
 	}
 
 	if b, err = msgpack.Marshal(paramIn); err != nil {
-		return nil, err
+		return err
 	}
 	if dueTime != 0 {
 		Values = []string{"dueTime", strconv.FormatInt(dueTime, 10), "data", string(b)}
@@ -52,25 +52,19 @@ func (sc *ParamCtx) ApiBasic(ServiceKey string, paramIn interface{}, dueTime int
 	args := &redis.XAddArgs{Stream: ServiceKey, Values: Values, MaxLen: 4096}
 	if cmd = sc.Rds.XAdd(sc.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
-		return nil, cmd.Err()
+		return cmd.Err()
 	}
 	if dueTime != 0 {
-		return nil, nil
+		return nil
 	}
 
 	//BLPop 返回结果 [key1,value1,key2,value2]
 	//cmd.Val() is the stream id, the result will be poped from the list with this id
 	if results, err = sc.Rds.BLPop(sc.Ctx, time.Second*20, cmd.Val()).Result(); err != nil {
-		return nil, err
-	}
-	return []byte(results[1]), nil
-}
-func (sc *ParamCtx) Api(ServiceKey string, structIn interface{}, out interface{}) (err error) {
-	var (
-		b []byte
-	)
-	if b, err = sc.ApiBasic(ServiceKey, structIn, 0); err != nil {
 		return err
+	} else if out != nil && len(results) == 2 {
+		b = []byte(results[1])
+		return msgpack.Unmarshal(b, out)
 	}
-	return msgpack.Unmarshal(b, out)
+	return nil
 }

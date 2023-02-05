@@ -11,7 +11,7 @@ import (
 	"github.com/yangkequn/saavuu/rCtx"
 )
 
-type fn func(dc *rCtx.DataCtx, pc *rCtx.ParamCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(dc *rCtx.DataCtx, pc *rCtx.ApiCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
@@ -35,7 +35,7 @@ func NewApiService(serviceName string, f fn) {
 		}
 		//process one job
 		dc := &rCtx.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
-		pc := &rCtx.ParamCtx{Ctx: context.Background(), Rds: config.ParamRds}
+		pc := &rCtx.ApiCtx{Ctx: context.Background(), Rds: config.ParamRds}
 		if out, err = f(dc, pc, param); err != nil {
 			return err
 		}

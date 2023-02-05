@@ -19,7 +19,7 @@ func LoadGetPermissionFromRedis() {
 	// read RedisGetPermission usiing ParamRds
 	// RedisGetPermission is a hash
 	// split each value of RedisGetPermission into string[] and store in PermittedBatchOp
-	paramCtx := saavuu.NewParamContext(context.Background())
+	paramCtx := saavuu.NewApiContext(context.Background())
 	if err := paramCtx.HGetAll("RedisGetPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisGetPermission  error: " + err.Error())
 	} else {
@@ -64,7 +64,7 @@ func IsGetPermitted(dataKey string, operation string) bool {
 
 	PermittedBatchOp[dataKey] = permission
 	//save to redis
-	paramCtx := saavuu.NewParamContext(context.Background())
+	paramCtx := saavuu.NewApiContext(context.Background())
 	paramCtx.HSet("RedisGetPermission", dataKey, permission)
 	return config.Cfg.DevelopMode
 }
