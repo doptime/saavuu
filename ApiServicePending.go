@@ -20,7 +20,7 @@ func PendingApiAddOne(serviceName string, dueTimeStr string, bytesValue string) 
 }
 func PendingApiRunOne(serviceName, dueTimeStr string) {
 	var (
-		bytesValue                                 string
+		bytes                                      []byte
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
 		err                                        error
 		cmd                                        []redis.Cmder
@@ -38,8 +38,9 @@ func PendingApiRunOne(serviceName, dueTimeStr string) {
 		logger.Lshortfile.Println(err)
 		return
 	}
-	bytesValue = cmd[0].(*redis.StringCmd).Val()
-	apiServices[serviceName].ApiFunc(serviceName, []byte(bytesValue))
+	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
+		apiServices[serviceName].ApiFunc(serviceName, bytes)
+	}
 }
 
 func PendingApiFromRedisToLoal() {
