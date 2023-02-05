@@ -1,13 +1,12 @@
-package rCtx
+package data
 
 import (
-	"context"
 	"errors"
 	"reflect"
 
-	"github.com/go-redis/redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/logger"
+	"github.com/yangkequn/saavuu/rds"
 )
 
 func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error) {
@@ -24,53 +23,17 @@ func (dc *DataCtx) HGet(key string, field string, param interface{}) (err error)
 	}
 	return msgpack.Unmarshal(data, param)
 }
-func HSet(ctx context.Context, rds *redis.Client, key string, field string, value interface{}) (err error) {
-	bytes, err := msgpack.Marshal(value)
-	if err != nil {
-		return err
-	}
-	status := rds.HSet(ctx, key, field, bytes)
-	return status.Err()
-}
 
 func (dc *DataCtx) HSet(key string, field string, param interface{}) (err error) {
-	return HSet(dc.Ctx, dc.Rds, key, field, param)
-}
-func (pc *ApiCtx) HSet(key string, field string, param interface{}) (err error) {
-	return HSet(pc.Ctx, pc.Rds, key, field, param)
+	return rds.HSet(dc.Ctx, dc.Rds, key, field, param)
 }
 
 func (dc *DataCtx) HExists(key string, field string) (ok bool, err error) {
 	cmd := dc.Rds.HExists(dc.Ctx, key, field)
 	return cmd.Val(), cmd.Err()
 }
-func HGetAll(ctx context.Context, rds *redis.Client, key string, mapOut interface{}) (err error) {
-	mapElem := reflect.TypeOf(mapOut)
-	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
-		return errors.New("mapOut must be a map[string] struct/interface{}")
-	}
-	cmd := rds.HGetAll(ctx, key)
-	data, err := cmd.Result()
-	if err != nil {
-		return err
-	}
-	//append all data to mapOut
-	structSupposed := mapElem.Elem()
-	for k, v := range data {
-		//make a copy of stru , to obj
-		obj := reflect.New(structSupposed).Interface()
-		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
-			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(obj).Elem())
-		}
-	}
-	return err
-}
 func (dc *DataCtx) HGetAll(key string, mapOut interface{}) (err error) {
-	return HGetAll(dc.Ctx, dc.Rds, key, mapOut)
-}
-func (pc *ApiCtx) HGetAll(key string, mapOut interface{}) (err error) {
-	return HGetAll(pc.Ctx, pc.Rds, key, mapOut)
+	return rds.HGetAll(dc.Ctx, dc.Rds, key, mapOut)
 }
 func (dc *DataCtx) HSetAll(key string, _map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
@@ -144,12 +107,7 @@ func (dc *DataCtx) HDel(key string, field string) (err error) {
 	return status.Err()
 }
 func (dc *DataCtx) HKeys(key string) (fields []string, err error) {
-	cmd := dc.Rds.HKeys(dc.Ctx, key)
-	return cmd.Val(), cmd.Err()
-}
-func (pc *ApiCtx) HKeys(key string) (fields []string, err error) {
-	cmd := pc.Rds.HKeys(pc.Ctx, key)
-	return cmd.Val(), cmd.Err()
+	return rds.HKeys(dc.Ctx, dc.Rds, key)
 }
 func (dc *DataCtx) HVals(key string) (values []interface{}, err error) {
 	cmd := dc.Rds.HVals(dc.Ctx, key)

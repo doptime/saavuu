@@ -1,4 +1,4 @@
-package saavuu
+package api
 
 import (
 	"context"
@@ -7,11 +7,11 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/logger"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
-type fn func(dc *rCtx.DataCtx, pc *rCtx.ApiCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(dc *data.DataCtx, pc *ApiCtx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
@@ -34,8 +34,8 @@ func NewApiService(serviceName string, f fn) {
 			return err
 		}
 		//process one job
-		dc := &rCtx.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
-		pc := &rCtx.ApiCtx{Ctx: context.Background(), Rds: config.ParamRds}
+		dc := &data.DataCtx{Ctx: context.Background(), Rds: config.DataRds}
+		pc := &ApiCtx{Ctx: context.Background(), Rds: config.ParamRds}
 		if out, err = f(dc, pc, param); err != nil {
 			return err
 		}

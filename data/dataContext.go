@@ -1,4 +1,4 @@
-package rCtx
+package data
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/rds"
 )
 
 type DataCtx struct {
@@ -13,21 +15,18 @@ type DataCtx struct {
 	Rds *redis.Client
 }
 
-func (dc *DataCtx) Get(key string, param interface{}) (err error) {
-	cmd := dc.Rds.Get(dc.Ctx, key)
-	data, err := cmd.Bytes()
-	if err != nil {
-		return err
+func NewDataContext(ctx context.Context) *DataCtx {
+	if ctx == nil {
+		ctx = context.Background()
 	}
-	return msgpack.Unmarshal(data, param)
+	return &DataCtx{Ctx: ctx, Rds: config.DataRds}
+}
+
+func (dc *DataCtx) Get(key string, param interface{}) (err error) {
+	return rds.Get(dc.Ctx, dc.Rds, key, param)
 }
 func (dc *DataCtx) Set(key string, param interface{}, expiration time.Duration) (err error) {
-	bytes, err := msgpack.Marshal(param)
-	if err != nil {
-		return err
-	}
-	status := dc.Rds.Set(dc.Ctx, key, bytes, expiration)
-	return status.Err()
+	return rds.Set(dc.Ctx, dc.Rds, key, param, expiration)
 }
 
 func (dc *DataCtx) RPush(key string, param interface{}) (err error) {

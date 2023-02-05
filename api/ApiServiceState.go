@@ -1,13 +1,14 @@
-package saavuu
+package api
 
 import (
 	"strconv"
 	"time"
 
 	"github.com/yangkequn/saavuu/logger"
+	"github.com/yangkequn/saavuu/tools"
 )
 
-var apiCounter Counter = Counter{}
+var apiCounter tools.Counter = tools.Counter{}
 
 func reportApiStates() {
 	// all keys of ServiceMap to []string serviceNames

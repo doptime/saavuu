@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	"github.com/yangkequn/saavuu/logger"
-	"github.com/yangkequn/saavuu/rCtx"
+	"github.com/yangkequn/saavuu/rds"
 )
 
 func loadOSEnv(key string, panicString string) (value string) {
@@ -61,8 +61,7 @@ func LoadConfigFromEnv() (err error) {
 
 func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := rCtx.DataCtx{Ctx: context.Background(), Rds: ParamServer}
-	if err = rc.Get(keyName, &Cfg); err != nil {
+	if err = rds.Get(context.Background(), ParamServer, keyName, &Cfg); err != nil {
 		return err
 	}
 	UseConfig()
@@ -70,8 +69,7 @@ func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) 
 }
 func SaveConfigToRedis(ParamServer *redis.Client, keyName string) (err error) {
 	// 保存到 ParamServer
-	rc := rCtx.DataCtx{Ctx: context.Background(), Rds: ParamServer}
-	if err = rc.Set(keyName, &Cfg, -1); err != nil {
+	if err = rds.Set(context.Background(), ParamServer, keyName, &Cfg, -1); err != nil {
 		return err
 	}
 	return nil

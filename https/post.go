@@ -3,8 +3,8 @@ package https
 import (
 	"errors"
 
+	"github.com/yangkequn/saavuu/api"
 	. "github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
 func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
@@ -18,7 +18,7 @@ func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
 	}
 	svcCtx.MergeJwtField(paramIn)
 
-	pc := rCtx.ApiCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+	pc := api.ApiCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
 	if err = pc.Api(svcCtx.Service, paramIn, &result, 0); err != nil {
 		return nil, err
 	}

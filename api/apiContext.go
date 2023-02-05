@@ -1,4 +1,4 @@
-package rCtx
+package api
 
 import (
 	"context"
@@ -8,12 +8,20 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
 )
 
 type ApiCtx struct {
 	Ctx context.Context
 	Rds *redis.Client
+}
+
+func NewApiContext(ctx context.Context) *ApiCtx {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return &ApiCtx{Ctx: ctx, Rds: config.ParamRds}
 }
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel

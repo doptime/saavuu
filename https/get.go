@@ -9,8 +9,8 @@ import (
 
 	"github.com/go-redis/redis/v9"
 	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
-	"github.com/yangkequn/saavuu/rCtx"
 )
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
@@ -29,7 +29,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	dc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
+	dc := data.DataCtx{Ctx: svcCtx.Ctx, Rds: DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
@@ -57,7 +57,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
 	case "TIME":
-		pc := rCtx.DataCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
+		pc := data.DataCtx{Ctx: svcCtx.Ctx, Rds: ParamRds}
 		if tm, err := pc.Time(); err != nil {
 			return "", err
 		} else {

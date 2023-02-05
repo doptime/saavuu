@@ -1,4 +1,4 @@
-package saavuu
+package tools
 
 import (
 	"github.com/mitchellh/mapstructure"
