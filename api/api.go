@@ -12,7 +12,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *Ctx) Api(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
+func (sc *Ctx) ApiWhen(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -61,4 +61,8 @@ func (sc *Ctx) Api(ServiceKey string, paramIn interface{}, out interface{}, dueT
 		return msgpack.Unmarshal(b, out)
 	}
 	return nil
+}
+
+func (sc *Ctx) Api(ServiceKey string, paramIn interface{}, out interface{}) (err error) {
+	return sc.ApiWhen(ServiceKey, paramIn, out, 0)
 }

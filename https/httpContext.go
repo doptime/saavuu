@@ -3,7 +3,7 @@ package https
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
@@ -68,7 +68,7 @@ func (svc *HttpContext) BodyBytes() (data []byte, err error) {
 	if svc.Req.ContentLength == 0 {
 		return nil, errors.New("empty body")
 	}
-	if data, err = ioutil.ReadAll(svc.Req.Body); err != nil {
+	if data, err = io.ReadAll(svc.Req.Body); err != nil {
 		return nil, err
 	}
 	return data, nil

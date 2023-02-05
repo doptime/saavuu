@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
-	. "github.com/yangkequn/saavuu/config"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -20,9 +19,9 @@ func (svc *HttpContext) JwtToken() (token *jwt.Token) {
 		keyFunction := func(token *jwt.Token) (value interface{}, err error) {
 			_, ok := token.Method.(*jwt.SigningMethodHMAC)
 			if !ok {
-				return nil, errors.New("Invalid signing method")
+				return nil, errors.New("invalid signing method")
 			}
-			return []byte(Cfg.JwtSecret), nil
+			return []byte(config.Cfg.JwtSecret), nil
 		}
 		svc.jwtToken, _ = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction)
 	}
@@ -47,7 +46,7 @@ func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 		return
 	}
 	for k, v := range mpclaims {
-		if !strings.Contains(Cfg.JwtIgnoreFields, strings.ToLower(k)) {
+		if !strings.Contains(config.Cfg.JwtIgnoreFields, strings.ToLower(k)) {
 			paramIn["JWT_"+k] = v
 		}
 	}

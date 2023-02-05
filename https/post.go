@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/yangkequn/saavuu/api"
-	. "github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/config"
 )
 
 func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
@@ -18,8 +18,8 @@ func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
 	}
 	svcCtx.MergeJwtField(paramIn)
 
-	pc := api.Ctx{Ctx: svcCtx.Ctx, Rds: ParamRds}
-	if err = pc.Api(svcCtx.Service, paramIn, &result, 0); err != nil {
+	pc := api.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
+	if err = pc.Api(svcCtx.Service, paramIn, &result); err != nil {
 		return nil, err
 	}
 
