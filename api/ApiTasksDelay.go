@@ -11,14 +11,14 @@ import (
 )
 
 // put parameter to redis ,make it persistent
-func PendingApiAddOne(serviceName string, dueTimeStr string, bytesValue string) {
-	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":pending", dueTimeStr, bytesValue); cmd.Err() != nil {
+func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
+	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return
 	}
-	go PendingApiRunOne(serviceName, dueTimeStr)
+	go delayTaskDoOne(serviceName, dueTimeStr)
 }
-func PendingApiRunOne(serviceName, dueTimeStr string) {
+func delayTaskDoOne(serviceName, dueTimeStr string) {
 	var (
 		bytes                                      []byte
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
@@ -32,8 +32,8 @@ func PendingApiRunOne(serviceName, dueTimeStr string) {
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
 	pipeline := config.ParamRds.Pipeline()
-	pipeline.HGet(context.Background(), serviceName+":pending", dueTimeStr)
-	pipeline.HDel(context.Background(), serviceName+":pending", dueTimeStr)
+	pipeline.HGet(context.Background(), serviceName+":delay", dueTimeStr)
+	pipeline.HDel(context.Background(), serviceName+":delay", dueTimeStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
 		logger.Lshortfile.Println(err)
 		return
@@ -43,7 +43,7 @@ func PendingApiRunOne(serviceName, dueTimeStr string) {
 	}
 }
 
-func PendingApiFromRedisToLoal() {
+func delayTasksLoad() {
 	var (
 		services    = apiServiceNames()
 		dueTimeStrs []string
@@ -52,16 +52,16 @@ func PendingApiFromRedisToLoal() {
 	)
 	pipeline := config.ParamRds.Pipeline()
 	for _, service := range services {
-		pipeline.HKeys(context.Background(), service+":pending")
+		pipeline.HKeys(context.Background(), service+":delay")
 	}
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
-		logger.Lshortfile.Println("err LoadPendingApiTask, ", err)
+		logger.Lshortfile.Println("err LoadDelayApiTask, ", err)
 		return
 	}
 	for i, service := range services {
 		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, dueTimeStr := range dueTimeStrs {
-			go PendingApiRunOne(service, dueTimeStr)
+			go delayTaskDoOne(service, dueTimeStr)
 		}
 	}
 }

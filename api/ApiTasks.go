@@ -51,7 +51,7 @@ func XGroupCreate(c context.Context) (err error) {
 	return nil
 }
 
-func apiReceiveJobs() {
+func receiveJobs() {
 	var (
 		cmd     *redis.XStreamSliceCmd
 		apiName string
@@ -80,7 +80,7 @@ func apiReceiveJobs() {
 				bytesValue := message.Values["data"].(string)
 				//the delay calling will lost if the app is down
 				if dueTimeStr, ok := message.Values["dueTime"]; ok {
-					go PendingApiAddOne(apiName, dueTimeStr.(string), bytesValue)
+					go delayTaskAddOne(apiName, dueTimeStr.(string), bytesValue)
 				} else {
 					go apiServices[apiName].ApiFunc(message.ID, []byte(bytesValue))
 				}

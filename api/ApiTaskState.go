@@ -10,7 +10,7 @@ import (
 
 var apiCounter tools.Counter = tools.Counter{}
 
-func reportApiStates() {
+func reportStates() {
 	// all keys of ServiceMap to []string serviceNames
 	var serviceNames []string = make([]string, 0, len(apiServices))
 	for serviceName := range apiServices {
@@ -28,7 +28,7 @@ func reportApiStates() {
 	}
 }
 func RunningAllApis() {
-	PendingApiFromRedisToLoal()
-	go reportApiStates()
-	apiReceiveJobs()
+	delayTasksLoad()
+	go reportStates()
+	receiveJobs()
 }
