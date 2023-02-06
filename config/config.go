@@ -15,11 +15,11 @@ type Configuration struct {
 	RedisDbData       int
 
 	//DevelopMode should never be true in production
-	DevelopMode     bool
-	JwtSecret       string
-	JwtIgnoreFields string
-	MaxBufferSize   int64
-	CORS            string
+	DevelopMode   bool
+	JwtSecret     string
+	JwtFieldsKept string
+	MaxBufferSize int64
+	CORS          string
 
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	ServiceBatchSize int64

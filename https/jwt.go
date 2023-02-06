@@ -46,7 +46,7 @@ func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 		return
 	}
 	for k, v := range mpclaims {
-		if !strings.Contains(config.Cfg.JwtIgnoreFields, strings.ToLower(k)) {
+		if strings.Contains(config.Cfg.JwtFieldsKept, strings.ToLower(k)) {
 			paramIn["JWT_"+k] = v
 		}
 	}

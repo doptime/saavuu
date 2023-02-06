@@ -33,8 +33,8 @@ func LoadConfigFromEnv() (err error) {
 		logger.Lshortfile.Panicln("Error: REDIS_DB_DATA is not a number")
 	}
 	Cfg.JwtSecret = loadOSEnv("JWT_SECRET", "Error: JWT_SECRET Can not load from env")
-	if Cfg.JwtIgnoreFields = loadOSEnv("JWT_IGNORE_FIELDS", ""); Cfg.JwtIgnoreFields != "" {
-		Cfg.JwtIgnoreFields = strings.ToLower(Cfg.JwtIgnoreFields)
+	if Cfg.JwtFieldsKept = loadOSEnv("JWT_FIELDS_KEPT", ""); Cfg.JwtFieldsKept != "" {
+		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
 	if Cfg.MaxBufferSize, err = strconv.ParseInt(loadOSEnv("MAX_BUFFER_SIZE", "Error: MAX_BUFFER_SIZE is not set "), 10, 64); err != nil {
 		logger.Lshortfile.Panicln("Error: MAX_BUFFER_SIZE is not a number")
