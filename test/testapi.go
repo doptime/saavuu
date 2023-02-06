@@ -18,6 +18,6 @@ func TestApi() {
 		return data, nil
 	})
 	pc := api.NewContext(context.Background())
-	go pc.Api("test", map[string]string{"message": "ok"}, nil, time.Now().UnixMicro()+1000)
+	go pc.DoAt("test", map[string]string{"message": "ok"}, nil, time.Now().UnixMicro()+1000)
 	api.RunningAllApis()
 }

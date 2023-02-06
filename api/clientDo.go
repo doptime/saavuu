@@ -12,7 +12,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (sc *Ctx) ApiWhen(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
+func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -44,7 +44,7 @@ func (sc *Ctx) ApiWhen(ServiceKey string, paramIn interface{}, out interface{}, 
 		Values = []string{"data", string(b)}
 	}
 	args := &redis.XAddArgs{Stream: ServiceKey, Values: Values, MaxLen: 4096}
-	if cmd = sc.Rds.XAdd(sc.Ctx, args); cmd.Err() != nil {
+	if cmd = ac.Rds.XAdd(ac.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return cmd.Err()
 	}
@@ -54,7 +54,7 @@ func (sc *Ctx) ApiWhen(ServiceKey string, paramIn interface{}, out interface{}, 
 
 	//BLPop 返回结果 [key1,value1,key2,value2]
 	//cmd.Val() is the stream id, the result will be poped from the list with this id
-	if results, err = sc.Rds.BLPop(sc.Ctx, time.Second*20, cmd.Val()).Result(); err != nil {
+	if results, err = ac.Rds.BLPop(ac.Ctx, time.Second*20, cmd.Val()).Result(); err != nil {
 		return err
 	} else if out != nil && len(results) == 2 {
 		b = []byte(results[1])
@@ -63,6 +63,6 @@ func (sc *Ctx) ApiWhen(ServiceKey string, paramIn interface{}, out interface{}, 
 	return nil
 }
 
-func (sc *Ctx) Api(ServiceKey string, paramIn interface{}, out interface{}) (err error) {
-	return sc.ApiWhen(ServiceKey, paramIn, out, 0)
+func (ac *Ctx) Do(ServiceKey string, paramIn interface{}, out interface{}) (err error) {
+	return ac.DoAt(ServiceKey, paramIn, out, 0)
 }
