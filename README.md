@@ -36,7 +36,7 @@ type Input struct {
 }
 
 func init() {
-	api.NewApi("demo", 128, func(dc *data.Ctx, pc *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
+	api.NewApi("demo", func(dc *data.Ctx, pc *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
 		var req *Input = &Input{}
 		if err = tools.MapsToStructure(parmIn, req); err != nil {
 			return nil, err
@@ -86,6 +86,5 @@ HGET("UserInfo", id).then((data) => {
     "JWT_SECRET": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
     "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
     "CORS": "*",
-    "SAAVUU_CONFIG_KEY": "saavuu_service_config",
     "MAX_BUFFER_SIZE": "3145728",
 ```

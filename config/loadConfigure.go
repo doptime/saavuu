@@ -53,23 +53,25 @@ func LoadConfigFromEnv() (err error) {
 	}
 
 	UseConfig()
-	SaveConfigToRedis(ParamRds, loadOSEnv("SAAVUU_CONFIG_KEY", "Error: Can not load SAAVUU_CONFIG_KEY from env"))
+	SaveConfigToRedis(ParamRds)
 
 	logger.Lshortfile.Println("Load config from env success")
 	return nil
 }
 
-func LoadConfigFromRedis(ParamServer *redis.Client, keyName string) (err error) {
+const redisConfigKey = "saavuu_config"
+
+func LoadConfigFromRedis(ParamServer *redis.Client) (err error) {
 	// 保存到 ParamServer
-	if err = rds.Get(context.Background(), ParamServer, keyName, &Cfg); err != nil {
+	if err = rds.Get(context.Background(), ParamServer, redisConfigKey, &Cfg); err != nil {
 		return err
 	}
 	UseConfig()
 	return nil
 }
-func SaveConfigToRedis(ParamServer *redis.Client, keyName string) (err error) {
+func SaveConfigToRedis(ParamServer *redis.Client) (err error) {
 	// 保存到 ParamServer
-	if err = rds.Set(context.Background(), ParamServer, keyName, &Cfg, -1); err != nil {
+	if err = rds.Set(context.Background(), ParamServer, redisConfigKey, &Cfg, -1); err != nil {
 		return err
 	}
 	return nil
