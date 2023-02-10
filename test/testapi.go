@@ -9,15 +9,16 @@ import (
 	"github.com/yangkequn/saavuu/data"
 )
 
-func TestApi() {
-
+func CreateTestApi() {
 	api.NewApi("test", func(dc *data.Ctx, pc *api.Ctx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
 		// your logic here
 		data = map[string]interface{}{"data": "ok"}
 		fmt.Println("test api ok")
 		return data, nil
 	})
-	pc := api.NewContext(context.Background())
-	go pc.DoAt("test", map[string]string{"message": "ok"}, nil, time.Now().UnixMicro()+1000)
+}
+func TestApi() {
+	_api := api.NewContext(context.Background())
+	go _api.DoAt("test", map[string]string{"message": "ok"}, nil, time.Now().UnixMicro()+1000)
 	api.RunningAllApis()
 }
