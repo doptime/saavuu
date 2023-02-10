@@ -16,7 +16,7 @@ func reportStates() {
 	for serviceName := range apiServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
-	logger.Lshortfile.Println(len(serviceNames), " services:", serviceNames)
+	logger.Lshortfile.Println(len(serviceNames), "apis:", serviceNames)
 	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]

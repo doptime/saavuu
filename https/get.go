@@ -29,33 +29,33 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	dc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds}
+	db := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
-		return _interface, dc.HGet(svcCtx.Key, svcCtx.Field, &_interface)
+		return _interface, db.HGet(svcCtx.Key, svcCtx.Field, &_interface)
 	case "HGETALL":
-		return maps, dc.HGetAll(svcCtx.Key, maps)
+		return maps, db.HGetAll(svcCtx.Key, maps)
 	case "HMGET":
-		return maps, dc.HMGET(svcCtx.Key, maps, strings.Split(svcCtx.Field, ",")...)
+		return maps, db.HMGET(svcCtx.Key, maps, strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
-		if keys, err := dc.HKeys(svcCtx.Key); err != nil {
+		if keys, err := db.HKeys(svcCtx.Key); err != nil {
 			return "", err
 		} else {
 			return json.Marshal(keys)
 		}
 	case "HEXISTS":
-		return dc.HExists(svcCtx.Key, svcCtx.Field)
+		return db.HExists(svcCtx.Key, svcCtx.Field)
 	case "HLEN":
-		return dc.HLen(svcCtx.Key)
+		return db.HLen(svcCtx.Key)
 	case "HVALS":
-		return dc.HVals(svcCtx.Key)
+		return db.HVals(svcCtx.Key)
 	case "SISMEMBER":
 		Member := svcCtx.Req.FormValue("Member")
 		if Member == "" {
 			return "", errors.New("no Member")
 		}
-		return dc.SIsMember(svcCtx.Key, svcCtx.Field)
+		return db.SIsMember(svcCtx.Key, svcCtx.Field)
 	case "TIME":
 		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
 		if tm, err := pc.Time(); err != nil {
@@ -154,7 +154,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		if Member == "" {
 			return "", errors.New("no Member")
 		}
-		return dc.ZRank(svcCtx.Key, Member)
+		return db.ZRank(svcCtx.Key, Member)
 	}
 	return nil, errors.New("unsupported command")
 

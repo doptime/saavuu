@@ -9,14 +9,14 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (dc *Ctx) HGet(key string, field string, param interface{}) (err error) {
+func (db *Ctx) HGet(key string, field string, param interface{}) (err error) {
 	//use reflect to check if param is a pointer
 	if reflect.TypeOf(param).Kind() != reflect.Ptr {
 		logger.Lshortfile.Println("param must be a pointer")
 		return errors.New("param must be a pointer")
 	}
 
-	cmd := dc.Rds.HGet(dc.Ctx, key, field)
+	cmd := db.Rds.HGet(db.Ctx, key, field)
 	data, err := cmd.Bytes()
 	if err != nil {
 		return err
@@ -24,18 +24,18 @@ func (dc *Ctx) HGet(key string, field string, param interface{}) (err error) {
 	return msgpack.Unmarshal(data, param)
 }
 
-func (dc *Ctx) HSet(key string, field string, param interface{}) (err error) {
-	return rds.HSet(dc.Ctx, dc.Rds, key, field, param)
+func (db *Ctx) HSet(key string, field string, param interface{}) (err error) {
+	return rds.HSet(db.Ctx, db.Rds, key, field, param)
 }
 
-func (dc *Ctx) HExists(key string, field string) (ok bool, err error) {
-	cmd := dc.Rds.HExists(dc.Ctx, key, field)
+func (db *Ctx) HExists(key string, field string) (ok bool, err error) {
+	cmd := db.Rds.HExists(db.Ctx, key, field)
 	return cmd.Val(), cmd.Err()
 }
-func (dc *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
-	return rds.HGetAll(dc.Ctx, dc.Rds, key, mapOut)
+func (db *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
+	return rds.HGetAll(db.Ctx, db.Rds, key, mapOut)
 }
-func (dc *Ctx) HSetAll(key string, _map interface{}) (err error) {
+func (db *Ctx) HSetAll(key string, _map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
@@ -43,26 +43,26 @@ func (dc *Ctx) HSetAll(key string, _map interface{}) (err error) {
 	}
 	//HSet each element of _map to redis
 	var result error
-	pipe := dc.Rds.Pipeline()
+	pipe := db.Rds.Pipeline()
 	for _, k := range reflect.ValueOf(_map).MapKeys() {
 		v := reflect.ValueOf(_map).MapIndex(k)
 		if bytes, err := msgpack.Marshal(v.Interface()); err != nil {
 			result = err
 		} else {
-			pipe.HSet(dc.Ctx, key, k.String(), bytes)
+			pipe.HSet(db.Ctx, key, k.String(), bytes)
 		}
 	}
-	pipe.Exec(dc.Ctx)
+	pipe.Exec(db.Ctx)
 	return result
 }
-func (dc *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
+func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
 		return errors.New("mapOut must be a map[string] struct/interface{}")
 	}
 	structSupposed := mapElem.Elem()
-	cmd := dc.Rds.HMGet(dc.Ctx, key, fields...)
+	cmd := db.Rds.HMGet(db.Ctx, key, fields...)
 	if cmd.Err() == nil {
 		//unmarshal each value of cmd.Val() to interface{}, using msgpack
 		for i, v := range cmd.Val() {
@@ -80,8 +80,8 @@ func (dc *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error)
 	return cmd.Err()
 }
 
-func (dc *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
-	cmd := dc.Rds.HGetAll(dc.Ctx, key)
+func (db *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
+	cmd := db.Rds.HGetAll(db.Ctx, key)
 	data, err := cmd.Result()
 	if err != nil {
 		return nil, err
@@ -98,19 +98,19 @@ func (dc *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err err
 	}
 	return param, nil
 }
-func (dc *Ctx) HLen(key string) (length int64, err error) {
-	cmd := dc.Rds.HLen(dc.Ctx, key)
+func (db *Ctx) HLen(key string) (length int64, err error) {
+	cmd := db.Rds.HLen(db.Ctx, key)
 	return cmd.Val(), cmd.Err()
 }
-func (dc *Ctx) HDel(key string, field string) (err error) {
-	status := dc.Rds.HDel(dc.Ctx, key, field)
+func (db *Ctx) HDel(key string, field string) (err error) {
+	status := db.Rds.HDel(db.Ctx, key, field)
 	return status.Err()
 }
-func (dc *Ctx) HKeys(key string) (fields []string, err error) {
-	return rds.HKeys(dc.Ctx, dc.Rds, key)
+func (db *Ctx) HKeys(key string) (fields []string, err error) {
+	return rds.HKeys(db.Ctx, db.Rds, key)
 }
-func (dc *Ctx) HVals(key string) (values []interface{}, err error) {
-	cmd := dc.Rds.HVals(dc.Ctx, key)
+func (db *Ctx) HVals(key string) (values []interface{}, err error) {
+	cmd := db.Rds.HVals(db.Ctx, key)
 	data := cmd.Val()
 	//unmarshal each value of cmd.Val() to interface{}, using msgpack
 	for _, v := range data {
@@ -121,25 +121,25 @@ func (dc *Ctx) HVals(key string) (values []interface{}, err error) {
 	}
 	return values, nil
 }
-func (dc *Ctx) HIncrBy(key string, field string, increment int64) (err error) {
-	status := dc.Rds.HIncrBy(dc.Ctx, key, field, increment)
+func (db *Ctx) HIncrBy(key string, field string, increment int64) (err error) {
+	status := db.Rds.HIncrBy(db.Ctx, key, field, increment)
 	return status.Err()
 }
-func (dc *Ctx) HIncrByFloat(key string, field string, increment float64) (err error) {
-	status := dc.Rds.HIncrByFloat(dc.Ctx, key, field, increment)
+func (db *Ctx) HIncrByFloat(key string, field string, increment float64) (err error) {
+	status := db.Rds.HIncrByFloat(db.Ctx, key, field, increment)
 	return status.Err()
 }
-func (dc *Ctx) HSetNX(key string, field string, param interface{}) (err error) {
+func (db *Ctx) HSetNX(key string, field string, param interface{}) (err error) {
 	bytes, err := msgpack.Marshal(param)
 	if err != nil {
 		return err
 	}
-	status := dc.Rds.HSetNX(dc.Ctx, key, field, bytes)
+	status := db.Rds.HSetNX(db.Ctx, key, field, bytes)
 	return status.Err()
 }
 
 // golang version of python scan_iter
-func (dc *Ctx) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
-	keys, _, err = dc.Rds.Scan(dc.Ctx, cursor, match, count).Result()
+func (db *Ctx) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
+	keys, _, err = db.Rds.Scan(db.Ctx, cursor, match, count).Result()
 	return keys, err
 }

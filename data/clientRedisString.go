@@ -8,7 +8,7 @@ import (
 )
 
 // get all keys that match the pattern, and return a map of key->value
-func (dc *Ctx) GetAll(match string, mapOut interface{}) (err error) {
+func (db *Ctx) GetAll(match string, mapOut interface{}) (err error) {
 	var (
 		keys []string = []string{match}
 		val  []byte
@@ -17,13 +17,13 @@ func (dc *Ctx) GetAll(match string, mapOut interface{}) (err error) {
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
 	}
-	if keys, err = dc.Scan(match, 0, 1024*1024*1024); err != nil {
+	if keys, err = db.Scan(match, 0, 1024*1024*1024); err != nil {
 		return err
 	}
 	var result error
 	structSupposed := mapElem.Elem()
 	for _, key := range keys {
-		if val, result = dc.Rds.Get(dc.Ctx, key).Bytes(); result != nil {
+		if val, result = db.Rds.Get(db.Ctx, key).Bytes(); result != nil {
 			err = result
 			continue
 		}
@@ -39,22 +39,22 @@ func (dc *Ctx) GetAll(match string, mapOut interface{}) (err error) {
 }
 
 // set each key value of _map to redis string type key value
-func (dc *Ctx) SetAll(_map interface{}) (err error) {
+func (db *Ctx) SetAll(_map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
 	}
 	//HSet each element of _map to redis
 	var result error
-	pipe := dc.Rds.Pipeline()
+	pipe := db.Rds.Pipeline()
 	for _, k := range reflect.ValueOf(_map).MapKeys() {
 		v := reflect.ValueOf(_map).MapIndex(k)
 		if bytes, err := msgpack.Marshal(v.Interface()); err != nil {
 			result = err
 		} else {
-			pipe.Set(dc.Ctx, k.String(), bytes, -1)
+			pipe.Set(db.Ctx, k.String(), bytes, -1)
 		}
 	}
-	pipe.Exec(dc.Ctx)
+	pipe.Exec(db.Ctx)
 	return result
 }

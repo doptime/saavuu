@@ -11,7 +11,7 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-type fn func(dc *data.Ctx, pc *Ctx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
+type fn func(db *data.Ctx, pc *Ctx, paramIn map[string]interface{}) (out map[string]interface{}, err error)
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
@@ -21,7 +21,7 @@ func NewApi(serviceName string, f fn) {
 			out            interface{}
 			marshaledBytes []byte
 			param          map[string]interface{} = map[string]interface{}{}
-			dc             *data.Ctx
+			db             *data.Ctx
 			pc             *Ctx
 		)
 		if err = msgpack.Unmarshal(s, &param); err != nil {
@@ -35,9 +35,9 @@ func NewApi(serviceName string, f fn) {
 		if config.ParamRds == nil {
 			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
 		}
-		dc = &data.Ctx{Ctx: context.Background(), Rds: config.DataRds}
+		db = &data.Ctx{Ctx: context.Background(), Rds: config.DataRds}
 		pc = &Ctx{Ctx: context.Background(), Rds: config.ParamRds}
-		if out, err = f(dc, pc, param); err != nil {
+		if out, err = f(db, pc, param); err != nil {
 			return err
 		}
 		//Post Back

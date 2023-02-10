@@ -12,7 +12,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, out interface{}, dueTime int64) (err error) {
+func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, out interface{}, dueTimeUnixMs int64) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -38,8 +38,8 @@ func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, out interface{}, due
 	if b, err = msgpack.Marshal(paramIn); err != nil {
 		return err
 	}
-	if dueTime != 0 {
-		Values = []string{"dueTime", strconv.FormatInt(dueTime, 10), "data", string(b)}
+	if dueTimeUnixMs != 0 {
+		Values = []string{"dueTime", strconv.FormatInt(dueTimeUnixMs, 10), "data", string(b)}
 	} else {
 		Values = []string{"data", string(b)}
 	}
@@ -48,7 +48,7 @@ func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, out interface{}, due
 		logger.Lshortfile.Println(cmd.Err())
 		return cmd.Err()
 	}
-	if dueTime != 0 {
+	if dueTimeUnixMs != 0 {
 		return nil
 	}
 
