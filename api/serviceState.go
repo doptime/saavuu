@@ -16,13 +16,14 @@ func reportStates() {
 	for serviceName := range apiServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
-	logger.Lshortfile.Println("service has", len(serviceNames), "services:", serviceNames)
+	logger.Lshortfile.Println(len(serviceNames), " services:", serviceNames)
 	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
 		for _, serviceName := range serviceNames {
-			num, _ := apiCounter.Get(serviceName)
-			logger.Lshortfile.Println(now + " service " + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+			if num, _ := apiCounter.Get(serviceName); num > 0 {
+				logger.Lshortfile.Println(now + "" + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+			}
 			apiCounter.DeleteAndGetLastValue(serviceName)
 		}
 	}
