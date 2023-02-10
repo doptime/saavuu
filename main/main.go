@@ -87,7 +87,6 @@ func RedisHttpStart(path string, port int) {
 func main() {
 	logger.Std.Println("App Start! load config from OS env")
 	config.LoadConfigFromEnv()
-
 	go permission.LoadGetPermissionFromRedis()
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()

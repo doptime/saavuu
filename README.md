@@ -36,7 +36,7 @@ type Input struct {
 }
 
 func init() {
-	api.NewApi("demo", func(dc *data.Ctx, pc *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
+	api.NewApi("demo", func(dc *data.Ctx, api *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
 		var req *Input = &Input{}
 		if err = tools.MapsToStructure(parmIn, req); err != nil {
 			return nil, err
