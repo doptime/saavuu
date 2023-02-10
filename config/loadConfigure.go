@@ -53,7 +53,7 @@ func LoadConfigFromEnv() (err error) {
 	}
 
 	UseConfig()
-	SaveConfigToRedis(ParamRds)
+	saveConfigToRedis(ParamRds)
 
 	logger.Lshortfile.Println("Load config from env success")
 	return nil
@@ -61,7 +61,15 @@ func LoadConfigFromEnv() (err error) {
 
 const redisConfigKey = "saavuu_config"
 
-func LoadConfigFromRedis(ParamServer *redis.Client) (err error) {
+func saveConfigToRedis(ParamServer *redis.Client) (err error) {
+	// 保存到 ParamServer
+	if err = rds.Set(context.Background(), ParamServer, redisConfigKey, &Cfg, -1); err != nil {
+		return err
+	}
+	return nil
+}
+
+func loadConfigFromRedis(ParamServer *redis.Client) (err error) {
 	// 保存到 ParamServer
 	if err = rds.Get(context.Background(), ParamServer, redisConfigKey, &Cfg); err != nil {
 		return err
@@ -69,10 +77,19 @@ func LoadConfigFromRedis(ParamServer *redis.Client) (err error) {
 	UseConfig()
 	return nil
 }
-func SaveConfigToRedis(ParamServer *redis.Client) (err error) {
-	// 保存到 ParamServer
-	if err = rds.Set(context.Background(), ParamServer, redisConfigKey, &Cfg, -1); err != nil {
-		return err
+
+func ApiInitial(redisAddressForApi string, redisPassword string, redisDb int) {
+	ParamRedis := redis.NewClient(&redis.Options{
+		Addr:     redisAddressForApi,
+		Password: redisPassword, // no password set
+		DB:       redisDb,       // use default DB
+	})
+	if err := loadConfigFromRedis(ParamRedis); err != nil {
+		logger.Lshortfile.Panicln(err)
+	} else if DataRds == nil {
+		logger.Lshortfile.Panicln("config.DataRedis is nil. ")
+	} else if ParamRds == nil {
+		logger.Lshortfile.Panicln("config.ParamRedis is nil. ")
 	}
-	return nil
+	logger.Lshortfile.Println("ApiInitial passed")
 }
