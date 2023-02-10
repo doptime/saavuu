@@ -91,5 +91,5 @@ func ApiInitial(redisAddressForApi string, redisPassword string, redisDb int) {
 	} else if ParamRds == nil {
 		logger.Lshortfile.Panicln("config.ParamRedis is nil. ")
 	}
-	logger.Lshortfile.Println("ApiInitial passed")
+	logger.Lshortfile.Println("ApiInitial success")
 }
