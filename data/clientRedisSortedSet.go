@@ -1,10 +1,14 @@
 package data
 
 import (
+	"reflect"
+
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 func (db *Ctx) ZAdd(key string, members ...redis.Z) (err error) {
+	MarshalRedisZ(members...)
 	status := db.Rds.ZAdd(db.Ctx, key, members...)
 	return status.Err()
 }
@@ -12,9 +16,41 @@ func (db *Ctx) ZRem(key string, members ...interface{}) (err error) {
 	status := db.Rds.ZRem(db.Ctx, key, members)
 	return status.Err()
 }
-func (db *Ctx) ZRange(key string, start, stop int64) (members []string, err error) {
-	cmd := db.Rds.ZRange(db.Ctx, key, start, stop)
-	return cmd.Result()
+func (db *Ctx) ZRange(key string, start, stop int64, out ...interface{}) (err error) {
+	var cmd *redis.StringSliceCmd
+
+	if cmd = db.Rds.ZRange(db.Ctx, key, start, stop); cmd.Err() != nil && cmd.Err() != redis.Nil {
+		return cmd.Err()
+	}
+	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
+	elemType := reflect.TypeOf(out).Elem().Elem()
+	for _, member := range cmd.Val() {
+		elem := reflect.New(elemType).Interface()
+		if err := msgpack.Unmarshal([]byte(member), &elem); err != nil {
+			return err
+		}
+		reflect.ValueOf(out).Set(reflect.Append(reflect.ValueOf(out), reflect.ValueOf(elem)))
+	}
+
+	return nil
+}
+func UnmarshalRedisZ(_struct interface{}, members ...redis.Z) (out []redis.Z) {
+	for i := range members {
+		if members[i].Member != nil {
+			elemType := reflect.TypeOf(out).Elem()
+			elem := reflect.New(elemType).Interface()
+			members[i].Member, _ = msgpack.Marshal(elem)
+		}
+	}
+	return members
+}
+func MarshalRedisZ(members ...redis.Z) (out []redis.Z) {
+	for i := range members {
+		if members[i].Member != nil {
+			members[i].Member, _ = msgpack.Marshal(members[i].Member)
+		}
+	}
+	return members
 }
 func (db *Ctx) ZRangeWithScores(key string, start, stop int64) (members []redis.Z, err error) {
 	cmd := db.Rds.ZRangeWithScores(db.Ctx, key, start, stop)
