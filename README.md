@@ -37,7 +37,7 @@ type Input struct {
 func init() {
 	api.NewApi("demo", func(db *data.Ctx, api *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
 		var req *Input = &Input{}
-		if err = data.MapsToStructure(parmIn, req); err != nil {
+		if err = db.MapsToStructure(parmIn, req); err != nil {
 			return nil, err
 		} else if req.JWT_id == "" || len(req.data) == 0 {
 			return nil, saavuu.ErrInvalidInput
