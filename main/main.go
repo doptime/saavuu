@@ -9,9 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
@@ -97,14 +95,14 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	db := data.NewContext(nil)
-	db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
-	members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})
-	apis := make(map[*TestApi]float64)
-	db.UnmarshalRedisZ(members, apis)
-	logger.Std.Println(apis, len(apis))
-	results := []TestApi{}
-	db.ZRange("test", 0, 1000, &results)
+	// db := data.NewContext(nil)
+	// db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
+	// members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})
+	// apis := make(map[*TestApi]float64)
+	// db.UnmarshalRedisZ(members, apis)
+	// logger.Std.Println(apis, len(apis))
+	// results := []TestApi{}
+	// db.ZRange("test", 0, 1000, &results)
 	//test.TestApi()
 
 	RedisHttpStart("/rSvc", 8080)
