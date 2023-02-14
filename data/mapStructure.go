@@ -13,9 +13,9 @@ func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interfac
 	msgPack, ok := parmIn["MsgPack"].([]byte)
 	if ok {
 		delete(parmIn, "MsgPack")
-	}
-	if err = msgpack.Unmarshal(msgPack, outStruct); err != nil {
-		return err
+		if err = msgpack.Unmarshal(msgPack, outStruct); err != nil {
+			return err
+		}
 	}
 	if err = mapstructure.Decode(parmIn, outStruct); err != nil {
 		return err
