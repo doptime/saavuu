@@ -102,8 +102,15 @@ func (db *Ctx) ZRemRangeByScore(key string, min, max string) (err error) {
 	status := db.Rds.ZRemRangeByScore(db.Ctx, key, min, max)
 	return status.Err()
 }
-func (db *Ctx) ZIncrBy(key string, increment float64, member string) (err error) {
-	status := db.Rds.ZIncrBy(db.Ctx, key, increment, member)
+func (db *Ctx) ZIncrBy(key string, increment float64, member interface{}) (err error) {
+	var (
+		memberBytes []byte
+	)
+	//marshal member using msgpack
+	if memberBytes, err = msgpack.Marshal(member); err != nil {
+		return err
+	}
+	status := db.Rds.ZIncrBy(db.Ctx, key, increment, string(memberBytes))
 	return status.Err()
 }
 func (db *Ctx) ZUnionStore(destination string, store *redis.ZStore) (err error) {
