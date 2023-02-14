@@ -58,17 +58,21 @@ func (db *Ctx) ZRevRank(key string, member string) (rank int64) {
 	cmd := db.Rds.ZRevRank(db.Ctx, key, string(memberBytes))
 	return cmd.Val()
 }
-func (db *Ctx) ZScore(key string, member string) (score float64) {
+func (db *Ctx) ZScore(key string, member string) (score float64, err error) {
 	var (
 		memberBytes []byte
-		err         error
+		cmd         *redis.FloatCmd
 	)
 	//marshal member using msgpack
 	if memberBytes, err = msgpack.Marshal(member); err != nil {
-		return 0
+		return 0, err
 	}
-	cmd := db.Rds.ZScore(db.Ctx, key, string(memberBytes))
-	return cmd.Val()
+	if cmd = db.Rds.ZScore(db.Ctx, key, string(memberBytes)); cmd.Err() != nil && cmd.Err() != redis.Nil {
+		return 0, err
+	} else if cmd.Err() == redis.Nil {
+		return 0, nil
+	}
+	return cmd.Val(), nil
 }
 func (db *Ctx) ZCard(key string) (length int64) {
 	cmd := db.Rds.ZCard(db.Ctx, key)
