@@ -19,6 +19,6 @@ func CreateTestApi() {
 }
 func TestApi() {
 	_api := api.NewContext(context.Background())
-	go _api.DoAt("test", map[string]string{"message": "ok"}, nil, time.Now().UnixMicro()+1000)
+	go _api.DoAt("test", map[string]string{"message": "ok"}, time.Now().UnixMicro()+1000)
 	api.RunningAllApis()
 }
