@@ -10,18 +10,21 @@ import (
 )
 
 func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
-	msgPack, ok := parmIn["MsgPack"].([]byte)
-	if ok {
-		delete(parmIn, "MsgPack")
-		if err = msgpack.Unmarshal(msgPack, outStruct); err != nil {
+	var (
+		bytes []byte
+		ok    bool
+	)
+	if bytes, ok = parmIn["MsgPack"].([]byte); ok {
+		if err = msgpack.Unmarshal(bytes, outStruct); err != nil {
 			return err
 		}
+		delete(parmIn, "MsgPack")
 	}
 	if err = mapstructure.Decode(parmIn, outStruct); err != nil {
 		return err
 	}
 	if ok {
-		parmIn["MsgPack"] = msgPack
+		parmIn["MsgPack"] = bytes
 	}
 	return nil
 }
