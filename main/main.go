@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
@@ -104,6 +105,13 @@ func main() {
 	// results := []TestApi{}
 	// db.ZRange("test", 0, 1000, &results)
 	//test.TestApi()
+
+	var PubTokens []string
+	db := data.NewContext(nil)
+	var err error
+	if _, err = db.ZRangeWithScores("MeditHabitDay20230215", 0, -1, &PubTokens); err != nil {
+		return
+	}
 
 	RedisHttpStart("/rSvc", 8080)
 }

@@ -85,7 +85,9 @@ func (db *Ctx) UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores 
 		if err := msgpack.Unmarshal([]byte(str), elem.Interface()); err != nil {
 			return nil, err
 		}
-		reflect.ValueOf(outSlice).Elem().Set(reflect.Append(reflect.ValueOf(outSlice).Elem(), reflect.ValueOf(elem).Elem()))
+		//append elem to out, elem is a pointer
+		reflect.ValueOf(outSlice).Elem().Set(reflect.Append(reflect.ValueOf(outSlice).Elem(), elem.Elem()))
+
 		scores[i] = member.Score
 	}
 	return scores, nil
