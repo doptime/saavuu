@@ -76,7 +76,7 @@ func (db *Ctx) UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores 
 	}
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
 	elemType := reflect.TypeOf(outSlice).Elem().Elem()
-	scores = make([]float64, len(scores))
+	scores = make([]float64, len(members))
 	for i, member := range members {
 		if str, ok = member.Member.(string); !ok || str == "" {
 			continue
