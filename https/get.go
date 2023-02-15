@@ -15,9 +15,9 @@ import (
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		jwts       map[string]interface{} = map[string]interface{}{}
-		maps       map[string]interface{} = map[string]interface{}{}
-		_interface interface{}
+		jwts           map[string]interface{} = map[string]interface{}{}
+		maps           map[string]interface{} = map[string]interface{}{}
+		interfaceSlice []interface{}          = []interface{}{}
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -33,7 +33,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
-		return _interface, db.HGet(svcCtx.Key, svcCtx.Field, &_interface)
+		return ret, db.HGet(svcCtx.Key, svcCtx.Field, &ret)
 	case "HGETALL":
 		return maps, db.HGetAll(svcCtx.Key, maps)
 	case "HMGET":
@@ -65,96 +65,51 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 	case "ZRANGE":
 		var (
-			Start, Stop, WITHSCORES string
-			start, stop             int64
+			start, stop int64 = 0, -1
 		)
-		if Start = svcCtx.Req.FormValue("Start"); Start == "" {
-			return "", errors.New("no Start")
+		if start, err = strconv.ParseInt(svcCtx.Req.FormValue("Start"), 10, 64); err != nil {
+			return "", errors.New("parse start error:" + err.Error())
 		}
-		if Stop = svcCtx.Req.FormValue("Stop"); Stop == "" {
-			return "", errors.New("no Stop")
+		if stop, err = strconv.ParseInt(svcCtx.Req.FormValue("Stop"), 10, 64); err != nil {
+			return "", errors.New("parse stop error:" + err.Error())
 		}
-		if WITHSCORES = svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
-			return "", errors.New("no WITHSCORES")
-		}
-		if start, err = strconv.ParseInt(Start, 10, 64); err != nil {
-			return "", err
-		}
-		if stop, err = strconv.ParseInt(Stop, 10, 64); err != nil {
-			return "", err
-		}
-		result := []interface{}{}
-		if WITHSCORES == "true" {
-			cmd := config.DataRds.ZRangeWithScores(svcCtx.Ctx, svcCtx.Key, start, stop)
-			if err = cmd.Err(); err != nil {
+		// ZRANGE key start stop [WITHSCORES==true]
+		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
+			var scores []float64
+			if scores, err = db.ZRangeWithScores(svcCtx.Key, start, stop, &interfaceSlice); err != nil {
 				return "", err
 			}
-			for _, v := range cmd.Val() {
-				result = append(result, v.Member)
-				result = append(result, v.Score)
-			}
-		} else {
-			cmd := config.DataRds.ZRange(svcCtx.Ctx, svcCtx.Key, start, stop)
-			if err = cmd.Err(); err != nil {
-				return "", err
-			}
-			for _, v := range cmd.Val() {
-				result = append(result, v)
-			}
+			return json.Marshal(map[string]interface{}{"members": interfaceSlice, "scores": scores})
 		}
-		//marshal result to json
-		return json.Marshal(result)
+		// ZRANGE key start stop [WITHSCORES==false]
+		if err = db.ZRange(svcCtx.Key, start, stop, &interfaceSlice); err != nil {
+			return "", err
+		}
+		return json.Marshal(interfaceSlice)
 	case "ZRANGEBYSCORE":
 		var (
-			Min, Max, WITHSCORES string
-			min, max             float64
+			Min, Max      string
+			offset, count int64
+			scores        []float64
 		)
-		if Min = svcCtx.Req.FormValue("Min"); Min == "" {
-			return "", errors.New("no Min")
+		if Min, Max = svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"); Min == "" || Max == "" {
+			return "", errors.New("no Min or Max")
 		}
-		if Max = svcCtx.Req.FormValue("Max"); Max == "" {
-			return "", errors.New("no Max")
-		}
-		if WITHSCORES = svcCtx.Req.FormValue("WITHSCORES"); WITHSCORES == "" {
-			return "", errors.New("no WITHSCORES")
-		}
-		result := []interface{}{}
-		if WITHSCORES == "true" {
-			cmd := config.DataRds.ZRangeByScoreWithScores(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
-				Min:    Min,
-				Max:    Max,
-				Offset: 0,
-				Count:  0,
-			})
-			if err = cmd.Err(); err != nil {
+		//ZRANGEBYSCORE key min max [WITHSCORES==true]
+		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
+			if scores, err = db.ZRangeByScoreWithScores(svcCtx.Key, &redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &interfaceSlice); err != nil {
 				return "", err
 			}
-			for _, v := range cmd.Val() {
-				result = append(result, v.Member)
-				result = append(result, v.Score)
-			}
-		} else {
-			cmd := config.DataRds.ZRangeByScore(svcCtx.Ctx, svcCtx.Key, &redis.ZRangeBy{
-				Min:    strconv.FormatFloat(min, 'f', -1, 64),
-				Max:    strconv.FormatFloat(max, 'f', -1, 64),
-				Offset: 0,
-				Count:  0,
-			})
-			if err = cmd.Err(); err != nil {
-				return "", err
-			}
-			for _, v := range cmd.Val() {
-				result = append(result, v)
-			}
+			//marshal result to json
+			return json.Marshal(map[string]interface{}{"members": interfaceSlice, "scores": scores})
 		}
-		//marshal result to json
-		return json.Marshal(result)
+		//ZRANGEBYSCORE key min max [WITHSCORES==false]
+		if err = db.ZRangeByScore(svcCtx.Key, &redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &interfaceSlice); err != nil {
+			return "", err
+		}
+		return json.Marshal(interfaceSlice)
 	case "ZRANK":
-		Member := svcCtx.Req.FormValue("Member")
-		if Member == "" {
-			return "", errors.New("no Member")
-		}
-		return db.ZRank(svcCtx.Key, Member)
+		return db.ZRank(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	}
 	return nil, errors.New("unsupported command")
 
