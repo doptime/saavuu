@@ -78,9 +78,9 @@ func (db *Ctx) ZCard(key string) (length int64) {
 	cmd := db.Rds.ZCard(db.Ctx, key)
 	return cmd.Val()
 }
-func (db *Ctx) ZCount(key string, min, max string) (length int64) {
+func (db *Ctx) ZCount(key string, min, max string) (length int64, err error) {
 	cmd := db.Rds.ZCount(db.Ctx, key, min, max)
-	return cmd.Val()
+	return cmd.Result()
 }
 func (db *Ctx) ZRangeByScore(key string, opt *redis.ZRangeBy, outSlice interface{}) (err error) {
 	cmd := db.Rds.ZRangeByScore(db.Ctx, key, opt)

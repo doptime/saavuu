@@ -15,8 +15,9 @@ import (
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		jwts map[string]interface{} = map[string]interface{}{}
-		maps map[string]interface{} = map[string]interface{}{}
+		jwts     map[string]interface{} = map[string]interface{}{}
+		maps     map[string]interface{} = map[string]interface{}{}
+		Min, Max string
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -50,11 +51,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HVALS":
 		return db.HVals(svcCtx.Key)
 	case "SISMEMBER":
-		Member := svcCtx.Req.FormValue("Member")
-		if Member == "" {
-			return "", errors.New("no Member")
-		}
-		return db.SIsMember(svcCtx.Key, svcCtx.Field)
+		return db.SIsMember(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	case "TIME":
 		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
 		if tm, err := pc.Time(); err != nil {
@@ -88,7 +85,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(result)
 	case "ZRANGEBYSCORE":
 		var (
-			Min, Max      string
 			offset, count int64
 			scores        []float64
 			result        []interface{} = []interface{}{}
@@ -111,6 +107,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(result)
 	case "ZRANK":
 		return db.ZRank(svcCtx.Key, svcCtx.Req.FormValue("Member"))
+	case "ZCOUNT":
+		return db.ZCount(svcCtx.Key, svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"))
 	}
 	return nil, errors.New("unsupported command")
 
