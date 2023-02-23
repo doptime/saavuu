@@ -109,6 +109,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return db.ZRank(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	case "ZCOUNT":
 		return db.ZCount(svcCtx.Key, svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"))
+	case "ZSCORE":
+		return db.ZScore(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	}
 	return nil, errors.New("unsupported command")
 
