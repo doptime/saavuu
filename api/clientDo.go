@@ -12,7 +12,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTimeUnixMs int64) (err error) {
+func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -38,8 +38,8 @@ func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTi
 	if b, err = msgpack.Marshal(paramIn); err != nil {
 		return err
 	}
-	if dueTimeUnixMs != 0 {
-		Values = []string{"dueTime", strconv.FormatInt(dueTimeUnixMs, 10), "data", string(b)}
+	if dueTime != nil {
+		Values = []string{"dueTime", strconv.FormatInt(dueTime.UnixMilli(), 10), "data", string(b)}
 	} else {
 		Values = []string{"data", string(b)}
 	}
@@ -48,7 +48,7 @@ func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTi
 		logger.Lshortfile.Println(cmd.Err())
 		return cmd.Err()
 	}
-	if dueTimeUnixMs != 0 {
+	if dueTime != nil {
 		return nil
 	}
 
@@ -62,10 +62,10 @@ func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTi
 	}
 	return nil
 }
-func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, dueTimeUnixMs int64) (err error) {
-	return ac.do(ServiceKey, paramIn, nil, dueTimeUnixMs)
+func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, dueTime *time.Time) (err error) {
+	return ac.do(ServiceKey, paramIn, nil, dueTime)
 }
 
 func (ac *Ctx) Do(ServiceKey string, paramIn interface{}, out interface{}) (err error) {
-	return ac.do(ServiceKey, paramIn, out, 0)
+	return ac.do(ServiceKey, paramIn, out, nil)
 }
