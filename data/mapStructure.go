@@ -11,20 +11,23 @@ import (
 
 func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
 	var (
-		bytes []byte
-		ok    bool
+		msgpackBytes []byte
+		ok           bool
 	)
-	if bytes, ok = parmIn["MsgPack"].([]byte); ok {
-		if err = msgpack.Unmarshal(bytes, outStruct); err != nil {
-			return err
-		}
+	//the source of MsgPack if from web client
+	if msgpackBytes, ok = parmIn["MsgPack"].([]byte); ok {
 		delete(parmIn, "MsgPack")
 	}
 	if err = mapstructure.Decode(parmIn, outStruct); err != nil {
 		return err
 	}
 	if ok {
-		parmIn["MsgPack"] = bytes
+		//msgpackBytes should unmarshal after mapstructure.Decode
+		//allowing JWT_*** to Cover the value in outStruct
+		if err = msgpack.Unmarshal(msgpackBytes, outStruct); err != nil {
+			return err
+		}
+		parmIn["MsgPack"] = msgpackBytes
 	}
 	return nil
 }
