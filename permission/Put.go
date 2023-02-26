@@ -34,10 +34,31 @@ func LoadPutPermissionFromRedis() {
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }
-func IsPutPermitted(dataKey string, operation string, AtField *string, token *jwt.Token) (ok bool) {
+func IsPermittedPutField(operation string, Field *string, token *jwt.Token) (operationNew string, err error) {
 	var (
 		mpclaims jwt.MapClaims
+		ok       bool
 	)
+	// Field contains @*, replace @* with jwt value
+	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
+	if len(*Field) > 0 {
+		operationNew = "@" + operation
+		FieldParts := strings.Split(*Field, "@")
+		if token == nil || token.Claims == nil {
+			return operationNew, fmt.Errorf("JWT token is nil")
+		}
+		if mpclaims, ok = token.Claims.(jwt.MapClaims); !ok {
+			return operationNew, fmt.Errorf("JWT token is invalid")
+		}
+		subTag := FieldParts[len(FieldParts)-1]
+		if FieldParts[len(FieldParts)-1], ok = mpclaims[subTag].(string); !ok {
+			return operationNew, fmt.Errorf("jwt missiong subTag " + subTag)
+		}
+		*Field = strings.Join(FieldParts, "")
+	}
+	return operationNew, nil
+}
+func IsPutPermitted(dataKey string, operation string) (ok bool) {
 	dataKey = strings.Split(dataKey, ":")[0]
 	// only care non-digit part of dataKey
 	//split dataKey with number digit char, and get the first part
@@ -50,23 +71,6 @@ func IsPutPermitted(dataKey string, operation string, AtField *string, token *jw
 	}
 	if len(dataKey) == 0 {
 		return false
-	}
-	// if AtField without @, then both AtField and token should be nil
-	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
-	// Field contains @*, replace @* with jwt value
-	if len(*AtField) > 0 {
-		operation = "@" + operation
-		FieldParts := strings.Split(*AtField, "@")
-		if token == nil || token.Claims == nil {
-			return false
-		}
-		if mpclaims, ok = token.Claims.(jwt.MapClaims); !ok {
-			return false
-		}
-		if FieldParts[len(FieldParts)-1], ok = mpclaims[FieldParts[len(FieldParts)-1]].(string); !ok {
-			return false
-		}
-		*AtField = strings.Join(FieldParts, "")
 	}
 
 	permission, ok := PermittedPutOp[dataKey]

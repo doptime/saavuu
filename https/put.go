@@ -2,6 +2,7 @@ package https
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
@@ -20,15 +21,14 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 
 	if strings.Contains(svcCtx.Field, "@") {
 		if err := svcCtx.ParseJwtToken(); err != nil {
-			return "false", err
+			return "false", fmt.Errorf("parse JWT token error: %v", err)
 		}
-		if !permission.IsPutPermitted(svcCtx.Key, operation, &svcCtx.Field, svcCtx.jwtToken) {
+		if operation, err = permission.IsPermittedPutField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
 			return "false", errors.New("permission denied")
 		}
-	} else {
-		if !permission.IsPutPermitted(svcCtx.Key, operation, nil, nil) {
-			return "false", errors.New("permission denied")
-		}
+	}
+	if !permission.IsPutPermitted(svcCtx.Key, operation) {
+		return "false", errors.New("permission denied")
 	}
 
 	switch svcCtx.Cmd {
