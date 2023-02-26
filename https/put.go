@@ -22,9 +22,10 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if svcCtx.Key == "" || svcCtx.Field == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		if !permission.IsPutPermitted(svcCtx.Key, "hset") {
+		if !permission.IsPutPermitted(svcCtx.Key, "hset", &svcCtx.Field, svcCtx.jwtToken) {
 			return "false", errors.New("permission denied")
 		}
+
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
 			return "false", err
 		}
@@ -38,7 +39,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if svcCtx.Key == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		if !permission.IsPutPermitted(svcCtx.Key, "rpush") {
+		if !permission.IsPutPermitted(svcCtx.Key, "rpush", &svcCtx.Field, svcCtx.jwtToken) {
 			return "false", errors.New("permission denied")
 		}
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
