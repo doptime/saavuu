@@ -37,7 +37,6 @@ func LoadPutPermissionFromRedis() {
 func IsPutPermitted(dataKey string, operation string, Field *string, token *jwt.Token) (ok bool) {
 	var (
 		mpclaims jwt.MapClaims
-		jwtValue string
 	)
 	dataKey = strings.Split(dataKey, ":")[0]
 	// only care non-digit part of dataKey
@@ -55,7 +54,7 @@ func IsPutPermitted(dataKey string, operation string, Field *string, token *jwt.
 
 	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
 	// if Field contains @, then replace it with jwt value
-	if FieldParts := strings.Split(*Field, "@"); len(FieldParts) > 1 {
+	if FieldParts := strings.Split(*Field, "@"); strings.Contains(*Field, "@") {
 		operation = "@" + operation
 		if token == nil || token.Claims == nil {
 			return false
@@ -63,10 +62,10 @@ func IsPutPermitted(dataKey string, operation string, Field *string, token *jwt.
 		if mpclaims, ok = token.Claims.(jwt.MapClaims); !ok {
 			return false
 		}
-		if jwtValue, ok = mpclaims[FieldParts[1]].(string); !ok {
+		if FieldParts[len(FieldParts)-1], ok = mpclaims[FieldParts[len(FieldParts)-1]].(string); !ok {
 			return false
 		}
-		*Field = FieldParts[0] + jwtValue
+		*Field = strings.Join(FieldParts, "")
 	}
 
 	permission, ok := PermittedPutOp[dataKey]
