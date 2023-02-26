@@ -4,30 +4,32 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 )
 
 func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
 	var (
-		msgpackBytes []byte
-		ok           bool
+		bytes, bytes_web []byte
+		ok               bool
 	)
 	//the source of MsgPack if from web client
-	if msgpackBytes, ok = parmIn["MsgPack"].([]byte); ok {
+	if bytes_web, ok = parmIn["MsgPack"].([]byte); ok {
 		delete(parmIn, "MsgPack")
 	}
-	if err = mapstructure.Decode(parmIn, outStruct); err != nil {
+	if bytes, err = msgpack.Marshal(parmIn); err != nil {
+		return err
+	}
+	if err = msgpack.Unmarshal(bytes, outStruct); err != nil {
 		return err
 	}
 	if ok {
 		//msgpackBytes should unmarshal after mapstructure.Decode
 		//allowing JWT_*** to Cover the value in outStruct
-		if err = msgpack.Unmarshal(msgpackBytes, outStruct); err != nil {
+		if err = msgpack.Unmarshal(bytes_web, outStruct); err != nil {
 			return err
 		}
-		parmIn["MsgPack"] = msgpackBytes
+		parmIn["MsgPack"] = bytes_web
 	}
 	return nil
 }
