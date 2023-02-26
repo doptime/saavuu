@@ -40,8 +40,19 @@ func LoadDelPermissionFromRedis() {
 	go LoadPutPermissionFromRedis()
 }
 func IsDelPermitted(dataKey string, operation string) bool {
-	// remove :... from dataKey
 	dataKey = strings.Split(dataKey, ":")[0]
+	// only care non-digit part of dataKey
+	//split dataKey with number digit char, and get the first part
+	//for example, if dataKey is "user1x3", then dataKey will be "user"
+	for i, v := range dataKey {
+		if v >= '0' && v <= '9' {
+			dataKey = dataKey[:i]
+			break
+		}
+	}
+	if len(dataKey) == 0 {
+		return false
+	}
 
 	permission, ok := PermittedDelOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis

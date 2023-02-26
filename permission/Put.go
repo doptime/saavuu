@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
@@ -33,8 +34,41 @@ func LoadPutPermissionFromRedis() {
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
 }
-func IsPutPermitted(dataKey string, operation string) bool {
+func IsPutPermitted(dataKey string, operation string, Field *string, token *jwt.Token) (ok bool) {
+	var (
+		mpclaims jwt.MapClaims
+		jwtValue string
+	)
 	dataKey = strings.Split(dataKey, ":")[0]
+	// only care non-digit part of dataKey
+	//split dataKey with number digit char, and get the first part
+	//for example, if dataKey is "user1x3", then dataKey will be "user"
+	for i, v := range dataKey {
+		if v >= '0' && v <= '9' {
+			dataKey = dataKey[:i]
+			break
+		}
+	}
+	if len(dataKey) == 0 {
+		return false
+	}
+
+	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
+	// if Field contains @, then replace it with jwt value
+	if FieldParts := strings.Split(*Field, "@"); len(FieldParts) > 1 {
+		operation = "@" + operation
+		if token == nil || token.Claims == nil {
+			return false
+		}
+		if mpclaims, ok = token.Claims.(jwt.MapClaims); !ok {
+			return false
+		}
+		if jwtValue, ok = mpclaims[FieldParts[1]].(string); !ok {
+			return false
+		}
+		*Field = FieldParts[0] + jwtValue
+	}
+
 	permission, ok := PermittedPutOp[dataKey]
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
