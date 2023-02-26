@@ -19,7 +19,10 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	)
 
 	if strings.Contains(svcCtx.Field, "@") {
-		if !permission.IsPutPermitted(svcCtx.Key, operation, &svcCtx.Field, svcCtx.JwtToken()) {
+		if err := svcCtx.ParseJwtToken(); err != nil {
+			return "false", err
+		}
+		if !permission.IsPutPermitted(svcCtx.Key, operation, &svcCtx.Field, svcCtx.jwtToken) {
 			return "false", errors.New("permission denied")
 		}
 	} else {

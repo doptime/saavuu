@@ -2,6 +2,7 @@ package https
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
@@ -9,17 +10,15 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func (svc *HttpContext) JwtToken() (token *jwt.Token) {
+func (svc *HttpContext) ParseJwtToken() (err error) {
 	var (
-		jwtStr   string
-		err      error
-		jwtToken *jwt.Token
+		jwtStr string
 	)
 	if svc.jwtToken != nil {
-		return svc.jwtToken
+		return nil
 	}
 	if jwtStr = svc.Req.Header.Get("Authorization"); len(jwtStr) == 0 {
-		return nil
+		return errors.New("no JWT token")
 	}
 	//decode jwt string to map[string] interface{} with jwtSrcrets as jwt secret
 	keyFunction := func(token *jwt.Token) (value interface{}, err error) {
@@ -29,11 +28,10 @@ func (svc *HttpContext) JwtToken() (token *jwt.Token) {
 		}
 		return []byte(config.Cfg.JwtSecret), nil
 	}
-	if jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
-		return nil
+	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
+		return fmt.Errorf("invalid JWT token: %v", err)
 	}
-	svc.jwtToken = jwtToken
-	return svc.jwtToken
+	return nil
 }
 func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 	//remove nay field that starts with "JWT_" in paramIn
@@ -44,8 +42,7 @@ func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 		}
 	}
 
-	var token *jwt.Token = svc.JwtToken()
-	if token == nil {
+	if err := svc.ParseJwtToken(); err != nil {
 		return
 	}
 	//save every field in svc.Jwt.Claims to in
