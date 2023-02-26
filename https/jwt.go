@@ -10,21 +10,29 @@ import (
 )
 
 func (svc *HttpContext) JwtToken() (token *jwt.Token) {
-	var jwtStr string
-	if svc.jwtToken == nil {
-		if jwtStr = svc.Req.Header.Get("Authorization"); len(jwtStr) == 0 {
-			return nil
-		}
-		//decode jwt string to map[string] interface{} with jwtSrcrets as jwt secret
-		keyFunction := func(token *jwt.Token) (value interface{}, err error) {
-			_, ok := token.Method.(*jwt.SigningMethodHMAC)
-			if !ok {
-				return nil, errors.New("invalid signing method")
-			}
-			return []byte(config.Cfg.JwtSecret), nil
-		}
-		svc.jwtToken, _ = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction)
+	var (
+		jwtStr   string
+		err      error
+		jwtToken *jwt.Token
+	)
+	if svc.jwtToken != nil {
+		return svc.jwtToken
 	}
+	if jwtStr = svc.Req.Header.Get("Authorization"); len(jwtStr) == 0 {
+		return nil
+	}
+	//decode jwt string to map[string] interface{} with jwtSrcrets as jwt secret
+	keyFunction := func(token *jwt.Token) (value interface{}, err error) {
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, errors.New("invalid signing method")
+		}
+		return []byte(config.Cfg.JwtSecret), nil
+	}
+	if jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
+		return nil
+	}
+	svc.jwtToken = jwtToken
 	return svc.jwtToken
 }
 func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
