@@ -22,9 +22,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	svcCtx.MergeJwtField(jwts)
 
-	if len(svcCtx.Key) == 0 {
+	//only command TIME need not key
+	if len(svcCtx.Key) == 0 && svcCtx.Cmd != "TIME" {
 		return nil, errors.New("no key")
-	} else if act := strings.ToLower(svcCtx.Cmd); !permission.IsGetPermitted(svcCtx.Key, act) {
+	}
+	if act := strings.ToLower(svcCtx.Cmd); !permission.IsGetPermitted(svcCtx.Key, act) {
 		// check operation permission
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
