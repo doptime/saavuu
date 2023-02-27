@@ -22,8 +22,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 
 	svcCtx.MergeJwtField(jwts)
 
-	//only command TIME need not key
-	if len(svcCtx.Key) == 0 && svcCtx.Cmd != "TIME" {
+	if len(svcCtx.Key) == 0 {
 		return nil, errors.New("no key")
 	}
 	if act := strings.ToLower(svcCtx.Cmd); !permission.IsGetPermitted(svcCtx.Key, act) {
