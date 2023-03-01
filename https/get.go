@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/config"
@@ -18,6 +19,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		jwts     map[string]interface{} = map[string]interface{}{}
 		maps     map[string]interface{} = map[string]interface{}{}
 		Min, Max string
+		tm       time.Time
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -55,11 +57,10 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return db.SIsMember(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	case "TIME":
 		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
-		if tm, err := pc.Time(); err != nil {
+		if tm, err = pc.Time(); err != nil {
 			return "", err
-		} else {
-			return tm.UnixMilli(), nil
 		}
+		return tm.UnixMilli(), nil
 	case "ZRANGE":
 		var (
 			start, stop int64         = 0, -1
