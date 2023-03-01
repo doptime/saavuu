@@ -30,6 +30,9 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	//for get
 	svcContext.Cmd = svcContext.Req.FormValue("Cmd")
+	if svcContext.Cmd == "TIME" {
+		svcContext.Key = "TIME"
+	}
 	svcContext.Key = svcContext.Req.FormValue("Key")
 	svcContext.Field = svcContext.Req.FormValue("Field")
 
