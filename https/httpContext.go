@@ -41,8 +41,8 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 
 	//for response
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
-	svcContext.ResponseContentType = svcContext.Req.FormValue("RspType")
-	if svcContext.ResponseContentType == "" {
+	//default response content type: application/json
+	if svcContext.ResponseContentType = svcContext.Req.FormValue("RspType"); svcContext.ResponseContentType == "" {
 		svcContext.ResponseContentType = "application/json"
 	}
 	return svcContext
