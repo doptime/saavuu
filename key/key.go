@@ -11,7 +11,7 @@ func YMD(Key string, tm time.Time) string {
 }
 func YM(Key string, tm time.Time) string {
 	//year is 4 digits, month is 2 digits
-	return fmt.Sprintf("%sYM:%04vM%02v", Key, tm.Year(), int(tm.Month()))
+	return fmt.Sprintf("%sYM:%04v%02v", Key, tm.Year(), int(tm.Month()))
 }
 func Y(Key string, tm time.Time) string {
 	//year is 4 digits
@@ -21,7 +21,7 @@ func YW(Key string, tm time.Time) string {
 	tm = tm.UTC()
 	isoYear, isoWeek := tm.ISOWeek()
 	//year is 4 digits, week is 2 digits
-	return fmt.Sprintf("%sYW:%04vW%02v", Key, isoYear, isoWeek)
+	return fmt.Sprintf("%sYW:%04v%02v", Key, isoYear, isoWeek)
 }
 func Field(Key, Field string) string {
 	return fmt.Sprintf("%s:%s", Key, Field)
