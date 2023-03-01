@@ -40,7 +40,7 @@ func IsGetPermitted(dataKey string, operation string) bool {
 	//split dataKey with number digit char, and get the first part
 	//for example, if dataKey is "user1x3", then dataKey will be "user"
 	for i, v := range dataKey {
-		if v >= '0' && v <= '9' {
+		if (v >= '0' && v <= '9') || v == ':' {
 			dataKey = dataKey[:i]
 			break
 		}
