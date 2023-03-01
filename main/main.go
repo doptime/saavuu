@@ -95,7 +95,7 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	// db := data.NewContext(nil)
+	//db := data.NewContext(nil)
 	// db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
 	// members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})
 	// apis := make(map[*TestApi]float64)

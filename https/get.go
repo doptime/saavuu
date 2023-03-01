@@ -52,7 +52,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HLEN":
 		return db.HLen(svcCtx.Key)
 	case "HVALS":
-		return db.HVals(svcCtx.Key)
+		var values []interface{}
+		if err = db.HVals(svcCtx.Key, &values); err != nil {
+			return "", err
+		}
+		return values, nil
 	case "SISMEMBER":
 		return db.SIsMember(svcCtx.Key, svcCtx.Req.FormValue("Member"))
 	case "TIME":
