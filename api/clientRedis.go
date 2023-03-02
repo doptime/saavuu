@@ -12,6 +12,6 @@ func (ac *Ctx) HSet(key string, field string, param interface{}) (err error) {
 	return rds.HSet(ac.Ctx, ac.Rds, key, field, param)
 }
 
-func (ac *Ctx) HKeys(key string) (fields []string, err error) {
-	return rds.HKeys(ac.Ctx, ac.Rds, key)
+func (ac *Ctx) HKeys(key string, fields interface{}) (err error) {
+	return rds.HKeys(ac.Ctx, ac.Rds, key, fields)
 }

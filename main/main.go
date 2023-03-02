@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
@@ -95,36 +96,14 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	// db := data.NewContext(nil)
-	// var keys []string
-	// var err error
-	// if keys, err = db.HKeys("MeditBGChunk"); err != nil {
-	// 	logger.Std.Println(err)
-	// }
-	// var keys2 []uint32
-	// if err = db.HKeysMk("MeditBGChunks", &keys2); err != nil {
-	// 	logger.Std.Println(err)
-	// }
-	// //remove key from keys that in keys2
-	// for _, key := range keys2 {
-	// 	for i, key1 := range keys {
-	// 		i32, _ := strconv.Atoi(key1)
-	// 		if uint32(i32) == key {
-	// 			keys = append((keys)[:i], (keys)[i+1:]...)
-	// 			break
-	// 		}
-	// 	}
-	// }
-	// for _, key := range keys {
-	// 	var value interface{}
-	// 	if err := db.HGet("MeditBGChunk", key, &value); err != nil {
-	// 		logger.Std.Println(err)
-	// 	}
-	// 	k, _ := strconv.Atoi(key)
-	// 	if err = db.HSet1("MeditBGChunks", uint32(k), value); err != nil {
-	// 		logger.Std.Println(err)
-	// 	}
-	// }
+	db := data.NewContext(nil)
+	var keys2 []uint32
+	var err error
+	if err = db.HKeys("MeditBGChunk", &keys2); err != nil {
+		logger.Std.Println(err)
+	}
+	//print length of keys2
+	logger.Std.Println(len(keys2))
 
 	// db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
 	// members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})

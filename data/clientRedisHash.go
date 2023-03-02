@@ -95,11 +95,8 @@ func (db *Ctx) HDel(key string, field string) (err error) {
 	status := db.Rds.HDel(db.Ctx, key, field)
 	return status.Err()
 }
-func (db *Ctx) HKeys(key string) (fields []string, err error) {
-	return rds.HKeys(db.Ctx, db.Rds, key)
-}
-func (db *Ctx) HKeysPackFields(key string, fields interface{}) (err error) {
-	return rds.HKeysPackFields(db.Ctx, db.Rds, key, fields)
+func (db *Ctx) HKeys(key string, fields interface{}) (err error) {
+	return rds.HKeys(db.Ctx, db.Rds, key, fields)
 }
 func (db *Ctx) HVals(key string, values *[]interface{}) (err error) {
 	return rds.HValsPackFields(db.Ctx, db.Rds, key, values)

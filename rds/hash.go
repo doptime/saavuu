@@ -50,8 +50,3 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 	}
 	return err
 }
-
-func HKeys(ctx context.Context, rc *redis.Client, key string) (fields []string, err error) {
-	cmd := rc.HKeys(ctx, key)
-	return cmd.Val(), cmd.Err()
-}

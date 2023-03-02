@@ -128,12 +128,18 @@ func isPointerToSlice(obj interface{}) (ok bool) {
 	return true
 }
 
-func HKeysPackFields(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
+func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
 	if !isPointerToSlice(fields) {
 		logger.Lshortfile.Println("fields must be a pointer to slice")
 		return errors.New("fields must be a pointer to slice")
 	}
 	cmd := rc.HKeys(ctx, key)
+	//if fields if *[]string, return directly
+	//not needed to unmarshal fields
+	if reflect.TypeOf(fields).Elem().Elem().Kind() == reflect.String {
+		reflect.ValueOf(fields).Elem().Set(reflect.ValueOf(cmd.Val()))
+		return cmd.Err()
+	}
 	// structFields := reflect.TypeOf(fields).Elem()
 	// *fields = make([]interface{}, 0, len(cmd.Val()))
 	structFields := reflect.TypeOf(fields).Elem().Elem()

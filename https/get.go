@@ -42,7 +42,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HMGET":
 		return maps, db.HMGET(svcCtx.Key, maps, strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
-		if keys, err := db.HKeys(svcCtx.Key); err != nil {
+		var keys []string
+		if err := db.HKeys(svcCtx.Key, &keys); err != nil {
 			return "", err
 		} else {
 			return json.Marshal(keys)
