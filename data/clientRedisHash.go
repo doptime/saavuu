@@ -9,7 +9,7 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (db *Ctx) HGet(key string, field interface{}, value *interface{}) (err error) {
+func (db *Ctx) HGet(key string, field interface{}, value interface{}) (err error) {
 	return rds.HGet(db.Ctx, db.Rds, key, field, value)
 }
 

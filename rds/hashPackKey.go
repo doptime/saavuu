@@ -11,16 +11,11 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-func HGet(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
+func HGet(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
 	var (
 		cmd              *redis.StringCmd
 		fieldBytes, data []byte
 	)
-	//use reflect to check if param is a pointer
-	if reflect.TypeOf(field).Kind() != reflect.Ptr {
-		logger.Lshortfile.Println("field must be a pointer")
-		return errors.New("field must be a pointer")
-	}
 	if field == nil {
 		return errors.New("field is nil")
 	}
