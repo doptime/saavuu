@@ -19,15 +19,6 @@ func HGet(ctx context.Context, rc *redis.Client, key string, field string, param
 	return msgpack.Unmarshal(data, param)
 }
 
-func HSet(ctx context.Context, rc *redis.Client, key string, field string, value interface{}) (err error) {
-	bytes, err := msgpack.Marshal(value)
-	if err != nil {
-		return err
-	}
-	status := rc.HSet(ctx, key, field, bytes)
-	return status.Err()
-}
-
 func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {

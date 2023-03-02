@@ -24,16 +24,28 @@ func HGetPackFields(ctx context.Context, rc *redis.Client, key string, field int
 	return msgpack.Unmarshal(data, value)
 }
 
-func HSetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
-	fieldBytes, err := json.Marshal(field)
-	if err != nil {
+func HSet(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
+	var (
+		fieldBytes []byte
+		valueBytes []byte
+		status     *redis.IntCmd
+	)
+	if field == nil {
+		return errors.New("field is nil")
+	}
+
+	if valueBytes, err = msgpack.Marshal(value); err != nil {
 		return err
 	}
-	valueBytes, err := msgpack.Marshal(value)
-	if err != nil {
+
+	if _, ok := field.(string); ok {
+		status = rc.HSet(ctx, key, field, valueBytes)
+	} else if fieldBytes, err = json.Marshal(field); err != nil {
 		return err
+	} else {
+		status = rc.HSet(ctx, key, fieldBytes, valueBytes)
+
 	}
-	status := rc.HSet(ctx, key, fieldBytes, valueBytes)
 	return status.Err()
 }
 

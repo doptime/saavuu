@@ -21,11 +21,8 @@ func (db *Ctx) HGetPackFields(key string, field interface{}, value *interface{})
 	return rds.HGetPackFields(db.Ctx, db.Rds, key, field, value)
 }
 
-func (db *Ctx) HSet(key string, field string, param interface{}) (err error) {
-	return rds.HSet(db.Ctx, db.Rds, key, field, param)
-}
-func (db *Ctx) HSetPackFields(key string, field interface{}, value interface{}) (err error) {
-	return rds.HSetPackFields(db.Ctx, db.Rds, key, field, value)
+func (db *Ctx) HSet(key string, field interface{}, value interface{}) (err error) {
+	return rds.HSet(db.Ctx, db.Rds, key, field, value)
 }
 
 func (db *Ctx) HExists(key string, field string) (ok bool, err error) {
