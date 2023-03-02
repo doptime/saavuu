@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -14,12 +15,27 @@ import (
 	"github.com/yangkequn/saavuu/permission"
 )
 
+func mapConvertWithKeyFromInterfaceToString(m map[interface{}]interface{}) (m2 map[string]interface{}, err error) {
+	var bytes []byte
+	m2 = make(map[string]interface{})
+	for k, v := range m {
+		//marshal to string,using json
+		if reflect.TypeOf(k).Kind() == reflect.String {
+			m2[k.(string)] = v
+		} else if bytes, err = json.Marshal(k); err != nil {
+			return nil, err
+		}
+		m2[string(bytes)] = v
+	}
+	return m2, nil
+}
+
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		jwts     map[string]interface{} = map[string]interface{}{}
-		maps     map[string]interface{} = map[string]interface{}{}
-		Min, Max string
-		tm       time.Time
+		jwts                    map[string]interface{} = map[string]interface{}{}
+		Min, Max                string
+		tm                      time.Time
+		map_interface_interface map[interface{}]interface{}
 	)
 
 	svcCtx.MergeJwtField(jwts)
@@ -38,9 +54,15 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGET":
 		return ret, db.HGet(svcCtx.Key, svcCtx.Field, &ret)
 	case "HGETALL":
-		return maps, db.HGetAll(svcCtx.Key, maps)
+		if err := db.HGetAll(svcCtx.Key, &map_interface_interface); err != nil {
+			return nil, err
+		}
+		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
 	case "HMGET":
-		return maps, db.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ","), maps)
+		if err = db.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ","), &map_interface_interface); err != nil {
+			return nil, err
+		}
+		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
 	case "HKEYS":
 		var keys []string
 		if err := db.HKeys(svcCtx.Key, &keys); err != nil {
