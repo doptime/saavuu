@@ -2,6 +2,7 @@ package rds
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"reflect"
 
@@ -11,7 +12,7 @@ import (
 )
 
 func HGetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
-	fieldBytes, err := msgpack.Marshal(field)
+	fieldBytes, err := json.Marshal(field)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,7 @@ func HGetPackFields(ctx context.Context, rc *redis.Client, key string, field int
 }
 
 func HSetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
-	fieldBytes, err := msgpack.Marshal(field)
+	fieldBytes, err := json.Marshal(field)
 	if err != nil {
 		return err
 	}
@@ -53,7 +54,7 @@ func HGetMapPackFields(ctx context.Context, rc *redis.Client, key string, mapOut
 	for k, v := range data {
 		//make a copy of stru , to valObj
 		keyObj := reflect.New(KeyStructSupposed).Interface()
-		if err = msgpack.Unmarshal([]byte(k), &keyObj); err != nil {
+		if err = json.Unmarshal([]byte(k), &keyObj); err != nil {
 			logger.Lshortfile.Println("HGetAll1: key unmarshal error:", err)
 			continue
 		}
@@ -75,7 +76,7 @@ func HSetMapPackFields(ctx context.Context, rc *redis.Client, key string, mapIn 
 	//append all key value of mapIn to mapOut, using msgpack
 	for _, k := range reflect.ValueOf(mapIn).MapKeys() {
 		//marshal key to bytes
-		keyBytes, err := msgpack.Marshal(k.Interface())
+		keyBytes, err := json.Marshal(k.Interface())
 		if err != nil {
 			logger.Lshortfile.Println("HSetMap: key marshal error:", err)
 			continue
@@ -94,7 +95,7 @@ func HSetMapPackFields(ctx context.Context, rc *redis.Client, key string, mapIn 
 func HMGETPackFields(ctx context.Context, rc *redis.Client, key string, fields []interface{}, values *[]interface{}) (err error) {
 	fieldBytes := make([]string, 0, len(fields))
 	for _, v := range fields {
-		b, err := msgpack.Marshal(v)
+		b, err := json.Marshal(v)
 		if err != nil {
 			logger.Lshortfile.Println("HMGET1: field marshal error:", err)
 			continue
@@ -140,7 +141,7 @@ func HKeysPackFields(ctx context.Context, rc *redis.Client, key string, fields i
 	reflect.ValueOf(fields).Elem().Set(slice)
 	for _, v := range cmd.Val() {
 		field := reflect.New(structFields).Interface()
-		if err = msgpack.Unmarshal([]byte(v), &field); err != nil {
+		if err = json.Unmarshal([]byte(v), &field); err != nil {
 			logger.Lshortfile.Println("HKeys1: field unmarshal error:", err)
 			continue
 		}
