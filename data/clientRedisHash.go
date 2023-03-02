@@ -98,8 +98,8 @@ func (db *Ctx) HDel(key string, field string) (err error) {
 func (db *Ctx) HKeys(key string) (fields []string, err error) {
 	return rds.HKeys(db.Ctx, db.Rds, key)
 }
-func (db *Ctx) HKeys1(key string, fields *[]interface{}) (err error) {
-	return rds.HKeys1(db.Ctx, db.Rds, key, fields)
+func (db *Ctx) HKeysMk(key string, fields interface{}) (err error) {
+	return rds.HKeysMK(db.Ctx, db.Rds, key, fields)
 }
 func (db *Ctx) HVals(key string, values *[]interface{}) (err error) {
 	return rds.HVals(db.Ctx, db.Rds, key, values)

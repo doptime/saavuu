@@ -97,10 +97,24 @@ func main() {
 	go permission.LoadDelPermissionFromRedis()
 
 	db := data.NewContext(nil)
-	var keys []string = make([]string, 0)
+	var keys []string
 	var err error
 	if keys, err = db.HKeys("MeditBGChunk"); err != nil {
 		logger.Std.Println(err)
+	}
+	var keys2 []uint32
+	if err = db.HKeysMk("MeditBGChunks", &keys2); err != nil {
+		logger.Std.Println(err)
+	}
+	//remove key from keys that in keys2
+	for _, key := range keys2 {
+		for i, key1 := range keys {
+			i32, _ := strconv.Atoi(key1)
+			if uint32(i32) == key {
+				keys = append((keys)[:i], (keys)[i+1:]...)
+				break
+			}
+		}
 	}
 	for _, key := range keys {
 		var value interface{}

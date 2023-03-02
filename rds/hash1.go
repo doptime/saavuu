@@ -116,18 +116,36 @@ func HMGET1(ctx context.Context, rc *redis.Client, key string, fields []interfac
 	}
 	return cmd.Err()
 }
+func isPointerToSlice(obj interface{}) (ok bool) {
+	objType := reflect.TypeOf(obj)
+	if objType.Kind() != reflect.Ptr {
+		return false
+	}
+	if objType.Elem().Kind() != reflect.Slice {
+		return false
+	}
+	return true
+}
 
-func HKeys1(ctx context.Context, rc *redis.Client, key string, fields *[]interface{}) (err error) {
+func HKeysMK(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
+	if !isPointerToSlice(fields) {
+		logger.Lshortfile.Println("fields must be a pointer to slice")
+		return errors.New("fields must be a pointer to slice")
+	}
 	cmd := rc.HKeys(ctx, key)
-	structFields := reflect.TypeOf(fields).Elem()
-	*fields = make([]interface{}, 0, len(cmd.Val()))
+	// structFields := reflect.TypeOf(fields).Elem()
+	// *fields = make([]interface{}, 0, len(cmd.Val()))
+	structFields := reflect.TypeOf(fields).Elem().Elem()
+	slice := reflect.MakeSlice(reflect.TypeOf(fields).Elem(), 0, len(cmd.Val()))
+	reflect.ValueOf(fields).Elem().Set(slice)
 	for _, v := range cmd.Val() {
 		field := reflect.New(structFields).Interface()
 		if err = msgpack.Unmarshal([]byte(v), &field); err != nil {
 			logger.Lshortfile.Println("HKeys1: field unmarshal error:", err)
 			continue
 		}
-		*fields = append(*fields, field)
+		//*fields = append(*fields, field)
+		reflect.ValueOf(fields).Elem().Set(reflect.Append(reflect.ValueOf(fields).Elem(), reflect.ValueOf(field).Elem()))
 	}
 	return cmd.Err()
 }
