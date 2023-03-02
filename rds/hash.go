@@ -66,6 +66,21 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 		cmd *redis.MapStringStringCmd
 	)
 	mapElem := reflect.TypeOf(mapOut)
+	//if mapOut is  a pointer to nil map , make a new one
+	if mapElem.Kind() == reflect.Ptr {
+		if mapElem.Elem().Kind() != reflect.Map {
+			logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
+			return errors.New("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
+		}
+		//if mapOut is a pointer to nil map, make a new one
+		if reflect.ValueOf(mapOut).Elem().IsNil() {
+			reflect.ValueOf(mapOut).Elem().Set(reflect.MakeMap(mapElem.Elem()))
+		}
+		//make sure mapElem is a map
+		mapElem = mapElem.Elem()
+		mapOut = reflect.ValueOf(mapOut).Elem().Interface()
+	}
+	//make sure mapElem is a map
 	if mapElem.Kind() != reflect.Map {
 		logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{}")
 		return errors.New("mapOut must be a map[interface{}] interface{}")
@@ -126,28 +141,106 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 	//hset to redis
 	return rc.HSet(ctx, key, mapOut).Err()
 }
-func HMGETPackFields(ctx context.Context, rc *redis.Client, key string, fields []interface{}, values *[]interface{}) (err error) {
-	fieldBytes := make([]string, 0, len(fields))
-	for _, v := range fields {
-		b, err := json.Marshal(v)
-		if err != nil {
-			logger.Lshortfile.Println("HMGET1: field marshal error:", err)
-			continue
-		}
-		fieldBytes = append(fieldBytes, string(b))
+
+//	func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
+//		mapElem := reflect.TypeOf(_map)
+//		if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
+//			logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
+//			return errors.New("mapOut must be a map[string] struct/interface{}")
+//		}
+//		structSupposed := mapElem.Elem()
+//		cmd := db.Rds.HMGet(db.Ctx, key, fields...)
+//		if cmd.Err() == nil {
+//			//unmarshal each value of cmd.Val() to interface{}, using msgpack
+//			for i, v := range cmd.Val() {
+//				if v == nil {
+//					//set _map with nil
+//					reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.Zero(structSupposed))
+//					continue
+//				}
+//				obj := reflect.New(structSupposed).Interface()
+//				if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
+//					reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.ValueOf(obj).Elem())
+//				}
+//			}
+//		}
+//		return cmd.Err()
+//	}
+func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, mapOut interface{}) (err error) {
+	var (
+		cmd *redis.SliceCmd
+	)
+	//make sure fields should be a slice
+	fieldsType := reflect.TypeOf(fields)
+	if fieldsType.Kind() != reflect.Slice {
+		logger.Lshortfile.Println("fields must be a slice")
+		return errors.New("fields must be a slice")
 	}
-	cmd := rc.HMGet(ctx, key, fieldBytes...)
-	data := cmd.Val()
-	*values = make([]interface{}, 0, len(data))
-	valueStruct := reflect.TypeOf(values).Elem().Elem()
-	//unmarshal each value of cmd.Val() to interface{}, using msgpack
-	for _, v := range data {
-		obj := reflect.New(valueStruct).Interface()
-		if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err != nil {
-			logger.Lshortfile.Println("HMGET1: value unmarshal error:", err)
+	fieldsElem := reflect.ValueOf(fields)
+	//mapOut should be a map
+	mapElem := reflect.TypeOf(mapOut)
+	//if mapOut is  a pointer to nil map , make a new one
+	if mapElem.Kind() == reflect.Ptr {
+		if mapElem.Elem().Kind() != reflect.Map {
+			logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
+			return errors.New("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
+		}
+		//if mapOut is a pointer to nil map, make a new one
+		if reflect.ValueOf(mapOut).Elem().IsNil() {
+			reflect.ValueOf(mapOut).Elem().Set(reflect.MakeMap(mapElem.Elem()))
+		}
+		//make sure mapElem is a map
+		mapElem = mapElem.Elem()
+		mapOut = reflect.ValueOf(mapOut).Elem().Interface()
+	}
+	if mapElem.Kind() != reflect.Map {
+		logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{}")
+		return errors.New("mapOut must be a map[interface{}] interface{}")
+	}
+	//if mapOut is nil, make a new one
+	if reflect.ValueOf(mapOut).IsNil() {
+		reflect.ValueOf(mapOut).Set(reflect.MakeMap(mapElem))
+	}
+	//if fieldsElem is not []string, marshal each field to string
+	var fieldsString []string
+	var isStringField bool
+	if fieldsString, isStringField = fields.([]string); !isStringField {
+		//marshal each field to string
+		fieldsString = make([]string, 0, fieldsElem.Len())
+
+		for i := 0; i < fieldsElem.Len(); i++ {
+			b, err := json.Marshal(reflect.ValueOf(fields).Index(i).Interface())
+			if err != nil {
+				logger.Lshortfile.Println("HMGET: field marshal error:", err)
+				continue
+			}
+			fieldsString = append(fieldsString, string(b))
+		}
+	}
+	if cmd = rc.HMGet(ctx, key, fieldsString...); cmd.Err() != nil {
+		return cmd.Err()
+	}
+
+	//append all data to mapOut
+	KeyStructSupposed := mapElem.Key()
+	valueStructSupposed := mapElem.Elem()
+
+	//save all data to mapOut
+	for i, v := range cmd.Val() {
+		key := reflect.New(KeyStructSupposed).Interface()
+		if err = json.Unmarshal([]byte(fieldsString[i]), &key); err != nil {
+			logger.Lshortfile.Println("HMGET: key unmarshal error:", err)
 			continue
 		}
-		*values = append(*values, obj)
+		if v == nil {
+			//set _map with nil
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.Zero(valueStructSupposed))
+			continue
+		}
+		obj := reflect.New(valueStructSupposed).Interface()
+		if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.ValueOf(obj).Elem())
+		}
 	}
 	return cmd.Err()
 }

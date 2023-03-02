@@ -96,11 +96,22 @@ func main() {
 	go permission.LoadDelPermissionFromRedis()
 
 	// db := data.NewContext(nil)
-	// var info map[uint32]interface{} = make(map[uint32]interface{})
-	// if err := db.HGetAll("MeditBGInfo", info); err != nil {
+	// var info map[uint32]interface{}
+	// if err := db.HGetAll("MeditBGInfo", &info); err != nil {
 	// 	logger.Std.Println(err)
 	// }
-	// if err := db.HSetAll("MeditBGInfo1", info); err != nil {
+	// var info2 map[uint32]interface{} = make(map[uint32]interface{})
+	// //take first 2 keys from info
+	// keys2 := make([]uint32, 2)
+	// i := 0
+	// for k := range info {
+	// 	keys2[i] = k
+	// 	i++
+	// 	if i == 2 {
+	// 		break
+	// 	}
+	// }
+	// if err := db.HMGET("MeditBGInfo", keys2, &info2); err != nil {
 	// 	logger.Std.Println(err)
 	// }
 	// //print bytes

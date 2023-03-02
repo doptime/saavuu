@@ -40,7 +40,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGETALL":
 		return maps, db.HGetAll(svcCtx.Key, maps)
 	case "HMGET":
-		return maps, db.HMGET(svcCtx.Key, maps, strings.Split(svcCtx.Field, ",")...)
+		return maps, db.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ","), maps)
 	case "HKEYS":
 		var keys []string
 		if err := db.HKeys(svcCtx.Key, &keys); err != nil {
