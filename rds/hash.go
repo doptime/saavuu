@@ -10,15 +10,6 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-func HGet(ctx context.Context, rc *redis.Client, key string, field string, param interface{}) (err error) {
-	cmd := rc.HGet(ctx, key, field)
-	data, err := cmd.Bytes()
-	if err != nil {
-		return err
-	}
-	return msgpack.Unmarshal(data, param)
-}
-
 func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {

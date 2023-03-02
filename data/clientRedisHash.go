@@ -9,16 +9,8 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (db *Ctx) HGet(key string, field string, param interface{}) (err error) {
-	//use reflect to check if param is a pointer
-	if reflect.TypeOf(param).Kind() != reflect.Ptr {
-		logger.Lshortfile.Println("param must be a pointer")
-		return errors.New("param must be a pointer")
-	}
-	return rds.HGet(db.Ctx, db.Rds, key, field, param)
-}
-func (db *Ctx) HGetPackFields(key string, field interface{}, value *interface{}) (err error) {
-	return rds.HGetPackFields(db.Ctx, db.Rds, key, field, value)
+func (db *Ctx) HGet(key string, field interface{}, value *interface{}) (err error) {
+	return rds.HGet(db.Ctx, db.Rds, key, field, value)
 }
 
 func (db *Ctx) HSet(key string, field interface{}, value interface{}) (err error) {

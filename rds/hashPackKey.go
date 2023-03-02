@@ -11,14 +11,31 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-func HGetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
-	fieldBytes, err := json.Marshal(field)
-	if err != nil {
-		return err
+func HGet(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
+	var (
+		cmd              *redis.StringCmd
+		fieldBytes, data []byte
+	)
+	//use reflect to check if param is a pointer
+	if reflect.TypeOf(field).Kind() != reflect.Ptr {
+		logger.Lshortfile.Println("field must be a pointer")
+		return errors.New("field must be a pointer")
 	}
-	cmd := rc.HGet(ctx, key, string(fieldBytes))
-	data, err := cmd.Bytes()
-	if err != nil {
+	if field == nil {
+		return errors.New("field is nil")
+	}
+	//case string do not need to marshal
+	if _field, ok := field.(string); ok {
+		cmd = rc.HGet(ctx, key, _field)
+	} else if fieldBytes, err = json.Marshal(field); err != nil {
+		//case fail to marshal
+		return err
+	} else {
+		//case marshal success
+		cmd = rc.HGet(ctx, key, string(fieldBytes))
+	}
+
+	if data, err = cmd.Bytes(); err != nil {
 		return err
 	}
 	return msgpack.Unmarshal(data, value)
