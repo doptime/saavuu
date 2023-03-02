@@ -95,18 +95,17 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	//db := data.NewContext(nil)
-	bytes, ok := json.Marshal(nil)
-	//print bytes
-	logger.Std.Println(bytes, ok)
+	// db := data.NewContext(nil)
+	// var info map[uint32]interface{} = make(map[uint32]interface{})
+	// if err := db.HGetAll("MeditBGInfo", info); err != nil {
+	// 	logger.Std.Println(err)
+	// }
+	// if err := db.HSetAll("MeditBGInfo1", info); err != nil {
+	// 	logger.Std.Println(err)
+	// }
+	// //print bytes
+	// logger.Std.Println(len(info))
 
-	// db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
-	// members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})
-	// apis := make(map[*TestApi]float64)
-	// db.UnmarshalRedisZ(members, apis)
-	// logger.Std.Println(apis, len(apis))
-	// results := []TestApi{}
-	// db.ZRange("test", 0, 1000, &results)
 	//test.TestApi()
 
 	RedisHttpStart("/rSvc", 8080)

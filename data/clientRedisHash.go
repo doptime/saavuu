@@ -24,11 +24,8 @@ func (db *Ctx) HExists(key string, field string) (ok bool, err error) {
 func (db *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
 	return rds.HGetAll(db.Ctx, db.Rds, key, mapOut)
 }
-func (db *Ctx) HGetMap(key string, mapOut interface{}) (err error) {
-	return rds.HGetMapPackFields(db.Ctx, db.Rds, key, mapOut)
-}
-func (db *Ctx) HSetMap(key string, _map interface{}) (err error) {
-	return rds.HSetMapPackFields(db.Ctx, db.Rds, key, _map)
+func (db *Ctx) HSetAll(key string, _map interface{}) (err error) {
+	return rds.HSetAll(db.Ctx, db.Rds, key, _map)
 }
 func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
 	mapElem := reflect.TypeOf(_map)
@@ -58,24 +55,6 @@ func (db *Ctx) HMGETPackFields(key string, fields []interface{}, values *[]inter
 	return rds.HMGETPackFields(db.Ctx, db.Rds, key, fields, values)
 }
 
-func (db *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
-	cmd := db.Rds.HGetAll(db.Ctx, key)
-	data, err := cmd.Result()
-	if err != nil {
-		return nil, err
-	}
-	param = make(map[string]interface{})
-	//make a copoy of valueStruct
-	// unmarshal value of data to the copy
-	// store unmarshaled result to param
-	for k, v := range data {
-		var obj interface{}
-		if err = msgpack.Unmarshal([]byte(v), &obj); err == nil {
-			param[k] = obj
-		}
-	}
-	return param, nil
-}
 func (db *Ctx) HLen(key string) (length int64, err error) {
 	cmd := db.Rds.HLen(db.Ctx, key)
 	return cmd.Val(), cmd.Err()
