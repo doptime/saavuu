@@ -66,7 +66,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 		cmd *redis.MapStringStringCmd
 	)
 	mapElem := reflect.TypeOf(mapOut)
-	//if mapOut is  a pointer to nil map , make a new one
+	//if mapOut is  a pointer to  map , such as: var mapOut *map[uint32]interface{}
 	if mapElem.Kind() == reflect.Ptr {
 		if mapElem.Elem().Kind() != reflect.Map {
 			logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
@@ -141,31 +141,6 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 	//hset to redis
 	return rc.HSet(ctx, key, mapOut).Err()
 }
-
-//	func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
-//		mapElem := reflect.TypeOf(_map)
-//		if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-//			logger.Lshortfile.Println("mapOut must be a map[string] struct/interface{}")
-//			return errors.New("mapOut must be a map[string] struct/interface{}")
-//		}
-//		structSupposed := mapElem.Elem()
-//		cmd := db.Rds.HMGet(db.Ctx, key, fields...)
-//		if cmd.Err() == nil {
-//			//unmarshal each value of cmd.Val() to interface{}, using msgpack
-//			for i, v := range cmd.Val() {
-//				if v == nil {
-//					//set _map with nil
-//					reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.Zero(structSupposed))
-//					continue
-//				}
-//				obj := reflect.New(structSupposed).Interface()
-//				if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
-//					reflect.ValueOf(_map).SetMapIndex(reflect.ValueOf(fields[i]), reflect.ValueOf(obj).Elem())
-//				}
-//			}
-//		}
-//		return cmd.Err()
-//	}
 func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, mapOut interface{}) (err error) {
 	var (
 		cmd *redis.SliceCmd
@@ -179,13 +154,14 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	fieldsElem := reflect.ValueOf(fields)
 	//mapOut should be a map
 	mapElem := reflect.TypeOf(mapOut)
-	//if mapOut is  a pointer to nil map , make a new one
+	//if mapOut is  a pointer to  map , such as: var mapOut *map[uint32]interface{}
 	if mapElem.Kind() == reflect.Ptr {
 		if mapElem.Elem().Kind() != reflect.Map {
 			logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
 			return errors.New("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
 		}
 		//if mapOut is a pointer to nil map, make a new one
+		//i.g. var mapOut map[uint32]interface{}   =>  var mapOut map[uint32]interface{} = make(map[uint32]interface{})
 		if reflect.ValueOf(mapOut).Elem().IsNil() {
 			reflect.ValueOf(mapOut).Elem().Set(reflect.MakeMap(mapElem.Elem()))
 		}
