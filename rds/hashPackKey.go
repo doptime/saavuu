@@ -10,7 +10,7 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
-func HGet1(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
+func HGetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value *interface{}) (err error) {
 	fieldBytes, err := msgpack.Marshal(field)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func HGet1(ctx context.Context, rc *redis.Client, key string, field interface{},
 	return msgpack.Unmarshal(data, value)
 }
 
-func HSet1(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
+func HSetPackFields(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
 	fieldBytes, err := msgpack.Marshal(field)
 	if err != nil {
 		return err
@@ -36,7 +36,7 @@ func HSet1(ctx context.Context, rc *redis.Client, key string, field interface{},
 	return status.Err()
 }
 
-func HGetMap(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
+func HGetMapPackFields(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapOut)
 	if mapElem.Kind() != reflect.Map {
 		logger.Lshortfile.Println("mapOut must be a map[interface{}] struct/interface{}")
@@ -65,7 +65,7 @@ func HGetMap(ctx context.Context, rc *redis.Client, key string, mapOut interface
 	}
 	return err
 }
-func HSetMap(ctx context.Context, rc *redis.Client, key string, mapIn interface{}) (err error) {
+func HSetMapPackFields(ctx context.Context, rc *redis.Client, key string, mapIn interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapIn)
 	if mapElem.Kind() != reflect.Map {
 		logger.Lshortfile.Println("mapIn must be a map[interface{}] struct/interface{}")
@@ -91,7 +91,7 @@ func HSetMap(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 	//hset to redis
 	return rc.HSet(ctx, key, mapOut).Err()
 }
-func HMGET1(ctx context.Context, rc *redis.Client, key string, fields []interface{}, values *[]interface{}) (err error) {
+func HMGETPackFields(ctx context.Context, rc *redis.Client, key string, fields []interface{}, values *[]interface{}) (err error) {
 	fieldBytes := make([]string, 0, len(fields))
 	for _, v := range fields {
 		b, err := msgpack.Marshal(v)
@@ -127,7 +127,7 @@ func isPointerToSlice(obj interface{}) (ok bool) {
 	return true
 }
 
-func HKeysMK(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
+func HKeysPackFields(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
 	if !isPointerToSlice(fields) {
 		logger.Lshortfile.Println("fields must be a pointer to slice")
 		return errors.New("fields must be a pointer to slice")
@@ -150,7 +150,7 @@ func HKeysMK(ctx context.Context, rc *redis.Client, key string, fields interface
 	return cmd.Err()
 }
 
-func HVals(ctx context.Context, rc *redis.Client, key string, values *[]interface{}) (err error) {
+func HValsPackFields(ctx context.Context, rc *redis.Client, key string, values *[]interface{}) (err error) {
 	cmd := rc.HVals(ctx, key)
 	data := cmd.Val()
 	*values = make([]interface{}, 0, len(data))

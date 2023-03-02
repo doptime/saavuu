@@ -17,15 +17,15 @@ func (db *Ctx) HGet(key string, field string, param interface{}) (err error) {
 	}
 	return rds.HGet(db.Ctx, db.Rds, key, field, param)
 }
-func (db *Ctx) HGet1(key string, field interface{}, value *interface{}) (err error) {
-	return rds.HGet1(db.Ctx, db.Rds, key, field, value)
+func (db *Ctx) HGetPackFields(key string, field interface{}, value *interface{}) (err error) {
+	return rds.HGetPackFields(db.Ctx, db.Rds, key, field, value)
 }
 
 func (db *Ctx) HSet(key string, field string, param interface{}) (err error) {
 	return rds.HSet(db.Ctx, db.Rds, key, field, param)
 }
-func (db *Ctx) HSet1(key string, field interface{}, value interface{}) (err error) {
-	return rds.HSet1(db.Ctx, db.Rds, key, field, value)
+func (db *Ctx) HSetPackFields(key string, field interface{}, value interface{}) (err error) {
+	return rds.HSetPackFields(db.Ctx, db.Rds, key, field, value)
 }
 
 func (db *Ctx) HExists(key string, field string) (ok bool, err error) {
@@ -36,10 +36,10 @@ func (db *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
 	return rds.HGetAll(db.Ctx, db.Rds, key, mapOut)
 }
 func (db *Ctx) HGetMap(key string, mapOut interface{}) (err error) {
-	return rds.HGetMap(db.Ctx, db.Rds, key, mapOut)
+	return rds.HGetMapPackFields(db.Ctx, db.Rds, key, mapOut)
 }
 func (db *Ctx) HSetMap(key string, _map interface{}) (err error) {
-	return rds.HSetMap(db.Ctx, db.Rds, key, _map)
+	return rds.HSetMapPackFields(db.Ctx, db.Rds, key, _map)
 }
 func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error) {
 	mapElem := reflect.TypeOf(_map)
@@ -65,8 +65,8 @@ func (db *Ctx) HMGET(key string, _map interface{}, fields ...string) (err error)
 	}
 	return cmd.Err()
 }
-func (db *Ctx) HMGET1(key string, fields []interface{}, values *[]interface{}) (err error) {
-	return rds.HMGET1(db.Ctx, db.Rds, key, fields, values)
+func (db *Ctx) HMGETPackFields(key string, fields []interface{}, values *[]interface{}) (err error) {
+	return rds.HMGETPackFields(db.Ctx, db.Rds, key, fields, values)
 }
 
 func (db *Ctx) HGetAllDefault(key string) (param map[string]interface{}, err error) {
@@ -98,11 +98,11 @@ func (db *Ctx) HDel(key string, field string) (err error) {
 func (db *Ctx) HKeys(key string) (fields []string, err error) {
 	return rds.HKeys(db.Ctx, db.Rds, key)
 }
-func (db *Ctx) HKeysMk(key string, fields interface{}) (err error) {
-	return rds.HKeysMK(db.Ctx, db.Rds, key, fields)
+func (db *Ctx) HKeysPackFields(key string, fields interface{}) (err error) {
+	return rds.HKeysPackFields(db.Ctx, db.Rds, key, fields)
 }
 func (db *Ctx) HVals(key string, values *[]interface{}) (err error) {
-	return rds.HVals(db.Ctx, db.Rds, key, values)
+	return rds.HValsPackFields(db.Ctx, db.Rds, key, values)
 }
 func (db *Ctx) HIncrBy(key string, field string, increment int64) (err error) {
 	status := db.Rds.HIncrBy(db.Ctx, key, field, increment)
