@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
@@ -95,7 +96,23 @@ func main() {
 	go permission.LoadPutPermissionFromRedis()
 	go permission.LoadDelPermissionFromRedis()
 
-	//db := data.NewContext(nil)
+	db := data.NewContext(nil)
+	var keys []string = make([]string, 0)
+	var err error
+	if keys, err = db.HKeys("MeditBGChunk"); err != nil {
+		logger.Std.Println(err)
+	}
+	for _, key := range keys {
+		var value interface{}
+		if err := db.HGet("MeditBGChunk", key, &value); err != nil {
+			logger.Std.Println(err)
+		}
+		k, _ := strconv.Atoi(key)
+		if err = db.HSet1("MeditBGChunks", uint32(k), value); err != nil {
+			logger.Std.Println(err)
+		}
+	}
+
 	// db.ZAdd("test", redis.Z{Score: 130, Member: TestApi{ApiBase: "test0130"}})
 	// members, _ := db.ZRangeByScoreWithScores("test", &redis.ZRangeBy{Min: "0", Max: "1000"}, &TestApi{})
 	// apis := make(map[*TestApi]float64)
