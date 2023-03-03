@@ -141,6 +141,8 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 	//hset to redis
 	return rc.HSet(ctx, key, mapOut).Err()
 }
+
+// 约定，来自客户端的fields，如果是[]string，则是真实的fields,那么就不需要再次marshal
 func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, mapOut interface{}) (err error) {
 	var (
 		cmd *redis.SliceCmd
@@ -179,11 +181,11 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	}
 	//if fieldsElem is not []string, marshal each field to string
 	var fieldsString []string
-	var isStringField bool
-	if fieldsString, isStringField = fields.([]string); !isStringField {
+	var fieldsIsString bool
+	//约定，来自客户端的fields，如果是[]string，则是真实的fields,那么就不需要再次marshal
+	if fieldsString, fieldsIsString = fields.([]string); !fieldsIsString {
 		//marshal each field to string
 		fieldsString = make([]string, 0, fieldsElem.Len())
-
 		for i := 0; i < fieldsElem.Len(); i++ {
 			b, err := json.Marshal(reflect.ValueOf(fields).Index(i).Interface())
 			if err != nil {
@@ -199,12 +201,17 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 
 	//append all data to mapOut
 	KeyStructSupposed := mapElem.Key()
+	KeyStructSupposedIsStringOrInterface := KeyStructSupposed.Kind() == reflect.String || KeyStructSupposed.Kind() == reflect.Interface
 	valueStructSupposed := mapElem.Elem()
 
 	//save all data to mapOut
 	for i, v := range cmd.Val() {
 		key := reflect.New(KeyStructSupposed).Interface()
-		if err = json.Unmarshal([]byte(fieldsString[i]), &key); err != nil {
+		if KeyStructSupposedIsStringOrInterface && fieldsIsString {
+			//reflect set key using  fieldsString[i]
+			reflect.ValueOf(key).Elem().Set(reflect.ValueOf(fieldsString[i]))
+		} else if err = json.Unmarshal([]byte(fieldsString[i]), &key); err != nil {
+			//if KeyStructSupposed is interface{}, use default type string
 			logger.Lshortfile.Println("HMGET: key unmarshal error:", err)
 			continue
 		}

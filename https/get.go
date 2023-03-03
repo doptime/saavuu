@@ -22,6 +22,7 @@ func mapConvertWithKeyFromInterfaceToString(m map[interface{}]interface{}) (m2 m
 		//marshal to string,using json
 		if reflect.TypeOf(k).Kind() == reflect.String {
 			m2[k.(string)] = v
+			continue
 		} else if bytes, err = json.Marshal(k); err != nil {
 			return nil, err
 		}
