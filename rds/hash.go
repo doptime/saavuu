@@ -107,11 +107,14 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 		}
 		// case key is not string, unmarshal key
 		keyObj := reflect.New(KeyStructSupposed).Interface()
-		if err = json.Unmarshal([]byte(k), &keyObj); err != nil {
+		if err = json.Unmarshal([]byte(k), &keyObj); err == nil {
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(keyObj).Elem(), reflect.ValueOf(valObj).Elem())
+		} else if KeyStructSupposed.Kind() == reflect.Interface {
+			//if KeyStructSupposed is interface{}, save key as string
+			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(valObj).Elem())
+		} else {
 			logger.Lshortfile.Println("HGetAll: key unmarshal error:", err)
-			continue
 		}
-		reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(keyObj).Elem(), reflect.ValueOf(valObj).Elem())
 	}
 	return err
 }
