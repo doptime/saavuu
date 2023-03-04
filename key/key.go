@@ -23,6 +23,11 @@ func YW(Key string, tm time.Time) string {
 	//year is 4 digits, week is 2 digits
 	return fmt.Sprintf("%sYW:%04v%02v", Key, isoYear, isoWeek)
 }
-func Field(Key, Field string) string {
-	return fmt.Sprintf("%s:%s", Key, Field)
+func Multiple(key string, fields ...string) string {
+	//	concacate all fields with ':'
+	strAll := key
+	for _, field := range fields {
+		strAll += ":" + field
+	}
+	return strAll
 }
