@@ -1,6 +1,6 @@
 package data
 
-import rds "github.com/yangkequn/saavuu/Rds"
+import rds "github.com/yangkequn/saavuu/rds"
 
 func (db *Ctx) RPush(param interface{}) (err error) {
 	return rds.RPush(db.Ctx, db.Rds, db.Key, param)
