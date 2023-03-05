@@ -24,11 +24,8 @@ func loadParamRds() (err error) {
 	return json.Unmarshal([]byte(loadOSEnv("REDIS_DB_PARAM", "Error: REDIS_DB_PARAM is not set ")), &Cfg.RedisDbParam)
 }
 
-func LoadConfigFromEnv() (err error) {
-
+func initialAppFramework() (err error) {
 	//try load from env
-	loadParamRds()
-
 	Cfg.RedisAddressData = loadOSEnv("REDIS_ADDR_DATA", "Error: Can not load REDIS_ADDR_DATA from env")
 	Cfg.RedisPasswordData = loadOSEnv("REDIS_PASSWORD_DATA", "")
 	if Cfg.RedisDbData, err = strconv.Atoi(loadOSEnv("REDIS_DB_DATA", "Error: REDIS_DB_DATA is not set ")); err != nil {
@@ -54,8 +51,13 @@ func LoadConfigFromEnv() (err error) {
 		logger.Std.Println("SERVICE_BATCH_SIZE is set to ", Cfg.ServiceBatchSize)
 	}
 
-	UseConfig()
-	saveConfigToRedis(ParamRds)
+	useParamRedis()
+	useDataRedis()
+
+	// 保存到 ParamServer
+	if err = rds.Set(context.Background(), ParamRds, redisConfigKey, &Cfg, -1); err != nil {
+		return err
+	}
 
 	logger.Lshortfile.Println("Load config from env success")
 	return nil
@@ -63,47 +65,34 @@ func LoadConfigFromEnv() (err error) {
 
 const redisConfigKey = "saavuu_config"
 
-func saveConfigToRedis(ParamServer *redis.Client) (err error) {
-	// 保存到 ParamServer
-	if err = rds.Set(context.Background(), ParamServer, redisConfigKey, &Cfg, -1); err != nil {
-		return err
-	}
-	return nil
-}
-
-func loadConfigFromRedis(ParamServer *redis.Client) (err error) {
-	// 保存到 ParamServer
-	if err = rds.Get(context.Background(), ParamServer, redisConfigKey, &Cfg); err != nil {
-		return err
-	}
-	UseConfig()
-	return nil
-}
-
-func ApiInitial() {
-	loadParamRds()
+func initialAppService() (err error) {
 	ParamRds = redis.NewClient(&redis.Options{
 		Addr:     Cfg.RedisAddressParam,
 		Password: Cfg.RedisPasswordParam, // no password set
 		DB:       Cfg.RedisDbParam,       // use default DB
 	})
-	if err := loadConfigFromRedis(ParamRds); err != nil {
+	if err = rds.Get(context.Background(), ParamRds, redisConfigKey, &Cfg); err != nil {
 		logger.Lshortfile.Panicln(err)
-	} else if DataRds == nil {
+	}
+	useParamRedis()
+	useDataRedis()
+	if DataRds == nil {
 		logger.Lshortfile.Panicln("config.DataRedis is nil. ")
 	}
 	logger.Lshortfile.Println("ApiInitial success")
+	return nil
 }
 
 func init() {
 	logger.Std.Println("App Start! load config from OS env")
+	loadParamRds()
 	AppMode = loadOSEnv("APP_MODE", "APP_MODE , should be either "+AppModeFRAMEWROK+" as www server or "+AppModeSERVICE+" to run services")
 	logger.Lshortfile.Println("Using AppMode " + AppMode)
 
 	if AppMode == AppModeFRAMEWROK {
-		LoadConfigFromEnv()
+		initialAppFramework()
 	} else if AppMode == AppModeSERVICE {
-		ApiInitial()
+		initialAppService()
 	} else {
 		logger.Lshortfile.Panicln("APP_MODE , should be either FRAMWORK as www server or SERVICE to run services")
 	}
