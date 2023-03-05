@@ -40,5 +40,5 @@ func (db *Ctx) Concat(fields ...interface{}) *Ctx {
 	if len(fields) == 0 {
 		return db
 	}
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKeys(fields))}
+	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKeys(fields...))}
 }
