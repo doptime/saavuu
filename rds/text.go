@@ -24,3 +24,8 @@ func Set(ctx context.Context, rc *redis.Client, key string, param interface{}, e
 	status := rc.Set(ctx, key, bytes, expiration)
 	return status.Err()
 }
+
+func Del(ctx context.Context, rc *redis.Client, key string) (err error) {
+	status := rc.Del(ctx, key)
+	return status.Err()
+}
