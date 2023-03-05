@@ -7,6 +7,9 @@ import (
 
 type RedisKey string
 
+func (Key RedisKey) String() string {
+	return string(Key)
+}
 func (Key RedisKey) YMD(tm time.Time) string {
 	//year is 4 digits, month is 2 digits, day is 2 digits
 	return fmt.Sprintf("%sYMD:%04v%02v%02v", Key, tm.Year(), int(tm.Month()), tm.Day())
