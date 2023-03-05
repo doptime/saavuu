@@ -23,11 +23,12 @@ func YW(Key string, tm time.Time) string {
 	//year is 4 digits, week is 2 digits
 	return fmt.Sprintf("%sYW:%04v%02v", Key, isoYear, isoWeek)
 }
-func Multiple(key string, fields ...string) string {
+func MultiPart(Key string, fields ...interface{}) string {
 	//	concacate all fields with ':'
-	strAll := key
+	strAll := Key
 	for _, field := range fields {
-		strAll += ":" + field
+		//convert field to string,field may be int, float, string, etc.
+		strAll += fmt.Sprintf(":%v", field)
 	}
 	return strAll
 }
