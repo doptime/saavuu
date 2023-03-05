@@ -8,7 +8,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
+func MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
 	var (
 		bytes, bytes_web []byte
 		ok               bool
@@ -34,7 +34,7 @@ func (db *Ctx) MapsToStructure(parmIn map[string]interface{}, outStruct interfac
 	return nil
 }
 
-func (db *Ctx) MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
+func MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
 	var bytes []byte
 	ret = make([][]byte, len(members))
 	for i, member := range members {
@@ -48,7 +48,7 @@ func (db *Ctx) MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
 
 var ErrOutSliceType = fmt.Errorf("out should be *[] Type")
 
-func (db *Ctx) UnmarshalStrings(members []string, outSlice interface{}) (err error) {
+func UnmarshalStrings(members []string, outSlice interface{}) (err error) {
 	//out should be *[] Type
 	if reflect.TypeOf(outSlice).Kind() != reflect.Ptr || reflect.TypeOf(outSlice).Elem().Kind() != reflect.Slice {
 		return ErrOutSliceType
@@ -70,7 +70,7 @@ func (db *Ctx) UnmarshalStrings(members []string, outSlice interface{}) (err err
 	return nil
 }
 
-func (db *Ctx) UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores []float64, err error) {
+func UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores []float64, err error) {
 	var (
 		str string
 		ok  bool
@@ -97,7 +97,7 @@ func (db *Ctx) UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores 
 	}
 	return scores, nil
 }
-func (db *Ctx) MarshalRedisZ(members ...redis.Z) {
+func MarshalRedisZ(members ...redis.Z) {
 	for i := range members {
 		if members[i].Member != nil {
 			members[i].Member, _ = msgpack.Marshal(members[i].Member)

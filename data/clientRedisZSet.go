@@ -6,14 +6,14 @@ import (
 )
 
 func (db *Ctx) ZAdd(members ...redis.Z) (err error) {
-	db.MarshalRedisZ(members...)
+	MarshalRedisZ(members...)
 	status := db.Rds.ZAdd(db.Ctx, db.Key, members...)
 	return status.Err()
 }
 func (db *Ctx) ZRem(members ...interface{}) (err error) {
 	//msgpack marshal members
 	var memberBytes [][]byte
-	if memberBytes, err = db.MarshalSlice(members...); err != nil {
+	if memberBytes, err = MarshalSlice(members...); err != nil {
 		return err
 	}
 	status := db.Rds.ZRem(db.Ctx, db.Key, memberBytes)
@@ -25,15 +25,15 @@ func (db *Ctx) ZRange(start, stop int64, outSlice interface{}) (err error) {
 	if cmd = db.Rds.ZRange(db.Ctx, db.Key, start, stop); cmd.Err() != nil && cmd.Err() != redis.Nil {
 		return cmd.Err()
 	}
-	return db.UnmarshalStrings(cmd.Val(), outSlice)
+	return UnmarshalStrings(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRangeWithScores(start, stop int64, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZRangeWithScores(db.Ctx, db.Key, start, stop)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRevRangeWithScores(start, stop int64, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZRevRangeWithScores(db.Ctx, db.Key, start, stop)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRank(member string) (rank int64, err error) {
 	var (
@@ -83,19 +83,19 @@ func (db *Ctx) ZCount(min, max string) (length int64, err error) {
 }
 func (db *Ctx) ZRangeByScore(opt *redis.ZRangeBy, outSlice interface{}) (err error) {
 	cmd := db.Rds.ZRangeByScore(db.Ctx, db.Key, opt)
-	return db.UnmarshalStrings(cmd.Val(), outSlice)
+	return UnmarshalStrings(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRangeByScoreWithScores(opt *redis.ZRangeBy, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZRangeByScoreWithScores(db.Ctx, db.Key, opt)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRevRangeByScore(opt *redis.ZRangeBy, outSlice interface{}) (err error) {
 	cmd := db.Rds.ZRevRangeByScore(db.Ctx, db.Key, opt)
-	return db.UnmarshalStrings(cmd.Val(), outSlice)
+	return UnmarshalStrings(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRevRangeByScoreWithScores(opt *redis.ZRangeBy, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZRevRangeByScoreWithScores(db.Ctx, db.Key, opt)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZRemRangeByRank(start, stop int64) (err error) {
 	status := db.Rds.ZRemRangeByRank(db.Ctx, db.Key, start, stop)
@@ -118,11 +118,11 @@ func (db *Ctx) ZIncrBy(increment float64, member interface{}) (err error) {
 }
 func (db *Ctx) ZPopMax(count int64, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZPopMax(db.Ctx, db.Key, count)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZPopMin(count int64, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZPopMin(db.Ctx, db.Key, count)
-	return db.UnmarshalRedisZ(cmd.Val(), outSlice)
+	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
 func (db *Ctx) ZLexCount(min, max string) (length int64) {
 	cmd := db.Rds.ZLexCount(db.Ctx, db.Key, min, max)
