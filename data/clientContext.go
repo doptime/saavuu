@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	rds "github.com/yangkequn/saavuu/Rds"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/rds"
 )
 
 type Ctx struct {
