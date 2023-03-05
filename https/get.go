@@ -49,40 +49,40 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", act)
 	}
 
-	db := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds}
+	db := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
-		return ret, db.HGet(svcCtx.Key, svcCtx.Field, &ret)
+		return ret, db.HGet(svcCtx.Field, &ret)
 	case "HGETALL":
-		if err := db.HGetAll(svcCtx.Key, &map_interface_interface); err != nil {
+		if err := db.HGetAll(&map_interface_interface); err != nil {
 			return nil, err
 		}
 		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
 	case "HMGET":
-		if err = db.HMGET(svcCtx.Key, strings.Split(svcCtx.Field, ","), &map_interface_interface); err != nil {
+		if err = db.HMGET(strings.Split(svcCtx.Field, ","), &map_interface_interface); err != nil {
 			return nil, err
 		}
 		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
 	case "HKEYS":
 		var keys []string
-		if err := db.HKeys(svcCtx.Key, &keys); err != nil {
+		if err := db.HKeys(&keys); err != nil {
 			return "", err
 		} else {
 			return json.Marshal(keys)
 		}
 	case "HEXISTS":
-		return db.HExists(svcCtx.Key, svcCtx.Field)
+		return db.HExists(svcCtx.Field)
 	case "HLEN":
-		return db.HLen(svcCtx.Key)
+		return db.HLen()
 	case "HVALS":
 		var values []interface{}
-		if err = db.HVals(svcCtx.Key, &values); err != nil {
+		if err = db.HVals(&values); err != nil {
 			return "", err
 		}
 		return values, nil
 	case "SISMEMBER":
-		return db.SIsMember(svcCtx.Key, svcCtx.Req.FormValue("Member"))
+		return db.SIsMember(svcCtx.Req.FormValue("Member"))
 	case "TIME":
 		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
 		if tm, err = pc.Time(); err != nil {
@@ -103,13 +103,13 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		// ZRANGE key start stop [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
 			var scores []float64
-			if scores, err = db.ZRangeWithScores(svcCtx.Key, start, stop, &result); err != nil {
+			if scores, err = db.ZRangeWithScores(start, stop, &result); err != nil {
 				return "", err
 			}
 			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
 		}
 		// ZRANGE key start stop [WITHSCORES==false]
-		if err = db.ZRange(svcCtx.Key, start, stop, &result); err != nil {
+		if err = db.ZRange(start, stop, &result); err != nil {
 			return "", err
 		}
 		return json.Marshal(result)
@@ -124,23 +124,23 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		//ZRANGEBYSCORE key min max [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
-			if scores, err = db.ZRangeByScoreWithScores(svcCtx.Key, &redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+			if scores, err = db.ZRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
 				return "", err
 			}
 			//marshal result to json
 			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
 		}
 		//ZRANGEBYSCORE key min max [WITHSCORES==false]
-		if err = db.ZRangeByScore(svcCtx.Key, &redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+		if err = db.ZRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
 			return "", err
 		}
 		return json.Marshal(result)
 	case "ZRANK":
-		return db.ZRank(svcCtx.Key, svcCtx.Req.FormValue("Member"))
+		return db.ZRank(svcCtx.Req.FormValue("Member"))
 	case "ZCOUNT":
-		return db.ZCount(svcCtx.Key, svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"))
+		return db.ZCount(svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"))
 	case "ZSCORE":
-		return db.ZScore(svcCtx.Key, svcCtx.Req.FormValue("Member"))
+		return db.ZScore(svcCtx.Req.FormValue("Member"))
 	}
 	return nil, errors.New("unsupported command")
 
