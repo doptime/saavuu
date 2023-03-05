@@ -23,7 +23,7 @@ func (db *Ctx) YW(tm time.Time) *Ctx {
 	//year is 4 digits, week is 2 digits
 	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%sYW:%04v%02v", db.Key, isoYear, isoWeek)}
 }
-func ConcatedKey(fields ...interface{}) string {
+func ConcatedKeys(fields ...interface{}) string {
 	//	concacate all fields with ':'
 	var key string
 	for _, field := range fields {
@@ -40,5 +40,5 @@ func (db *Ctx) Concat(fields ...interface{}) *Ctx {
 	if len(fields) == 0 {
 		return db
 	}
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKey(fields))}
+	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKeys(fields))}
 }
