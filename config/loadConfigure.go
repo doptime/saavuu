@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"strconv"
 	"strings"
@@ -17,15 +18,16 @@ func loadOSEnv(key string, panicString string) (value string) {
 	}
 	return value
 }
+func loadParamRds() (err error) {
+	Cfg.RedisAddressParam = loadOSEnv("REDIS_ADDR_PARAM", "Error: Can not load REDIS_ADDR_PARAM from env")
+	Cfg.RedisPasswordParam = loadOSEnv("REDIS_PASSWORD_PARAM", "")
+	return json.Unmarshal([]byte(loadOSEnv("REDIS_DB_PARAM", "Error: REDIS_DB_PARAM is not set ")), &Cfg.RedisDbParam)
+}
 
 func LoadConfigFromEnv() (err error) {
 
 	//try load from env
-	Cfg.RedisAddressParam = loadOSEnv("REDIS_ADDR_PARAM", "Error: Can not load REDIS_ADDR_PARAM from env")
-	Cfg.RedisPasswordParam = loadOSEnv("REDIS_PASSWORD_PARAM", "")
-	if Cfg.RedisDbParam, err = strconv.Atoi(loadOSEnv("REDIS_DB_PARAM", "Error: REDIS_DB_PARAM is not set ")); err != nil {
-		logger.Lshortfile.Panicln("Error: REDIS_DB_PARAM is not a number")
-	}
+	loadParamRds()
 
 	Cfg.RedisAddressData = loadOSEnv("REDIS_ADDR_DATA", "Error: Can not load REDIS_ADDR_DATA from env")
 	Cfg.RedisPasswordData = loadOSEnv("REDIS_PASSWORD_DATA", "")
@@ -78,18 +80,32 @@ func loadConfigFromRedis(ParamServer *redis.Client) (err error) {
 	return nil
 }
 
-func ApiInitial(redisAddressForApi string, redisPassword string, redisDb int) {
-	ParamRedis := redis.NewClient(&redis.Options{
-		Addr:     redisAddressForApi,
-		Password: redisPassword, // no password set
-		DB:       redisDb,       // use default DB
+func ApiInitial() {
+	loadParamRds()
+	ParamRds = redis.NewClient(&redis.Options{
+		Addr:     Cfg.RedisAddressParam,
+		Password: Cfg.RedisPasswordParam, // no password set
+		DB:       Cfg.RedisDbParam,       // use default DB
 	})
-	if err := loadConfigFromRedis(ParamRedis); err != nil {
+	if err := loadConfigFromRedis(ParamRds); err != nil {
 		logger.Lshortfile.Panicln(err)
 	} else if DataRds == nil {
 		logger.Lshortfile.Panicln("config.DataRedis is nil. ")
-	} else if ParamRds == nil {
-		logger.Lshortfile.Panicln("config.ParamRedis is nil. ")
 	}
 	logger.Lshortfile.Println("ApiInitial success")
+}
+
+func init() {
+	logger.Std.Println("App Start! load config from OS env")
+	AppMode = loadOSEnv("APP_MODE", "APP_MODE , should be either "+AppModeFRAMEWROK+" as www server or "+AppModeSERVICE+" to run services")
+	logger.Lshortfile.Println("Using AppMode " + AppMode)
+
+	if AppMode == AppModeFRAMEWROK {
+		LoadConfigFromEnv()
+	} else if AppMode == AppModeSERVICE {
+		ApiInitial()
+	} else {
+		logger.Lshortfile.Panicln("APP_MODE , should be either FRAMWORK as www server or SERVICE to run services")
+	}
+
 }

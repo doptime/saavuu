@@ -12,7 +12,6 @@ import (
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
-	"github.com/yangkequn/saavuu/permission"
 )
 
 // listten to a port and start http server
@@ -89,11 +88,6 @@ type TestApi struct {
 }
 
 func main() {
-	logger.Std.Println("App Start! load config from OS env")
-	config.LoadConfigFromEnv()
-	go permission.LoadGetPermissionFromRedis()
-	go permission.LoadPutPermissionFromRedis()
-	go permission.LoadDelPermissionFromRedis()
 
 	// db := data.NewContext(nil)
 	// var info map[uint32]interface{}
