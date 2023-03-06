@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"reflect"
 	"strconv"
 	"time"
@@ -12,20 +13,19 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
+func (ac *Ctx) do(paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
 	var (
 		b       []byte
 		results []string
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	//ensure ServiceKey start with "api:"
-	if ServiceKey[:4] != "api:" {
-		ServiceKey = "api:" + ServiceKey
+	//if service name is for redis, return error
+	if ac.ServiceName == "api:redis" {
+		return errors.New("api:redis not allowed to call")
 	}
 
 	//ensure the paramIn is a map or struct
-
 	paramType := reflect.TypeOf(paramIn)
 	if paramType.Kind() == reflect.Struct {
 	} else if paramType.Kind() == reflect.Map {
@@ -43,7 +43,7 @@ func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTi
 	} else {
 		Values = []string{"data", string(b)}
 	}
-	args := &redis.XAddArgs{Stream: ServiceKey, Values: Values, MaxLen: 4096}
+	args := &redis.XAddArgs{Stream: ac.ServiceName, Values: Values, MaxLen: 4096}
 	if cmd = ac.Rds.XAdd(ac.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return cmd.Err()
@@ -62,10 +62,10 @@ func (ac *Ctx) do(ServiceKey string, paramIn interface{}, out interface{}, dueTi
 	}
 	return nil
 }
-func (ac *Ctx) DoAt(ServiceKey string, paramIn interface{}, dueTime *time.Time) (err error) {
-	return ac.do(ServiceKey, paramIn, nil, dueTime)
+func (ac *Ctx) DoAt(paramIn interface{}, dueTime *time.Time) (err error) {
+	return ac.do(paramIn, nil, dueTime)
 }
 
-func (ac *Ctx) Do(ServiceKey string, paramIn interface{}, out interface{}) (err error) {
-	return ac.do(ServiceKey, paramIn, out, nil)
+func (ac *Ctx) Do(paramIn interface{}, out interface{}) (err error) {
+	return ac.do(paramIn, out, nil)
 }

@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -26,8 +25,7 @@ func LoadDelPermissionFromRedis() {
 	// read RedisDelPermission usiing ParamRds
 	// RedisDelPermission is a hash
 	// split each value of RedisDelPermission into string[] and store in PermittedDelOp
-	paramCtx := api.NewContext(context.Background())
-	if err := paramCtx.HGetAll("RedisDelPermission", _map); err != nil {
+	if err := api.RdsOp.HGetAll("RedisDelPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisDelPermission  error: " + err.Error())
 	} else {
 		if info := fmt.Sprint("loading RedisDelPermission success. num keys:", len(_map)); info != lastLoadDelPermissionInfo {
@@ -82,7 +80,6 @@ func IsDelPermitted(dataKey string, operation string) bool {
 	}
 	PermittedDelOp[dataKey] = permission
 	//save to redis
-	paramCtx := api.NewContext(context.Background())
-	paramCtx.HSet("RedisDelPermission", dataKey, permission)
+	api.RdsOp.HSet("RedisDelPermission", dataKey, permission)
 	return config.Cfg.DevelopMode
 }

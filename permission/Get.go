@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -19,8 +18,7 @@ func LoadGetPermissionFromRedis() {
 	// read RedisGetPermission usiing ParamRds
 	// RedisGetPermission is a hash
 	// split each value of RedisGetPermission into string[] and store in PermittedBatchOp
-	paramCtx := api.NewContext(context.Background())
-	if err := paramCtx.HGetAll("RedisGetPermission", _map); err != nil {
+	if err := api.RdsOp.HGetAll("RedisGetPermission", _map); err != nil {
 		logger.Lshortfile.Println("loading RedisGetPermission  error: " + err.Error())
 	} else {
 		if info := fmt.Sprint("loading RedisGetPermission success. num keys:", len(_map)); info != lastLoadRedisGetPermissionInfo {
@@ -76,7 +74,6 @@ func IsGetPermitted(dataKey string, operation string) bool {
 
 	PermittedBatchOp[dataKey] = permission
 	//save to redis
-	paramCtx := api.NewContext(context.Background())
-	paramCtx.HSet("RedisGetPermission", dataKey, permission)
+	api.RdsOp.HSet("RedisGetPermission", dataKey, permission)
 	return config.Cfg.DevelopMode
 }

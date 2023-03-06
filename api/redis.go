@@ -1,8 +1,13 @@
 package api
 
 import (
+	"context"
+
+	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/rds"
 )
+
+var RdsOp = Ctx{Rds: config.ParamRds, Ctx: context.Background(), ServiceName: "api:redis"}
 
 func (ac *Ctx) HGetAll(key string, mapOut interface{}) (err error) {
 	return rds.HGetAll(ac.Ctx, ac.Rds, key, mapOut)

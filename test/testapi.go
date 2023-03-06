@@ -1,15 +1,16 @@
 package test
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/yangkequn/saavuu/api"
 )
 
+var apiTest = api.New("test")
+
 func CreateTestApi() {
-	api.NewApi("test", func(pc *api.Ctx, parmIn map[string]interface{}) (data map[string]interface{}, err error) {
+	apiTest.Serve(func(parmIn map[string]interface{}) (data map[string]interface{}, err error) {
 		// your logic here
 		data = map[string]interface{}{"data": "ok"}
 		fmt.Println("test api ok")
@@ -17,8 +18,7 @@ func CreateTestApi() {
 	})
 }
 func TestApi() {
-	_api := api.NewContext(context.Background())
 	now := time.Now()
-	go _api.DoAt("test", map[string]string{"message": "ok"}, &now)
+	go apiTest.DoAt(map[string]string{"message": "ok"}, &now)
 	api.RunningAllApis()
 }
