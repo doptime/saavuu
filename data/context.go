@@ -15,11 +15,11 @@ type Ctx struct {
 	Key string
 }
 
-func NewCtx(ctx context.Context, Key string) *Ctx {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	return &Ctx{Ctx: ctx, Rds: config.DataRds, Key: Key}
+func New(Key string) *Ctx {
+	return &Ctx{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
+}
+func (ctx *Ctx) WithContext(c context.Context) *Ctx {
+	return &Ctx{Ctx: c, Rds: ctx.Rds, Key: ctx.Key}
 }
 
 func (db *Ctx) Time() (tm time.Time, err error) {
