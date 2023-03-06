@@ -25,3 +25,5 @@ func (ctx *Ctx) WithContext(c context.Context) *Ctx {
 func (db *Ctx) Time() (tm time.Time, err error) {
 	return rds.Time(db.Ctx, db.Rds)
 }
+
+var NonKey = New("")
