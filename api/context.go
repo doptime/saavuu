@@ -21,6 +21,6 @@ func New(ServiceName string) *Ctx {
 
 	return &Ctx{Ctx: context.Background(), Rds: config.ParamRds, ServiceName: ServiceName}
 }
-func (ctx *Ctx) WithBG() *Ctx {
-	return &Ctx{Ctx: context.Background(), Rds: ctx.Rds, ServiceName: ctx.ServiceName}
+func (ctx *Ctx) WithContext(c context.Context) *Ctx {
+	return &Ctx{Ctx: c, Rds: ctx.Rds, ServiceName: ctx.ServiceName}
 }
