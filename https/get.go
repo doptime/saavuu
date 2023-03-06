@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
@@ -84,8 +85,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "SISMEMBER":
 		return db.SIsMember(svcCtx.Req.FormValue("Member"))
 	case "TIME":
-		pc := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.ParamRds}
-		if tm, err = pc.Time(); err != nil {
+		if tm, err = api.RdsOp.Time(); err != nil {
 			return "", err
 		}
 		return tm.UnixMilli(), nil
