@@ -30,20 +30,20 @@ import (
 )
 
 type Input struct {
-	data   []uint16
-	JWT_id string
+	Data   []uint16
+	Id   string `msgpack:"alias:JWT_id"`
 }
-
+var apiDemo=api.New("demo")
 func init() {
-	api.NewApi("demo", func(db *data.Ctx, api *api.Ctx, parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
+	apiDemo.Serve(func(parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
 		var req *Input = &Input{}
-		if err = db.MapsToStructure(parmIn, req); err != nil {
+		if err = data.MapsToStructure(parmIn, req); err != nil {
 			return nil, err
-		} else if req.JWT_id == "" || len(req.data) == 0 {
+		} else if req.Id == "" || len(req.Data) == 0 {
 			return nil, saavuu.ErrInvalidInput
 		}
 		// your logic here
-		return map[string]interface{}{"data": req.data}, nil
+		return map[string]interface{}{"data": req.Data}, nil
 	})
 }
 ```
@@ -86,4 +86,6 @@ HGET("UserInfo", id).then((data) => {
     "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
     "CORS": "*",
     "MAX_BUFFER_SIZE": "3145728",
+    "DEVELOP_MODE": "true",
+    "APP_MODE":"framework",
 ```
