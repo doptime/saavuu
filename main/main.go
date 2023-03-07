@@ -26,14 +26,16 @@ func RedisHttpStart(path string, port int) {
 			ok         bool
 			err        error
 			httpStatus int = http.StatusOK
+			svcCtx     *https.HttpContext
 		)
 		if https.CorsChecked(r, w) {
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*12000)
 		defer cancel()
-		svcCtx := https.NewHttpContext(ctx, r, w)
-		if r.Method == "GET" {
+		if svcCtx, err = https.NewHttpContext(ctx, r, w); err != nil {
+			httpStatus = http.StatusBadRequest
+		} else if r.Method == "GET" {
 			result, err = svcCtx.GetHandler()
 		} else if r.Method == "POST" {
 			result, err = svcCtx.PostHandler()
@@ -50,7 +52,7 @@ func RedisHttpStart(path string, port int) {
 			errStr := err.Error()
 			if strings.Contains(errStr, "JWT") {
 				httpStatus = http.StatusUnauthorized
-			} else {
+			} else if httpStatus == http.StatusOK {
 				httpStatus = http.StatusInternalServerError
 			}
 			b = []byte(err.Error())
@@ -113,5 +115,5 @@ func main() {
 
 	//test.TestApi()
 
-	RedisHttpStart("/rSvc", 8080)
+	RedisHttpStart("/", 8080)
 }

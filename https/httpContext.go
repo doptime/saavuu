@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/vmihailenco/msgpack/v5"
@@ -19,25 +20,38 @@ type HttpContext struct {
 	Cmd   string
 	Key   string
 	Field string
-	// case post
-	Service string
 
 	QueryFields         string
 	ResponseContentType string
 }
 
-func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) *HttpContext {
-	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
-	//for get
-	svcContext.Cmd = svcContext.Req.FormValue("Cmd")
-	if svcContext.Cmd == "TIME" {
-		svcContext.Key = "TIME"
-	}
-	svcContext.Key = svcContext.Req.FormValue("Key")
-	svcContext.Field = svcContext.Req.FormValue("Field")
+var ErrIncompleteRequest = errors.New("incomplete request")
 
-	//for post
-	svcContext.Service = svcContext.Req.FormValue("Service")
+func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) (httpCtx *HttpContext, err error) {
+	var (
+		CmdKeyField  string
+		CmdKeyFields []string
+	)
+	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
+	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
+		return nil, ErrIncompleteRequest
+	}
+	//for get
+	if CmdKeyField = CmdKeyFields[len(CmdKeyFields)-1]; len(CmdKeyField) < 4 {
+		return nil, ErrIncompleteRequest
+	}
+	if CmdKeyFields = strings.Split(strings.Split(CmdKeyField, "?")[0], "="); len(CmdKeyFields) < 1 {
+		return nil, ErrIncompleteRequest
+	}
+	svcContext.Cmd = CmdKeyFields[0]
+	//default key is cmd
+	svcContext.Key = svcContext.Cmd
+	if len(CmdKeyFields) > 1 {
+		svcContext.Key = CmdKeyFields[1]
+	}
+	if len(CmdKeyFields) > 2 {
+		svcContext.Field = CmdKeyFields[2]
+	}
 
 	//for response
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
@@ -45,7 +59,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	if svcContext.ResponseContentType = svcContext.Req.FormValue("RspType"); svcContext.ResponseContentType == "" {
 		svcContext.ResponseContentType = "application/json"
 	}
-	return svcContext
+	return svcContext, nil
 }
 func (svc *HttpContext) SetContentType() {
 	if len(svc.ResponseContentType) > 0 && len(svc.QueryFields) > 0 {
