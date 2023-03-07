@@ -49,8 +49,10 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	if len(CmdKeyFields) > 1 {
 		svcContext.Key = CmdKeyFields[1]
 	}
-	if len(CmdKeyFields) > 2 {
+	if len(CmdKeyFields) == 2 {
 		svcContext.Field = CmdKeyFields[2]
+	} else {
+		svcContext.Field = strings.Join(CmdKeyFields[2:], "=")
 	}
 
 	//for response
