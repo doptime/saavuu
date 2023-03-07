@@ -33,23 +33,31 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 		CmdKeyFields []string
 	)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
+	//i.g. https://url.com/rSvc/HGET=UserAvatar=fa4Y3oyQk2swURaJ?Queries=*&RspType=image/jpeg
 	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
 		return nil, ErrIncompleteRequest
 	}
-	//for get
+	//this last part of url is cmd and key and field, i.g. HGET=UserAvatar=fa4Y3oyQk2swURaJ
+	//the shortest cmd has 4 chars, i.g. HGET, HSET, HDEL
 	if CmdKeyField = CmdKeyFields[len(CmdKeyFields)-1]; len(CmdKeyField) < 4 {
 		return nil, ErrIncompleteRequest
 	}
+	//split cmd and key and field, only cmd is required , key and field is optional
 	if CmdKeyFields = strings.Split(strings.Split(CmdKeyField, "?")[0], "="); len(CmdKeyFields) < 1 {
 		return nil, ErrIncompleteRequest
 	}
+	//read first param as cmd
 	svcContext.Cmd = CmdKeyFields[0]
-	//default key is cmd
-	svcContext.Key = svcContext.Cmd
-	if len(CmdKeyFields) > 1 {
+	//read second param as key
+	if len(CmdKeyFields) >= 2 {
 		svcContext.Key = CmdKeyFields[1]
+	} else {
+		//default key is cmd
+		svcContext.Key = svcContext.Cmd
 	}
-	if len(CmdKeyFields) == 2 {
+	//read third param as field
+	// if field contain character "=", it will be split into multiple fields, so we need to join them back
+	if len(CmdKeyFields) == 3 {
 		svcContext.Field = CmdKeyFields[2]
 	} else {
 		svcContext.Field = strings.Join(CmdKeyFields[2:], "=")
