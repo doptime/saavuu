@@ -59,7 +59,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	// if field contain character "=", it will be split into multiple fields, so we need to join them back
 	if len(CmdKeyFields) == 3 {
 		svcContext.Field = CmdKeyFields[2]
-	} else {
+	} else if len(CmdKeyFields) > 3 {
 		svcContext.Field = strings.Join(CmdKeyFields[2:], "=")
 	}
 
