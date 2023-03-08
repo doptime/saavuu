@@ -6,7 +6,7 @@ import (
 	"github.com/yangkequn/saavuu/api"
 )
 
-var ErrOnlyKeyOfService = errors.New("only command of API can be used")
+var ErrBadCommand = errors.New("error bad command")
 
 func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
 	//use remote service map to handle request
@@ -17,13 +17,12 @@ func (svcCtx *HttpContext) PostHandler() (data interface{}, err error) {
 	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	if svcCtx.Cmd != "API" {
-		return nil, ErrOnlyKeyOfService
-	}
-	svcCtx.MergeJwtField(paramIn)
-	if err = api.New(svcCtx.Key).Do(paramIn, &result); err != nil {
-		return nil, err
+	if svcCtx.Cmd == "API" {
+		svcCtx.MergeJwtField(paramIn)
+		err = api.New(svcCtx.Key).Do(paramIn, &result)
+	} else {
+		err = ErrBadCommand
 	}
 
-	return result, nil
+	return result, err
 }

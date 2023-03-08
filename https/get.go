@@ -141,7 +141,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return db.ZCount(svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"))
 	case "ZSCORE":
 		return db.ZScore(svcCtx.Req.FormValue("Member"))
+	//case default
+	default:
+		return nil, ErrBadCommand
 	}
-	return nil, errors.New("unsupported command")
 
 }

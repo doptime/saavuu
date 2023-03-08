@@ -58,6 +58,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 			return "false", err
 		}
 		return "true", nil
+	default:
+		return nil, ErrBadCommand
 	}
-	return result, nil
 }
