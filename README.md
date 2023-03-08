@@ -17,10 +17,11 @@
 * fully access control
 * support CORS
 ### drawbacks
-* saavuu has higher latency than monolithic web server. because all API are transfered : client => saavvuu => redis => api =>redis => saavuu => client. this usually takes 2ms in local network.
+* saavuu has higher latency than monolithic web server. because all API are transfered : client => saavuu => redis => api =>redis => saavuu => client. this usually takes 2ms in local network. 
   it take more time than traditional RPC with data flow : client => saavuu => api => saavuu => client
-  How ever, you will find out,saavuu makes api (dynamic upgrade version/ new api) hot plugable, and bring down microservice's complexity to near zero. because saavuu is just a redis proxy, you need no modification to saavuu. so only the  difficult part is needed, the API logic.
-* for thoese data operations without api,data flow is: client => saavuu => redis => saavuu => client. this usually takes 1ms in local network.
+  For thoese data operations without api,data flow is: client => saavuu => redis => saavuu => client. this usually takes 1ms in local network.
+
+  However, as you will find out, saavuu makes api (dynamic upgrade version/ new api) hot plugable, and bring down microservice's complexity to near zero. because saavuu is just a non editable redis proxy. so only the  API logic part is needed, and many cases, API logic is isn't needed at all, you just need to use develop nothing but using saavuu's redis api.
   
 ## demo usage
 ### server, go example:

@@ -59,7 +59,7 @@ func RedisHttpStart(path string, port int) {
 		} else if b, ok = result.([]byte); ok {
 		} else if s, ok = result.(string); ok {
 			b = []byte(s)
-		} else if len(svcCtx.QueryFields) > 0 {
+		} else if len(svcCtx.ResponseFields) > 0 {
 			//keep fields exits in svcContext.QueryFields only
 			if b, err = json.Marshal(result); err != nil {
 				//reponse result json to client

@@ -21,7 +21,7 @@ type HttpContext struct {
 	Key   string
 	Field string
 
-	QueryFields         string
+	ResponseFields      string
 	ResponseContentType string
 }
 
@@ -38,11 +38,16 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	}
 	//this last part of url is cmd and key and field, i.g. /HGET?K=UserAvatar&F=fa4Y3oyQk2swURaJ
 	//read first param as cmd
-	svcContext.Cmd = CmdKeyFields[0]
+	svcContext.Cmd = CmdKeyFields[len(CmdKeyFields)-1]
 	svcContext.Key = r.FormValue("K")
 	svcContext.Field = r.FormValue("F")
 	//for response
-	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
+	if svcContext.ResponseFields = svcContext.Req.FormValue("QF"); len(svcContext.ResponseFields) == 0 {
+		svcContext.ResponseFields = "*"
+	} else if svcContext.ResponseFields == "null" {
+		svcContext.ResponseFields = ""
+	}
+
 	//default response content type: application/json
 	if svcContext.ResponseContentType = svcContext.Req.FormValue("RspType"); svcContext.ResponseContentType == "" {
 		svcContext.ResponseContentType = "application/json"
@@ -50,7 +55,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	return svcContext, nil
 }
 func (svc *HttpContext) SetContentType() {
-	if len(svc.ResponseContentType) > 0 && len(svc.QueryFields) > 0 {
+	if len(svc.ResponseContentType) > 0 && len(svc.ResponseFields) > 0 {
 		svc.Rsb.Header().Set("Content-Type", svc.ResponseContentType)
 	}
 }
