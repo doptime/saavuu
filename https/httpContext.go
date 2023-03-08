@@ -29,7 +29,6 @@ var ErrIncompleteRequest = errors.New("incomplete request")
 
 func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) (httpCtx *HttpContext, err error) {
 	var (
-		CmdKeyField  string
 		CmdKeyFields []string
 	)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
@@ -37,32 +36,11 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
 		return nil, ErrIncompleteRequest
 	}
-	//this last part of url is cmd and key and field, i.g. HGET=UserAvatar=fa4Y3oyQk2swURaJ
-	//the shortest cmd has 4 chars, i.g. HGET, HSET, HDEL
-	if CmdKeyField = CmdKeyFields[len(CmdKeyFields)-1]; len(CmdKeyField) < 4 {
-		return nil, ErrIncompleteRequest
-	}
-	//split cmd and key and field, only cmd is required , key and field is optional
-	if CmdKeyFields = strings.Split(strings.Split(CmdKeyField, "?")[0], "="); len(CmdKeyFields) < 1 {
-		return nil, ErrIncompleteRequest
-	}
+	//this last part of url is cmd and key and field, i.g. /HGET?K=UserAvatar&F=fa4Y3oyQk2swURaJ
 	//read first param as cmd
 	svcContext.Cmd = CmdKeyFields[0]
-	//read second param as key
-	if len(CmdKeyFields) >= 2 {
-		svcContext.Key = CmdKeyFields[1]
-	} else {
-		//default key is cmd
-		svcContext.Key = svcContext.Cmd
-	}
-	//read third param as field
-	// if field contain character "=", it will be split into multiple fields, so we need to join them back
-	if len(CmdKeyFields) == 3 {
-		svcContext.Field = CmdKeyFields[2]
-	} else if len(CmdKeyFields) > 3 {
-		svcContext.Field = strings.Join(CmdKeyFields[2:], "=")
-	}
-
+	svcContext.Key = r.FormValue("K")
+	svcContext.Field = r.FormValue("F")
 	//for response
 	svcContext.QueryFields = svcContext.Req.FormValue("Queries")
 	//default response content type: application/json
