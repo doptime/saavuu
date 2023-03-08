@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
@@ -36,6 +37,30 @@ func LoadDelPermissionFromRedis() {
 	}
 	time.Sleep(time.Second * 10)
 	go LoadPutPermissionFromRedis()
+}
+func IsPermittedDelField(operation string, Field *string, token *jwt.Token) (operationNew string, err error) {
+	var (
+		mpclaims jwt.MapClaims
+		ok       bool
+	)
+	// Field contains @*, replace @* with jwt value
+	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
+	if len(*Field) > 0 {
+		operationNew = "@" + operation
+		FieldParts := strings.Split(*Field, "@")
+		if token == nil || token.Claims == nil {
+			return operationNew, fmt.Errorf("JWT token is nil")
+		}
+		if mpclaims, ok = token.Claims.(jwt.MapClaims); !ok {
+			return operationNew, fmt.Errorf("JWT token is invalid")
+		}
+		subTag := FieldParts[len(FieldParts)-1]
+		if FieldParts[len(FieldParts)-1], ok = mpclaims[subTag].(string); !ok {
+			return operationNew, fmt.Errorf("jwt missiong subTag " + subTag)
+		}
+		*Field = strings.Join(FieldParts, "")
+	}
+	return operationNew, nil
 }
 func IsDelPermitted(dataKey string, operation string) bool {
 	dataKey = strings.Split(dataKey, ":")[0]

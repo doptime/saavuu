@@ -10,11 +10,11 @@ import (
 )
 
 var ErrEmptyKeyOrField = errors.New("empty key or field")
+var ErrOperationNotPermited = errors.New("operation permission denied")
 
 func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	//use remote service map to handle request
 	var (
-		result    map[string]interface{} = map[string]interface{}{}
 		bytes     []byte
 		operation string = strings.ToLower(svcCtx.Cmd)
 	)
@@ -24,11 +24,11 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 			return "false", fmt.Errorf("parse JWT token error: %v", err)
 		}
 		if operation, err = permission.IsPermittedPutField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
-			return "false", errors.New("permission denied")
+			return "false", ErrOperationNotPermited
 		}
 	}
 	if !permission.IsPutPermitted(svcCtx.Key, operation) {
-		return "false", errors.New("permission denied")
+		return "false", ErrOperationNotPermited
 	}
 
 	switch svcCtx.Cmd {

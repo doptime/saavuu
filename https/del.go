@@ -1,7 +1,8 @@
 package https
 
 import (
-	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/permission"
@@ -9,9 +10,22 @@ import (
 
 func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 	var (
-		jwts map[string]interface{} = map[string]interface{}{}
+		jwts      map[string]interface{} = map[string]interface{}{}
+		operation                        = strings.ToLower(svcCtx.Cmd)
 	)
 	svcCtx.MergeJwtField(jwts)
+	if strings.Contains(svcCtx.Field, "@") {
+		if err := svcCtx.ParseJwtToken(); err != nil {
+			return "false", fmt.Errorf("parse JWT token error: %v", err)
+		}
+		if operation, err = permission.IsPermittedDelField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
+			return "false", ErrOperationNotPermited
+		}
+	}
+	if !permission.IsDelPermitted(svcCtx.Key, operation) {
+		// check operation permission
+		return nil, fmt.Errorf(" operation %v not permitted", operation)
+	}
 
 	switch svcCtx.Cmd {
 	case "HDEL":
@@ -19,21 +33,19 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		if svcCtx.Field == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		if !permission.IsDelPermitted(svcCtx.Key, "hdel") {
-			return "false", errors.New("permission denied")
-		}
 		cmd := config.DataRds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
+		return "false", err
 	case "DEL":
 		cmd := config.ParamRds.HDel(svcCtx.Ctx, svcCtx.Key, "del")
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
+		return "false", err
 	default:
 		return nil, ErrBadCommand
 	}
 
-	return "false", err
 }
