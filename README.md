@@ -4,19 +4,23 @@
 * All HTTP requests are transferd as binary msgpack data. It's compact and fast.
 * No API version related problem. Just use redis api.
 * Use msgpack to support structure data by default. Easily to upgrade data sturecture.
-* Use no database but KEYDB which is redis compatible. Flash storage supportion brings both memory speed and whole disk capacity
-* You don't need to write any GET Logic. Just use redis to query.
-* You don't need to write any DELETE Logic. Just use redis to remove.
-* You can focus only and alway on POST & PUT logic. 
-    saavuu will put request data to redis queue, and the service listening the queue will process the data.
-* You can use any programming language you like. python or go or not.
-* redis pipeline  brings heavy batch process performance.  
+* Use no database but redis compatible KEYDB. With flash storage supportion, KEYDB brings both memory speed and whole disk capacity
+* You don't need to write any CREATE GET PUT or DELETE  Logic. Just use redis to query，modify or delete. That means most CURD can be done at frontend, needs no backend job.
+* You can focus on operations with multiple data logic only.  We call it "API".
+    saavuu will put API data to redis stream, and the API receive and process the stream data.
+* You can use any programming language you like. python or go or may be c# if you like.
+* redis pipeline  brings high batch process performance.  
 ### other features
 * specify Content-Type in web side
 * allow specify response fields in web client to reduce web traffic
 * support JWT for authorization
 * fully access control
 * support CORS
+### drawbacks
+* saavuu has higher latency than monolithic web server. because all API are transfered : client => saavvuu => redis => api =>redis => saavuu => client. this usually takes 2ms in local network.
+  it take more time than traditional RPC with data flow : client => saavuu => api => saavuu => client
+  How ever, you will find out,saavuu makes api (dynamic upgrade version/ new api) hot plugable, and bring down microservice's complexity to near zero. because saavuu is just a redis proxy, you need no modification to saavuu. so only the  difficult part is needed, the API logic.
+* for thoese data operations without api,data flow is: client => saavuu => redis => saavuu => client. this usually takes 1ms in local network.
   
 ## demo usage
 ### server, go example:
