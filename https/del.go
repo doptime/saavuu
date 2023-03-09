@@ -55,6 +55,13 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 			return "true", nil
 		}
 		return "false", err
+	case "ZREMRANGEBYSCORE":
+		var Min = svcCtx.Req.FormValue("Min")
+		var Max = svcCtx.Req.FormValue("Max")
+		if err = config.DataRds.ZRemRangeByScore(svcCtx.Ctx, svcCtx.Key, Min, Max).Err(); err == nil {
+			return "true", nil
+		}
+		return "false", err
 	default:
 		return nil, ErrBadCommand
 	}
