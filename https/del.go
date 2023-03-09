@@ -44,6 +44,17 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 			return "true", nil
 		}
 		return "false", err
+	case "ZREM":
+		var MemberStr = strings.Split(svcCtx.Req.FormValue("Member"), ",")
+		//convert Member to []interface{}
+		var Member = make([]interface{}, len(MemberStr))
+		for i, v := range MemberStr {
+			Member[i] = v
+		}
+		if err = config.DataRds.ZRem(svcCtx.Ctx, svcCtx.Key, Member...).Err(); err == nil {
+			return "true", nil
+		}
+		return "false", err
 	default:
 		return nil, ErrBadCommand
 	}
