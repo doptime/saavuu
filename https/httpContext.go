@@ -39,7 +39,9 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	//this last part of url is cmd and key and field, i.g. /HGET?K=UserAvatar&F=fa4Y3oyQk2swURaJ
 	//read first param as cmd
 	svcContext.Cmd = CmdKeyFields[len(CmdKeyFields)-1]
-	svcContext.Key = r.FormValue("K")
+	if svcContext.Key = r.FormValue("K"); len(svcContext.Key) == 0 {
+		svcContext.Key = svcContext.Cmd
+	}
 	svcContext.Field = r.FormValue("F")
 	//for response
 	if svcContext.ResponseFields = svcContext.Req.FormValue("QF"); len(svcContext.ResponseFields) == 0 {
