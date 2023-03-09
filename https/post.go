@@ -42,17 +42,9 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		svcCtx.MergeJwtField(paramIn)
 		err = api.New(svcCtx.Key).Do(paramIn, &ret)
 	} else if svcCtx.Cmd == "ZADD" {
-		var (
-			ScoreStr string
-			Score    float64
-		)
-		svcCtx.MergeJwtField(paramIn)
-		//for each field, check if it contains @, replace it with jwt field
-		if ScoreStr = svcCtx.Req.FormValue("Score"); ScoreStr == "" {
-			return "false", errors.New("score is empty")
-		}
-		if Score, err = strconv.ParseFloat(ScoreStr, 64); err != nil {
-			return "false", errors.New("score is not float")
+		var Score float64
+		if Score, err = strconv.ParseFloat(svcCtx.Req.FormValue("Score"), 64); err != nil {
+			return "false", errors.New("parameter Score shoule be float")
 		}
 		if err = db.ZAdd(redis.Z{Score: Score, Member: paramIn["MsgPack"]}); err != nil {
 			return "false", err
