@@ -18,7 +18,7 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		if err := svcCtx.ParseJwtToken(); err != nil {
 			return "false", fmt.Errorf("parse JWT token error: %v", err)
 		}
-		if operation, err = permission.IsPermittedDelField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
+		if operation, err = permission.IsPermittedField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
 			return "false", ErrOperationNotPermited
 		}
 	}
