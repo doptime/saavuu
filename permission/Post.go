@@ -27,7 +27,7 @@ func LoaIsPermittedPostField(operation string, Field *string, token *jwt.Token) 
 		}
 		subTag := FieldParts[len(FieldParts)-1]
 		if FieldParts[len(FieldParts)-1], ok = mpclaims[subTag].(string); !ok {
-			return operationNew, fmt.Errorf("jwt missiong subTag " + subTag)
+			return operationNew, fmt.Errorf("jwt missing subTag " + subTag)
 		}
 		*Field = strings.Join(FieldParts, "")
 	}
