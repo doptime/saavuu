@@ -13,6 +13,7 @@ func IsPermittedField(operation string, Field *string, token *jwt.Token) (operat
 		ok       bool
 		obj      interface{}
 		subTag   string
+		f64      float64
 	)
 	// Field contains @*, replace @* with jwt value
 	// 只要设置的时候，有@id,@pub，可以确保写不越权，因为 是"@" + operation
@@ -30,6 +31,10 @@ func IsPermittedField(operation string, Field *string, token *jwt.Token) (operat
 		}
 		if obj, ok = mpclaims[subTag]; !ok {
 			return operationNew, fmt.Errorf("jwt missing subTag " + subTag)
+		}
+		// if 64 is int, convert to int
+		if f64, ok = obj.(float64); ok && f64 == float64(int64(f64)) {
+			obj = int64(f64)
 		}
 		FieldParts[len(FieldParts)-1] = fmt.Sprintf("%v", obj)
 		*Field = strings.Join(FieldParts, "")
