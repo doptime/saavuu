@@ -1,7 +1,6 @@
 package data
 
 import (
-	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/rds"
 )
 
@@ -13,9 +12,8 @@ func (db *Ctx) HSet(field interface{}, value interface{}) (err error) {
 	return rds.HSet(db.Ctx, db.Rds, db.Key, field, value)
 }
 
-func (db *Ctx) HExists(field string) (ok bool, err error) {
-	cmd := db.Rds.HExists(db.Ctx, db.Key, field)
-	return cmd.Val(), cmd.Err()
+func (db *Ctx) HExists(field interface{}) (ok bool, err error) {
+	return rds.HExists(db.Ctx, db.Rds, db.Key, field)
 }
 func (db *Ctx) HGetAll(mapOut interface{}) (err error) {
 	return rds.HGetAll(db.Ctx, db.Rds, db.Key, mapOut)
@@ -31,31 +29,23 @@ func (db *Ctx) HLen() (length int64, err error) {
 	cmd := db.Rds.HLen(db.Ctx, db.Key)
 	return cmd.Val(), cmd.Err()
 }
-func (db *Ctx) HDel(field string) (err error) {
-	status := db.Rds.HDel(db.Ctx, db.Key, field)
-	return status.Err()
+func (db *Ctx) HDel(field interface{}) (err error) {
+	return rds.HDel(db.Ctx, db.Rds, db.Key, field)
 }
 func (db *Ctx) HKeys(fields interface{}) (err error) {
 	return rds.HKeys(db.Ctx, db.Rds, db.Key, fields)
 }
-func (db *Ctx) HVals(values *[]interface{}) (err error) {
-	return rds.HValsPackFields(db.Ctx, db.Rds, db.Key, values)
+func (db *Ctx) HVals(values interface{}) (err error) {
+	return rds.HVals(db.Ctx, db.Rds, db.Key, values)
 }
-func (db *Ctx) HIncrBy(field string, increment int64) (err error) {
-	status := db.Rds.HIncrBy(db.Ctx, db.Key, field, increment)
-	return status.Err()
+func (db *Ctx) HIncrBy(field interface{}, increment int64) (err error) {
+	return rds.HIncrBy(db.Ctx, db.Rds, db.Key, field, increment)
 }
 func (db *Ctx) HIncrByFloat(field string, increment float64) (err error) {
-	status := db.Rds.HIncrByFloat(db.Ctx, db.Key, field, increment)
-	return status.Err()
+	return rds.HIncrByFloat(db.Ctx, db.Rds, db.Key, field, increment)
 }
-func (db *Ctx) HSetNX(field string, param interface{}) (err error) {
-	bytes, err := msgpack.Marshal(param)
-	if err != nil {
-		return err
-	}
-	status := db.Rds.HSetNX(db.Ctx, db.Key, field, bytes)
-	return status.Err()
+func (db *Ctx) HSetNX(field interface{}, param interface{}) (err error) {
+	return rds.HSetNX(db.Ctx, db.Rds, db.Key, field, param)
 }
 
 // golang version of python scan_iter

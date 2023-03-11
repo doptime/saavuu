@@ -11,13 +11,15 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
+var ErrInvalidField = errors.New("invalid field")
+
 func HGet(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
 	var (
 		cmd              *redis.StringCmd
 		fieldBytes, data []byte
 	)
 	if field == nil {
-		return errors.New("field is nil")
+		return ErrInvalidField
 	}
 	//case string do not need to marshal
 	if _field, ok := field.(string); ok {
@@ -43,7 +45,7 @@ func HSet(ctx context.Context, rc *redis.Client, key string, field interface{}, 
 		status     *redis.IntCmd
 	)
 	if field == nil {
-		return errors.New("field is nil")
+		return ErrInvalidField
 	}
 
 	if valueBytes, err = msgpack.Marshal(value); err != nil {
@@ -59,6 +61,42 @@ func HSet(ctx context.Context, rc *redis.Client, key string, field interface{}, 
 
 	}
 	return status.Err()
+}
+
+func HExists(ctx context.Context, rc *redis.Client, key string, field interface{}) (ok bool, err error) {
+	var (
+		cmd      *redis.BoolCmd
+		fieldStr string
+	)
+	if field == nil {
+		return false, ErrInvalidField
+	}
+	if fieldStr, ok = field.(string); ok {
+		cmd = rc.HExists(ctx, key, fieldStr)
+	} else if fieldBytes, err := json.Marshal(field); err != nil {
+		return false, err
+	} else {
+		cmd = rc.HExists(ctx, key, string(fieldBytes))
+	}
+	return cmd.Result()
+}
+func HDel(ctx context.Context, rc *redis.Client, key string, field interface{}) (err error) {
+	var (
+		cmd      *redis.IntCmd
+		fieldStr string
+		ok       bool
+	)
+	if field == nil {
+		return ErrInvalidField
+	}
+	if fieldStr, ok = field.(string); ok {
+		cmd = rc.HDel(ctx, key, fieldStr)
+	} else if fieldBytes, err := json.Marshal(field); err != nil {
+		return err
+	} else {
+		cmd = rc.HDel(ctx, key, string(fieldBytes))
+	}
+	return cmd.Err()
 }
 
 func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
@@ -270,19 +308,83 @@ func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	return cmd.Err()
 }
 
-func HValsPackFields(ctx context.Context, rc *redis.Client, key string, values *[]interface{}) (err error) {
+func HVals(ctx context.Context, rc *redis.Client, key string, values interface{}) (err error) {
+	if !isPointerToSlice(values) {
+		logger.Lshortfile.Println("values must be a pointer to slice")
+		return errors.New("values must be a pointer to slice")
+	}
 	cmd := rc.HVals(ctx, key)
-	data := cmd.Val()
-	*values = make([]interface{}, 0, len(data))
-	valueStruct := reflect.TypeOf(values).Elem().Elem()
-	//unmarshal each value of cmd.Val() to interface{}, using msgpack
-	for _, v := range data {
-		obj := reflect.New(valueStruct).Interface()
-		if err = msgpack.Unmarshal([]byte(v), &obj); err != nil {
+	// structFields := reflect.TypeOf(values).Elem()
+	// *values = make([]interface{}, 0, len(cmd.Val()))
+	structFields := reflect.TypeOf(values).Elem().Elem()
+	slice := reflect.MakeSlice(reflect.TypeOf(values).Elem(), 0, len(cmd.Val()))
+	reflect.ValueOf(values).Elem().Set(slice)
+	for _, v := range cmd.Val() {
+		value := reflect.New(structFields).Interface()
+		if err = msgpack.Unmarshal([]byte(v), &value); err != nil {
 			logger.Lshortfile.Println("HVals: value unmarshal error:", err)
 			continue
 		}
-		*values = append(*values, obj)
+		//*values = append(*values, value)
+		reflect.ValueOf(values).Elem().Set(reflect.Append(reflect.ValueOf(values).Elem(), reflect.ValueOf(value).Elem()))
+	}
+	return cmd.Err()
+}
+func HIncrBy(ctx context.Context, rc *redis.Client, key string, field interface{}, incr int64) (err error) {
+	var (
+		cmd      *redis.IntCmd
+		fieldStr string
+		ok       bool
+	)
+	if field == nil {
+		return ErrInvalidField
+	}
+	if fieldStr, ok = field.(string); ok {
+		cmd = rc.HIncrBy(ctx, key, fieldStr, incr)
+	} else if fieldBytes, err := json.Marshal(field); err != nil {
+		return err
+	} else {
+		cmd = rc.HIncrBy(ctx, key, string(fieldBytes), incr)
+	}
+	return cmd.Err()
+}
+func HIncrByFloat(ctx context.Context, rc *redis.Client, key string, field interface{}, incr float64) (err error) {
+	var (
+		cmd      *redis.FloatCmd
+		fieldStr string
+		ok       bool
+	)
+	if field == nil {
+		return ErrInvalidField
+	}
+	if fieldStr, ok = field.(string); ok {
+		cmd = rc.HIncrByFloat(ctx, key, fieldStr, incr)
+	} else if fieldBytes, err := json.Marshal(field); err != nil {
+		return err
+	} else {
+		cmd = rc.HIncrByFloat(ctx, key, string(fieldBytes), incr)
+	}
+	return cmd.Err()
+}
+func HSetNX(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
+	var (
+		cmd        *redis.BoolCmd
+		fieldStr   string
+		ok         bool
+		valueBytes []byte
+	)
+	if field == nil {
+		return ErrInvalidField
+	}
+	if valueBytes, err = msgpack.Marshal(value); err != nil {
+		return err
+	}
+	if fieldStr, ok = field.(string); ok {
+		cmd = rc.HSetNX(ctx, key, fieldStr, value)
+	} else if fieldBytes, err := json.Marshal(field); err != nil {
+		return err
+	} else {
+		cmd = rc.HSetNX(ctx, key, string(fieldBytes), valueBytes)
 	}
 	return cmd.Err()
 }

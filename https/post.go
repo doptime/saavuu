@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
@@ -43,10 +44,19 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		err = api.New(svcCtx.Key).Do(paramIn, &ret)
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64
+		var obj interface{}
+		var ok bool
 		if Score, err = strconv.ParseFloat(svcCtx.Req.FormValue("Score"), 64); err != nil {
 			return "false", errors.New("parameter Score shoule be float")
 		}
-		if err = db.ZAdd(redis.Z{Score: Score, Member: paramIn["MsgPack"]}); err != nil {
+		//unmarshal msgpack
+		if _, ok = paramIn["MsgPack"]; !ok {
+			return "false", errors.New("missing MsgPack content")
+		}
+		if err = msgpack.Unmarshal(paramIn["MsgPack"].([]byte), &obj); err != nil {
+			return "false", err
+		}
+		if err = db.ZAdd(redis.Z{Score: Score, Member: obj}); err != nil {
 			return "false", err
 		}
 		return "true", nil
