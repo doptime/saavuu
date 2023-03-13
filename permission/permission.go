@@ -1,11 +1,12 @@
 package permission
 
 import (
+	"context"
 	"strings"
 	"time"
 
-	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 )
 
 func IsPermitted(PermissionMap map[string]Permission, PermissionKey *string, dataKey string, operation string) (ok bool) {
@@ -50,6 +51,7 @@ func IsPermitted(PermissionMap map[string]Permission, PermissionKey *string, dat
 	}
 	PermissionMap[dataKey] = permission
 	//save to redis
-	api.RdsOp.HSet(*PermissionKey, dataKey, permission)
+	var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: *PermissionKey}
+	paramRds.HSet(dataKey, permission)
 	return config.Cfg.DevelopMode
 }

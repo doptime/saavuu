@@ -1,10 +1,12 @@
 package permission
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/yangkequn/saavuu/api"
+	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/logger"
 )
 
@@ -26,7 +28,9 @@ func LoadPPermissionFromRedis() {
 	for i, key := range keys {
 
 		var _map map[string]Permission = make(map[string]Permission)
-		if err := api.RdsOp.HGetAll(key, _map); err != nil {
+
+		var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: key}
+		if err := paramRds.HGetAll(_map); err != nil {
 			logger.Lshortfile.Println("loading " + key + "  error: " + err.Error())
 		} else {
 			lastInfo, ok := lastLoadPermissionInfo[key]
