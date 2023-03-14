@@ -11,15 +11,19 @@
 * You can use any programming language you like. python or go or may be c# if you like.
 * redis pipeline  brings high batch process performance.  
 ### other features
-* specify Content-Type in web side
+* allow specify Content-Type in web client.
 * allow specify response fields in web client to reduce web traffic
 * support JWT for authorization
 * fully access control
 * support CORS
-### drawbacks
-* saavuu has higher latency than monolithic web server. because all API are transfered : client => saavuu => redis => api =>redis => saavuu => client. this usually takes 2ms in local network. 
-  it take more time than traditional RPC with data flow : client => saavuu => api => saavuu => client
-  For thoese data operations without api,data flow is: client => saavuu => redis => saavuu => client. this usually takes 1ms in local network.
+### possible drawbacks
+* saavuu's API has higher latency than monolithic web server or traditional RPC . 
+  for saavuu, data flow in API is transfered : 
+    client => saavuu => redis => api =>redis => saavuu => client. this usually takes 2ms in local network. 
+  for traditional RPC, with data flow is transfered : 
+    client => otherFramework => RPC => otherFramework => client
+* For thoese data operations without api， saavuu is fast, with data flow is transfered :
+    client => saavuu => redis => saavuu => client. this usually takes 1ms in local network.
 
   However, as you will find out, saavuu makes api (dynamic upgrade version/ new api) hot plugable, and bring down microservice's complexity to near zero. because saavuu is just a non editable redis proxy. so only the  API logic part is needed, and many cases, API logic is isn't needed at all, you just need to use develop nothing but using saavuu's redis api.
   
