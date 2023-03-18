@@ -140,6 +140,54 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			return "", err
 		}
 		return json.Marshal(result)
+	case "ZREVRANGE":
+		var (
+			start, stop int64         = 0, -1
+			result      []interface{} = []interface{}{}
+		)
+		if start, err = strconv.ParseInt(svcCtx.Req.FormValue("Start"), 10, 64); err != nil {
+			return "", errors.New("parse start error:" + err.Error())
+		}
+		if stop, err = strconv.ParseInt(svcCtx.Req.FormValue("Stop"), 10, 64); err != nil {
+			return "", errors.New("parse stop error:" + err.Error())
+		}
+		// ZREVRANGE key start stop [WITHSCORES==true]
+		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
+			var scores []float64
+			if scores, err = db.ZRevRangeWithScores(start, stop, &result); err != nil {
+				return "", err
+			}
+			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+		}
+		// ZREVRANGE key start stop [WITHSCORES==false]
+		if err = db.ZRevRange(start, stop, &result); err != nil {
+			return "", err
+		}
+		return json.Marshal(result)
+	case "ZREVRANGEBYSCORE":
+		var (
+			offset, count int64
+			scores        []float64
+			result        []interface{} = []interface{}{}
+		)
+		if Min, Max = svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"); Min == "" || Max == "" {
+			return "", errors.New("no Min or Max")
+		}
+		//ZREVRANGEBYSCORE key max min [WITHSCORES==true]
+		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
+			if scores, err = db.ZRevRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+				return "", err
+			}
+			//marshal result to json
+			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+		}
+		//ZREVRANGEBYSCORE key max min [WITHSCORES==false]
+		if err = db.ZRevRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+			return "", err
+		}
+		return json.Marshal(result)
+	case "ZCARD":
+		return db.ZCard()
 	case "ZRANK":
 		return db.ZRank(svcCtx.Req.FormValue("Member"))
 	case "ZCOUNT":

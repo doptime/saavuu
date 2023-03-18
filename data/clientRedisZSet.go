@@ -93,6 +93,14 @@ func (db *Ctx) ZRevRangeByScore(opt *redis.ZRangeBy, outSlice interface{}) (err 
 	cmd := db.Rds.ZRevRangeByScore(db.Ctx, db.Key, opt)
 	return UnmarshalStrings(cmd.Val(), outSlice)
 }
+func (db *Ctx) ZRevRange(start, stop int64, outSlice interface{}) (err error) {
+	var cmd *redis.StringSliceCmd
+
+	if cmd = db.Rds.ZRevRange(db.Ctx, db.Key, start, stop); cmd.Err() != nil && cmd.Err() != redis.Nil {
+		return cmd.Err()
+	}
+	return UnmarshalStrings(cmd.Val(), outSlice)
+}
 func (db *Ctx) ZRevRangeByScoreWithScores(opt *redis.ZRangeBy, outSlice interface{}) (scores []float64, err error) {
 	cmd := db.Rds.ZRevRangeByScoreWithScores(db.Ctx, db.Key, opt)
 	return UnmarshalRedisZ(cmd.Val(), outSlice)
