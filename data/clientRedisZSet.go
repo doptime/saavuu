@@ -35,7 +35,7 @@ func (db *Ctx) ZRevRangeWithScores(start, stop int64, outSlice interface{}) (sco
 	cmd := db.Rds.ZRevRangeWithScores(db.Ctx, db.Key, start, stop)
 	return UnmarshalRedisZ(cmd.Val(), outSlice)
 }
-func (db *Ctx) ZRank(member string) (rank int64, err error) {
+func (db *Ctx) ZRank(member interface{}) (rank int64, err error) {
 	var (
 		memberBytes []byte
 	)
@@ -46,7 +46,7 @@ func (db *Ctx) ZRank(member string) (rank int64, err error) {
 	cmd := db.Rds.ZRank(db.Ctx, db.Key, string(memberBytes))
 	return cmd.Val(), cmd.Err()
 }
-func (db *Ctx) ZRevRank(member string) (rank int64, err error) {
+func (db *Ctx) ZRevRank(member interface{}) (rank int64, err error) {
 	var (
 		memberBytes []byte
 	)
@@ -57,7 +57,7 @@ func (db *Ctx) ZRevRank(member string) (rank int64, err error) {
 	cmd := db.Rds.ZRevRank(db.Ctx, db.Key, string(memberBytes))
 	return cmd.Val(), cmd.Err()
 }
-func (db *Ctx) ZScore(member string) (score float64, err error) {
+func (db *Ctx) ZScore(member interface{}) (score float64, err error) {
 	var (
 		memberBytes []byte
 		cmd         *redis.FloatCmd
