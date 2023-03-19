@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -37,8 +38,20 @@ func ConcatedKeys(fields ...interface{}) string {
 }
 
 func (db *Ctx) Concat(fields ...interface{}) *Ctx {
-	if len(fields) == 0 {
-		return db
+	//for each field ,it it's type if float64 or float32,but it's value is integer,then convert it to int
+	for i, field := range fields {
+		if f64, ok := field.(float64); ok && f64 == float64(int64(f64)) {
+			fields[i] = int64(field.(float64))
+		} else if f32, ok := field.(float32); ok && f32 == float32(int32(f32)) {
+			fields[i] = int32(field.(float32))
+		}
 	}
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKeys(fields...))}
+	//implete logic of  return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%s:%v", db.Key, ConcatedKeys(fields...))}
+	//but ,do not use recursion
+	results := make([]string, 0, len(fields)+1)
+	results = append(results, db.Key)
+	for _, field := range fields {
+		results = append(results, fmt.Sprintf("%v", field))
+	}
+	return &Ctx{db.Ctx, db.Rds, strings.Join(results, ":")}
 }
