@@ -2,9 +2,7 @@ package https
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
@@ -19,18 +17,13 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//use remote service map to handle request
 	var (
 		paramIn   map[string]interface{} = map[string]interface{}{}
-		operation string                 = strings.ToLower(svcCtx.Cmd)
+		operation string
 	)
 	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
 	}
-	if strings.Contains(svcCtx.Field, "@") {
-		if err := svcCtx.ParseJwtToken(); err != nil {
-			return "false", fmt.Errorf("parse JWT token error: %v", err)
-		}
-		if operation, err = permission.IsPermittedField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
-			return "false", ErrOperationNotPermited
-		}
+	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
+		return "", err
 	}
 	if !permission.IsPutPermitted(svcCtx.Key, operation) {
 		return "false", ErrOperationNotPermited

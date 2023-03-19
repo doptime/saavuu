@@ -2,8 +2,6 @@ package https
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/permission"
@@ -16,16 +14,11 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	//use remote service map to handle request
 	var (
 		bytes     []byte
-		operation string = strings.ToLower(svcCtx.Cmd)
+		operation string
 	)
 
-	if strings.Contains(svcCtx.Field, "@") {
-		if err := svcCtx.ParseJwtToken(); err != nil {
-			return "false", fmt.Errorf("parse JWT token error: %v", err)
-		}
-		if operation, err = permission.IsPermittedField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
-			return "false", ErrOperationNotPermited
-		}
+	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
+		return "", err
 	}
 	if !permission.IsPutPermitted(svcCtx.Key, operation) {
 		return "false", ErrOperationNotPermited

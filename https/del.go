@@ -11,16 +11,12 @@ import (
 func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 	var (
 		jwts      map[string]interface{} = map[string]interface{}{}
-		operation                        = strings.ToLower(svcCtx.Cmd)
+		operation string
 	)
 	svcCtx.MergeJwtField(jwts)
-	if strings.Contains(svcCtx.Field, "@") {
-		if err := svcCtx.ParseJwtToken(); err != nil {
-			return "false", fmt.Errorf("parse JWT token error: %v", err)
-		}
-		if operation, err = permission.IsPermittedField(operation, &svcCtx.Field, svcCtx.jwtToken); err != nil {
-			return "false", ErrOperationNotPermited
-		}
+
+	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
+		return "", err
 	}
 	if !permission.IsDelPermitted(svcCtx.Key, operation) {
 		// check operation permission
