@@ -28,16 +28,8 @@ func (svc *HttpContext) ParseJwtToken() (err error) {
 		}
 		return []byte(config.Cfg.JwtSecret), nil
 	}
-	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
+	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction, jwt.WithJSONNumber()); err != nil {
 		return fmt.Errorf("invalid JWT token: %v", err)
-	}
-	//for each element of svc.jwtToken ,if it's type if flaot64, convert it to int64
-	if mpclaims, ok := svc.jwtToken.Claims.(jwt.MapClaims); ok {
-		for k, v := range mpclaims {
-			if f64, ok := v.(float64); ok && f64 == float64(int64(f64)) {
-				mpclaims[k] = int64(f64)
-			}
-		}
 	}
 	return nil
 }
