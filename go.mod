@@ -3,7 +3,7 @@ module github.com/yangkequn/saavuu
 go 1.19
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/golang-jwt/jwt/v5 v5.0.0-rc.1
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 )

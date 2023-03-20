@@ -7,7 +7,7 @@ import (
 
 	"github.com/yangkequn/saavuu/config"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func (svc *HttpContext) ParseJwtToken() (err error) {
@@ -57,7 +57,7 @@ func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 	}
 }
 
-func ConvertMapToJwtString(param map[string]interface{}) (jwtString string, err error) {
+func ConvertMapToJwtString(param map[string]interface{}, secret string) (jwtString string, err error) {
 	//convert map to jwt.claims
 	claims := jwt.MapClaims{}
 	for k, v := range param {
@@ -66,6 +66,6 @@ func ConvertMapToJwtString(param map[string]interface{}) (jwtString string, err 
 	//create jwt token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	//sign jwt token
-	jwtString, err = token.SignedString([]byte(config.Cfg.JwtSecret))
+	jwtString, err = token.SignedString([]byte(secret))
 	return jwtString, err
 }
