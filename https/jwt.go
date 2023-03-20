@@ -28,7 +28,7 @@ func (svc *HttpContext) ParseJwtToken() (err error) {
 		}
 		return []byte(config.Cfg.JwtSecret), nil
 	}
-	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
+	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction, jwt.WithJSONNumber()); err != nil {
 		return fmt.Errorf("invalid JWT token: %v", err)
 	}
 	return nil
