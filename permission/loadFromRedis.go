@@ -28,18 +28,19 @@ func LoadPPermissionFromRedis() {
 	var desMap []*cmap.ConcurrentMap[string, Permission] = []*cmap.ConcurrentMap[string, Permission]{&PermittedPutOp, &PermittedPostOp, &PermittedGetOp, &PermittedDelOp}
 	for i, key := range keys {
 
-		var _map cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
-
+		var _map map[string]Permission = make(map[string]Permission)
 		var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: key}
 		if err := paramRds.HGetAll(_map); err != nil {
 			logger.Lshortfile.Println("loading " + key + "  error: " + err.Error())
 		} else {
+			var mapDes cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
+			mapDes.MSet(_map)
 			lastInfo, ok := lastLoadPermissionInfo[key]
-			if info := fmt.Sprint("loading "+key+" success. num keys:", _map.Count()); !ok || info != lastInfo {
+			if info := fmt.Sprint("loading "+key+" success. num keys:", mapDes.Count()); !ok || info != lastInfo {
 				logger.Lshortfile.Println(info)
 				lastLoadPermissionInfo[key] = info
 			}
-			*desMap[i] = _map
+			*desMap[i] = mapDes
 		}
 	}
 	time.Sleep(time.Second * 10)
