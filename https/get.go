@@ -49,7 +49,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}
 
-	db := data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds, Key: svcCtx.Key}
+	db := data.Ctx[interface{}]{Ctx: svcCtx.Ctx, Rds: config.DataRds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":

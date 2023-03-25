@@ -52,7 +52,7 @@ func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], Permissio
 	}
 	PermissionMap.Set(dataKey, permission)
 	//save to redis
-	var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: *PermissionKey}
+	var paramRds = data.Ctx[Permission]{Rds: config.ParamRds, Ctx: context.Background(), Key: *PermissionKey}
 	paramRds.HSet(dataKey, permission)
 	return config.Cfg.DevelopMode
 }

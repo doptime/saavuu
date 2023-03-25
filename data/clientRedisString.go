@@ -8,7 +8,7 @@ import (
 )
 
 // get all keys that match the pattern, and return a map of key->value
-func (db *Ctx) GetAll(match string, mapOut interface{}) (err error) {
+func (db *Ctx[v]) GetAll(match string, mapOut interface{}) (err error) {
 	var (
 		keys []string = []string{match}
 		val  []byte
@@ -39,7 +39,7 @@ func (db *Ctx) GetAll(match string, mapOut interface{}) (err error) {
 }
 
 // set each key value of _map to redis string type key value
-func (db *Ctx) SetAll(_map interface{}) (err error) {
+func (db *Ctx[v]) SetAll(_map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
 		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")

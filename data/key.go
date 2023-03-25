@@ -6,23 +6,23 @@ import (
 	"time"
 )
 
-func (db *Ctx) YMD(tm time.Time) *Ctx {
+func (db *Ctx[v]) YMD(tm time.Time) *Ctx[v] {
 	//year is 4 digits, month is 2 digits, day is 2 digits
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%sYMD:%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYMD:%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
 }
-func (db *Ctx) YM(tm time.Time) *Ctx {
+func (db *Ctx[v]) YM(tm time.Time) *Ctx[v] {
 	//year is 4 digits, month is 2 digits
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%sYM:%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYM:%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
 }
-func (db *Ctx) Y(tm time.Time) *Ctx {
+func (db *Ctx[v]) Y(tm time.Time) *Ctx[v] {
 	//year is 4 digits
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%sY:%04v", db.Key, tm.Year())}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sY:%04v", db.Key, tm.Year())}
 }
-func (db *Ctx) YW(tm time.Time) *Ctx {
+func (db *Ctx[v]) YW(tm time.Time) *Ctx[v] {
 	tm = tm.UTC()
 	isoYear, isoWeek := tm.ISOWeek()
 	//year is 4 digits, week is 2 digits
-	return &Ctx{db.Ctx, db.Rds, fmt.Sprintf("%sYW:%04v%02v", db.Key, isoYear, isoWeek)}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYW:%04v%02v", db.Key, isoYear, isoWeek)}
 }
 func ConcatedKeys(fields ...interface{}) string {
 	//	concacate all fields with ':'
@@ -37,7 +37,7 @@ func ConcatedKeys(fields ...interface{}) string {
 	return key[:len(key)-1]
 }
 
-func (db *Ctx) Concat(fields ...interface{}) *Ctx {
+func (db *Ctx[v]) Concat(fields ...interface{}) *Ctx[v] {
 	//for each field ,it it's type if float64 or float32,but it's value is integer,then convert it to int
 	for i, field := range fields {
 		if f64, ok := field.(float64); ok && f64 == float64(int64(f64)) {
@@ -53,5 +53,5 @@ func (db *Ctx) Concat(fields ...interface{}) *Ctx {
 	for _, field := range fields {
 		results = append(results, fmt.Sprintf("%v", field))
 	}
-	return &Ctx{db.Ctx, db.Rds, strings.Join(results, ":")}
+	return &Ctx[v]{db.Ctx, db.Rds, strings.Join(results, ":")}
 }
