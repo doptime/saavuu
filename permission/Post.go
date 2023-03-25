@@ -5,9 +5,10 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-var PermittedPostOp map[string]Permission = make(map[string]Permission)
+var PermittedPostOp cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
 
 func LoaIsPermittedPostField(operation string, Field *string, token *jwt.Token) (operationNew string, err error) {
 	var (

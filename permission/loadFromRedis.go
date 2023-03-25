@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/logger"
@@ -24,17 +25,17 @@ func LoadPPermissionFromRedis() {
 	//a slice name key holding  "RedisPutPermission","RedisPostPermission","RedisGetPermission","RedisDeletePermission"
 	var keys []string = []string{permitKeyPut, permitKeyPost, permitKeyGet, permitKeyDel}
 	//a slice name desMap holding  &PermittedPutOp,&PermittedPostOp,&PermittedGetOp,&PermittedDelOp
-	var desMap []*map[string]Permission = []*map[string]Permission{&PermittedPutOp, &PermittedPostOp, &PermittedGetOp, &PermittedDelOp}
+	var desMap []*cmap.ConcurrentMap[string, Permission] = []*cmap.ConcurrentMap[string, Permission]{&PermittedPutOp, &PermittedPostOp, &PermittedGetOp, &PermittedDelOp}
 	for i, key := range keys {
 
-		var _map map[string]Permission = make(map[string]Permission)
+		var _map cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
 
 		var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: key}
 		if err := paramRds.HGetAll(_map); err != nil {
 			logger.Lshortfile.Println("loading " + key + "  error: " + err.Error())
 		} else {
 			lastInfo, ok := lastLoadPermissionInfo[key]
-			if info := fmt.Sprint("loading "+key+" success. num keys:", len(_map)); !ok || info != lastInfo {
+			if info := fmt.Sprint("loading "+key+" success. num keys:", _map.Count()); !ok || info != lastInfo {
 				logger.Lshortfile.Println(info)
 				lastLoadPermissionInfo[key] = info
 			}

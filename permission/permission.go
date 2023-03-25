@@ -5,11 +5,12 @@ import (
 	"strings"
 	"time"
 
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 )
 
-func IsPermitted(PermissionMap map[string]Permission, PermissionKey *string, dataKey string, operation string) (ok bool) {
+func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], PermissionKey *string, dataKey string, operation string) (ok bool) {
 	dataKey = strings.Split(dataKey, ":")[0]
 	// only care non-digit part of dataKey
 	//split dataKey with number digit char, and get the first part
@@ -24,7 +25,7 @@ func IsPermitted(PermissionMap map[string]Permission, PermissionKey *string, dat
 		return false
 	}
 
-	permission, ok := PermissionMap[dataKey]
+	permission, ok := PermissionMap.Get(dataKey)
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
 		permission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{}}
@@ -49,7 +50,7 @@ func IsPermitted(PermissionMap map[string]Permission, PermissionKey *string, dat
 	} else {
 		permission.BlackList = append(permission.BlackList, operation)
 	}
-	PermissionMap[dataKey] = permission
+	PermissionMap.Set(dataKey, permission)
 	//save to redis
 	var paramRds = data.Ctx{Rds: config.ParamRds, Ctx: context.Background(), Key: *PermissionKey}
 	paramRds.HSet(dataKey, permission)

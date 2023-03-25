@@ -1,5 +1,7 @@
 package permission
 
+import cmap "github.com/orcaman/concurrent-map/v2"
+
 type Permission struct {
 	Key       string
 	CreateAt  int64
@@ -7,7 +9,7 @@ type Permission struct {
 	BlackList []string
 }
 
-var PermittedDelOp map[string]Permission = make(map[string]Permission)
+var PermittedDelOp cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
 
 func IsDelPermitted(dataKey string, operation string) bool {
 	return IsPermitted(PermittedDelOp, &permitKeyDel, dataKey, operation)
