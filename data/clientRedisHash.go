@@ -1,18 +1,21 @@
 package data
 
 import (
+	"reflect"
+
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (db *Ctx[v]) HGet(field interface{}, value interface{}) (err error) {
-	return rds.HGet(db.Ctx, db.Rds, db.Key, field, value)
+func (db *Ctx[v]) HGet(field interface{}) (value v, err error) {
+	value = reflect.New(reflect.TypeOf((*v)(nil)).Elem()).Interface().(v)
+	return value, rds.HGet(db.Ctx, db.Rds, db.Key, field, &value)
 }
 
-func (db *Ctx[v]) HSet(field interface{}, value interface{}) (err error) {
+func (db *Ctx[v]) HSet(field interface{}, value v) (err error) {
 	return rds.HSet(db.Ctx, db.Rds, db.Key, field, value)
 }
 
-func (db *Ctx[v]) HExists(field interface{}) (ok bool, err error) {
+func (db *Ctx[v]) HExists(field v) (ok bool, err error) {
 	return rds.HExists(db.Ctx, db.Rds, db.Key, field)
 }
 func (db *Ctx[v]) HGetAll(mapOut interface{}) (err error) {

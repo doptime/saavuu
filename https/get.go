@@ -53,7 +53,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	case "HGET":
-		return ret, db.HGet(svcCtx.Field, &ret)
+		return db.HGet(svcCtx.Field)
 	case "HGETALL":
 		if err := db.HGetAll(&map_interface_interface); err != nil {
 			return nil, err

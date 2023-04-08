@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"reflect"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -15,8 +16,14 @@ type Ctx[v any] struct {
 	Key string
 }
 
-func New[v any](Key string) *Ctx[v] {
+func New[v any]() *Ctx[v] {
+	//take name of v as key
+	var Key = reflect.TypeOf((*v)(nil)).Elem().Name()
 	return &Ctx[v]{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
+}
+
+func (ctx *Ctx[v]) WithKey(Key string) *Ctx[v] {
+	return &Ctx[v]{Ctx: ctx.Ctx, Rds: ctx.Rds, Key: Key}
 }
 func (ctx *Ctx[v]) WithContext(c context.Context) *Ctx[v] {
 	return &Ctx[v]{Ctx: c, Rds: ctx.Rds, Key: ctx.Key}
@@ -26,4 +33,4 @@ func (db *Ctx[v]) Time() (tm time.Time, err error) {
 	return rds.Time(db.Ctx, db.Rds)
 }
 
-var NonKey = New[interface{}]("")
+var NonKey = New[interface{}]()
