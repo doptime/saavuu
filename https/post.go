@@ -34,7 +34,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 
 	if svcCtx.Cmd == "API" {
 		svcCtx.MergeJwtField(paramIn)
-		err = api.New[map[string]interface{}](svcCtx.Key).Do(paramIn, &ret)
+		ret, err = api.New[map[string]interface{}, interface{}](svcCtx.Key).Do(paramIn)
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64
 		var obj interface{}

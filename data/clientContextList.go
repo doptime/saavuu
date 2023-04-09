@@ -12,7 +12,7 @@ func (db *Ctx[v]) RPush(param v) (err error) {
 func (db *Ctx[v]) LSet(index int64, param v) (err error) {
 	return rds.LSet(db.Ctx, db.Rds, db.Key, index, param)
 }
-func (db *Ctx[v]) LGet(index int64) (param v, err error) {
+func (db *Ctx[v]) LGet(index int64) (ret v, err error) {
 
 	vType := reflect.TypeOf((*v)(nil)).Elem()
 	if vType.Kind() == reflect.Ptr {

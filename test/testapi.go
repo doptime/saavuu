@@ -11,18 +11,17 @@ type testReq struct {
 	Data string
 }
 
-var apiTest = api.New[*testReq]("test")
+var apiTest = api.New[*testReq, string]("test")
 
 func CreateTestApi() {
-	apiTest.Serve(func(parmIn *testReq) (data interface{}, err error) {
+	apiTest.Serve(func(parmIn *testReq) (data string, err error) {
 		// your logic here
 		fmt.Println("test api ok" + parmIn.Data)
-		data = map[string]interface{}{"data": "ok"}
-		return data, nil
+		return "apiTestedSuccess", nil
 	})
 }
 func TestApi() {
 	now := time.Now()
-	go apiTest.DoAt(map[string]string{"message": "ok"}, &now)
+	go apiTest.DoAt(&testReq{"messageok"}, &now)
 	api.RunningAllApis()
 }

@@ -13,7 +13,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx[v]) do(paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
+func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	var (
 		b       []byte
 		results []string
@@ -22,7 +22,7 @@ func (ac *Ctx[v]) do(paramIn interface{}, out interface{}, dueTime *time.Time) (
 	)
 	//if service name is for redis, return error
 	if ac.ServiceName == "api:redis" {
-		return errors.New("api:redis not allowed to call")
+		return out, errors.New("api:redis not allowed to call")
 	}
 
 	//ensure the paramIn is a map or struct
@@ -32,11 +32,11 @@ func (ac *Ctx[v]) do(paramIn interface{}, out interface{}, dueTime *time.Time) (
 	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
 	} else {
 		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
-		return err
+		return out, err
 	}
 
 	if b, err = msgpack.Marshal(paramIn); err != nil {
-		return err
+		return out, err
 	}
 	if dueTime != nil {
 		Values = []string{"dueTime", strconv.FormatInt(dueTime.UnixMilli(), 10), "data", string(b)}
@@ -46,26 +46,37 @@ func (ac *Ctx[v]) do(paramIn interface{}, out interface{}, dueTime *time.Time) (
 	args := &redis.XAddArgs{Stream: ac.ServiceName, Values: Values, MaxLen: 4096}
 	if cmd = ac.Rds.XAdd(ac.Ctx, args); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
-		return cmd.Err()
+		return out, cmd.Err()
 	}
 	if dueTime != nil {
-		return nil
+		return out, nil
 	}
 
 	//BLPop 返回结果 [key1,value1,key2,value2]
 	//cmd.Val() is the stream id, the result will be poped from the list with this id
 	if results, err = ac.Rds.BLPop(ac.Ctx, time.Second*20, cmd.Val()).Result(); err != nil {
-		return err
-	} else if out != nil && len(results) == 2 {
-		b = []byte(results[1])
-		return msgpack.Unmarshal(b, out)
+		return out, err
 	}
-	return nil
+
+	if len(results) != 2 {
+		return out, errors.New("BLPop result length error")
+	}
+	b = []byte(results[1])
+
+	oType := reflect.TypeOf((*o)(nil)).Elem()
+	//if o type is a pointer, use reflect.New to create a new pointer
+	if oType.Kind() == reflect.Ptr {
+		out = reflect.New(oType.Elem()).Interface().(o)
+		return out, msgpack.Unmarshal(b, out)
+	}
+	oValueWithPointer := reflect.New(oType).Interface().(*o)
+	return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 }
-func (ac *Ctx[v]) DoAt(paramIn interface{}, dueTime *time.Time) (err error) {
-	return ac.do(paramIn, nil, dueTime)
+func (ac *Ctx[i, o]) DoAt(paramIn i, dueTime *time.Time) (err error) {
+	_, err = ac.do(paramIn, dueTime)
+	return err
 }
 
-func (ac *Ctx[v]) Do(paramIn interface{}, out interface{}) (err error) {
-	return ac.do(paramIn, out, nil)
+func (ac *Ctx[i, o]) Do(paramIn i) (out o, err error) {
+	return ac.do(paramIn, nil)
 }
