@@ -16,7 +16,7 @@ type Ctx[v any] struct {
 	Key string
 }
 
-func NewKeyDefault[v any]() *Ctx[v] {
+func NewStruct[v any]() *Ctx[v] {
 	//take name of v as key
 	var Key = reflect.TypeOf((*v)(nil)).Elem().Name()
 	return &Ctx[v]{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
@@ -33,4 +33,4 @@ func (db *Ctx[v]) Time() (tm time.Time, err error) {
 	return rds.Time(db.Ctx, db.Rds)
 }
 
-var NonKey = NewKeyDefault[interface{}]()
+var NonKey = NewStruct[interface{}]()
