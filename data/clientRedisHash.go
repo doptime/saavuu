@@ -7,8 +7,15 @@ import (
 )
 
 func (db *Ctx[v]) HGet(field interface{}) (value v, err error) {
-	value = reflect.New(reflect.TypeOf((*v)(nil)).Elem()).Interface().(v)
-	return value, rds.HGet(db.Ctx, db.Rds, db.Key, field, &value)
+	vType := reflect.TypeOf((*v)(nil)).Elem()
+	if vType.Kind() == reflect.Ptr {
+		vValue := reflect.New(vType.Elem()).Interface().(v)
+		err = rds.HGet(db.Ctx, db.Rds, db.Key, field, vValue)
+		return vValue, err
+	}
+	vValueWithPointer := reflect.New(vType).Interface().(*v)
+	err = rds.HGet(db.Ctx, db.Rds, db.Key, field, vValueWithPointer)
+	return *vValueWithPointer, err
 }
 
 func (db *Ctx[v]) HSet(field interface{}, value v) (err error) {
