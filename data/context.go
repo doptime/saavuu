@@ -17,8 +17,13 @@ type Ctx[v any] struct {
 }
 
 func NewStruct[v any]() *Ctx[v] {
-	//take name of v as key
-	var Key = reflect.TypeOf((*v)(nil)).Elem().Name()
+	var Key string
+	_type := reflect.TypeOf((*v)(nil))
+	//take name of type v as key
+	for _type.Kind() == reflect.Ptr {
+		_type = _type.Elem()
+	}
+	Key = _type.Name()
 	return &Ctx[v]{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
 }
 
