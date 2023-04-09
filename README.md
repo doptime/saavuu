@@ -35,24 +35,21 @@ package main
 import (
 	"github.com/yangkequn/saavuu"
 	"github.com/yangkequn/saavuu/api"
-	"github.com/yangkequn/saavuu/data"
 )
 
-type Input struct {
+type ReqInput struct {
 	Data   []uint16
 	Id   string `msgpack:"alias:JWT_id"`
 }
-var apiDemo=api.New("demo")
+//define api with input/output data structure
+var apiDemo=api.New[*ReqInput,string]("demo")
 func init() {
-	apiDemo.Serve(func(parmIn map[string]interface{}) (ret map[string]interface{}, err error) {
-		var req *Input = &Input{}
-		if err = data.MapsToStructure(parmIn, req); err != nil {
-			return nil, err
-		} else if req.Id == "" || len(req.Data) == 0 {
+	apiDemo.Serve(func(req *ReqInput) (ret string, err error) {
+		// your logic here
+		if req.Id == "" || len(req.Data) == 0 {
 			return nil, saavuu.ErrInvalidInput
 		}
-		// your logic here
-		return map[string]interface{}{"data": req.Data}, nil
+		return `{data:"ok"}`, nil
 	})
 }
 ```
