@@ -7,13 +7,17 @@ import (
 	"github.com/yangkequn/saavuu/api"
 )
 
-var apiTest = api.New("test")
+type testReq struct {
+	Data string
+}
+
+var apiTest = api.New[*testReq]("test")
 
 func CreateTestApi() {
-	apiTest.Serve(func(parmIn map[string]interface{}) (data map[string]interface{}, err error) {
+	apiTest.Serve(func(parmIn *testReq) (data interface{}, err error) {
 		// your logic here
+		fmt.Println("test api ok" + parmIn.Data)
 		data = map[string]interface{}{"data": "ok"}
-		fmt.Println("test api ok")
 		return data, nil
 	})
 }

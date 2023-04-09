@@ -7,20 +7,24 @@ import (
 	"github.com/yangkequn/saavuu/config"
 )
 
-type Ctx struct {
+type Ctx[v any] struct {
 	Ctx         context.Context
 	Rds         *redis.Client
+	Debug       bool
 	ServiceName string
 }
 
-func New(ServiceName string) *Ctx {
+func New[v any](ServiceName string) *Ctx[v] {
 	//ensure ServiceKey start with "api:"
 	if len(ServiceName) < 4 || ServiceName[:4] != "api:" {
 		ServiceName = "api:" + ServiceName
 	}
 
-	return &Ctx{Ctx: context.Background(), Rds: config.ParamRds, ServiceName: ServiceName}
+	return &Ctx[v]{Ctx: context.Background(), Rds: config.ParamRds, Debug: false, ServiceName: ServiceName}
 }
-func (ctx *Ctx) WithContext(c context.Context) *Ctx {
-	return &Ctx{Ctx: c, Rds: ctx.Rds, ServiceName: ctx.ServiceName}
+func (ctx *Ctx[v]) WithDebug() *Ctx[v] {
+	return &Ctx[v]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: true, ServiceName: ctx.ServiceName}
+}
+func (ctx *Ctx[v]) WithContext(c context.Context) *Ctx[v] {
+	return &Ctx[v]{Ctx: c, Rds: ctx.Rds, ServiceName: ctx.ServiceName}
 }

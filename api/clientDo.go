@@ -13,7 +13,7 @@ import (
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx) do(paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
+func (ac *Ctx[v]) do(paramIn interface{}, out interface{}, dueTime *time.Time) (err error) {
 	var (
 		b       []byte
 		results []string
@@ -62,10 +62,10 @@ func (ac *Ctx) do(paramIn interface{}, out interface{}, dueTime *time.Time) (err
 	}
 	return nil
 }
-func (ac *Ctx) DoAt(paramIn interface{}, dueTime *time.Time) (err error) {
+func (ac *Ctx[v]) DoAt(paramIn interface{}, dueTime *time.Time) (err error) {
 	return ac.do(paramIn, nil, dueTime)
 }
 
-func (ac *Ctx) Do(paramIn interface{}, out interface{}) (err error) {
+func (ac *Ctx[v]) Do(paramIn interface{}, out interface{}) (err error) {
 	return ac.do(paramIn, out, nil)
 }

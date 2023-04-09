@@ -3,18 +3,18 @@ package api
 import (
 	"context"
 	"errors"
+	"reflect"
 	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/logger"
 )
 
-type fn func(paramIn map[string]interface{}) (out map[string]interface{}, err error)
-
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func (ctx *Ctx) Serve(f fn) {
+func (ctx *Ctx[v]) Serve(f func(paramIn v) (ret interface{}, err error)) {
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
 			out            interface{}
@@ -29,9 +29,32 @@ func (ctx *Ctx) Serve(f fn) {
 		if config.ParamRds == nil {
 			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
 		}
-		if out, err = f(param); err != nil {
-			return err
+
+		vType := reflect.TypeOf((*v)(nil)).Elem()
+		if vType.Kind() == reflect.Ptr {
+			vValue := reflect.New(vType.Elem()).Interface().(v)
+			if ctx.Debug {
+				//just allow stop here to see the input data
+				ctx.Debug = !ctx.Debug
+				ctx.Debug = !ctx.Debug
+			}
+			if err = data.MapsToStructure(param, vValue); err != nil {
+				return err
+			}
+			if out, err = f(vValue); err != nil {
+				return err
+			}
+
+		} else {
+			vValueWithPointer := reflect.New(vType).Interface().(*v)
+			if err = data.MapsToStructure(param, vValueWithPointer); err != nil {
+				return err
+			}
+			if out, err = f(*vValueWithPointer); err != nil {
+				return err
+			}
 		}
+
 		//Post Back
 		if marshaledBytes, err = msgpack.Marshal(out); err != nil {
 			return err
