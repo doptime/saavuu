@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 )
@@ -91,16 +90,5 @@ type TestApi struct {
 }
 
 func main() {
-	type MeditBGInfo struct {
-		File     string  `msgpack:"file",omitempty`
-		Duration float32 `msgpack:"duration",omitempty`
-	}
-	var keyUserRootAccount = data.New[*MeditBGInfo]("MeditBGInfo")
-	if value, err := keyUserRootAccount.HGet("1431653920"); err != nil {
-		logger.Lshortfile.Println(err)
-	} else {
-		logger.Lshortfile.Println(value)
-	}
-
 	RedisHttpStart("/", 8080)
 }
