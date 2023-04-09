@@ -14,10 +14,10 @@ import (
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func (ctx *Ctx[v]) Serve(f func(paramIn v) (ret interface{}, err error)) {
+func (ctx *Ctx[i, o]) Serve(f func(paramIn i) (ret o, err error)) {
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
-			out            interface{}
+			out            o
 			marshaledBytes []byte
 			param          map[string]interface{} = map[string]interface{}{}
 		)
@@ -30,9 +30,9 @@ func (ctx *Ctx[v]) Serve(f func(paramIn v) (ret interface{}, err error)) {
 			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
 		}
 
-		vType := reflect.TypeOf((*v)(nil)).Elem()
+		vType := reflect.TypeOf((*i)(nil)).Elem()
 		if vType.Kind() == reflect.Ptr {
-			vValue := reflect.New(vType.Elem()).Interface().(v)
+			vValue := reflect.New(vType.Elem()).Interface().(i)
 			if ctx.Debug {
 				//just allow stop here to see the input data
 				ctx.Debug = !ctx.Debug
@@ -46,7 +46,7 @@ func (ctx *Ctx[v]) Serve(f func(paramIn v) (ret interface{}, err error)) {
 			}
 
 		} else {
-			vValueWithPointer := reflect.New(vType).Interface().(*v)
+			vValueWithPointer := reflect.New(vType).Interface().(*i)
 			if err = data.MapsToStructure(param, vValueWithPointer); err != nil {
 				return err
 			}
