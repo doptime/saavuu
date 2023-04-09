@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/https"
 	"github.com/yangkequn/saavuu/logger"
 )
@@ -90,30 +91,16 @@ type TestApi struct {
 }
 
 func main() {
-
-	// db := data.NewContext(nil)
-	// var info map[uint32]interface{}
-	// if err := db.HGetAll("MeditBGInfo", &info); err != nil {
-	// 	logger.Std.Println(err)
-	// }
-	// var info2 map[uint32]interface{} = make(map[uint32]interface{})
-	// //take first 2 keys from info
-	// keys2 := make([]uint32, 2)
-	// i := 0
-	// for k := range info {
-	// 	keys2[i] = k
-	// 	i++
-	// 	if i == 2 {
-	// 		break
-	// 	}
-	// }
-	// if err := db.HMGET("MeditBGInfo", keys2, &info2); err != nil {
-	// 	logger.Std.Println(err)
-	// }
-	// //print bytes
-	// logger.Std.Println(len(info))
-
-	//test.TestApi()
+	type MeditBGInfo struct {
+		File     string  `msgpack:"file",omitempty`
+		Duration float32 `msgpack:"duration",omitempty`
+	}
+	var keyUserRootAccount = data.New[*MeditBGInfo]("MeditBGInfo")
+	if value, err := keyUserRootAccount.HGet("1431653920"); err != nil {
+		logger.Lshortfile.Println(err)
+	} else {
+		logger.Lshortfile.Println(value)
+	}
 
 	RedisHttpStart("/", 8080)
 }

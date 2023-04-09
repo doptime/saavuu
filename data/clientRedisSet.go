@@ -5,13 +5,13 @@ import (
 )
 
 // append to Set
-func (db *Ctx[v]) SAdd(param interface{}) (err error) {
+func (db *Ctx[v]) SAdd(param v) (err error) {
 	return rds.SAdd(db.Ctx, db.Rds, db.Key, param)
 }
-func (db *Ctx[v]) SRem(param interface{}) (err error) {
+func (db *Ctx[v]) SRem(param v) (err error) {
 	return rds.SRem(db.Ctx, db.Rds, db.Key, param)
 }
-func (db *Ctx[v]) SIsMember(param interface{}) (isMember bool, err error) {
+func (db *Ctx[v]) SIsMember(param v) (isMember bool, err error) {
 	return rds.SIsMember(db.Ctx, db.Rds, db.Key, param)
 }
 func (db *Ctx[v]) SMembers() (members []string, err error) {
