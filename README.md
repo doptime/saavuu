@@ -33,7 +33,6 @@
 package main
 
 import (
-	"github.com/yangkequn/saavuu"
 	"github.com/yangkequn/saavuu/api"
 )
 
