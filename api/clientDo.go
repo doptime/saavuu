@@ -20,11 +20,6 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	//if service name is for redis, return error
-	if ac.ServiceName == "api:redis" {
-		return out, errors.New("api:redis not allowed to call")
-	}
-
 	//ensure the paramIn is a map or struct
 	paramType := reflect.TypeOf(paramIn)
 	if paramType.Kind() == reflect.Struct {
