@@ -41,16 +41,13 @@ type ReqInput struct {
 	Id   string `msgpack:"alias:JWT_id"`
 }
 //define api with input/output data structure
-var apiDemo=api.New[*ReqInput,string]("demo")
-func init() {
-	apiDemo.Serve(func(req *ReqInput) (ret string, err error) {
-		// your logic here
-		if req.Id == "" || len(req.Data) == 0 {
-			return nil, saavuu.ErrInvalidInput
-		}
-		return `{data:"ok"}`, nil
-	})
-}
+var ApiDemo=api.New[*ReqInput,string]("demo").Serve(func(req *ReqInput) (ret string, err error) {
+    // your logic here
+    if req.Id == "" || len(req.Data) == 0 {
+        return nil, saavuu.ErrInvalidInput
+    }
+    return `{data:"ok"}`, nil
+})
 ```
 
 ### server, python example:
