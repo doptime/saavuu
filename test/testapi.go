@@ -14,7 +14,7 @@ type testReq struct {
 var apiTest = api.New[*testReq, string]("test")
 
 func CreateTestApi() {
-	apiTest.Serve(func(parmIn *testReq) (data string, err error) {
+	apiTest.Api(func(parmIn *testReq) (data string, err error) {
 		// your logic here
 		fmt.Println("test api ok" + parmIn.Data)
 		return "apiTestedSuccess", nil

@@ -14,7 +14,7 @@ import (
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func (ctx *Ctx[i, o]) Serve(f func(paramIn i) (ret o, err error)) (ret *Ctx[i, o]) {
+func (ctx *Ctx[i, o]) Api(f func(paramIn i) (ret o, err error)) (ret *Ctx[i, o]) {
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
 			out            o
