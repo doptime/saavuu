@@ -14,8 +14,28 @@ import (
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-func Api[i any, o any](ServiceName string, f func(paramIn i) (ret o, err error)) (ctx *Ctx[i, o]) {
+// crate Api
+// ServiceName is defined as "In" + ServiceName in the first parameter
+func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
+	//get ServiceName
+	var ServiceName string
+	_type := reflect.TypeOf((*i)(nil))
+	//take name of type v as key
+	for _type.Kind() == reflect.Ptr {
+		_type = _type.Elem()
+	}
+
+	if ServiceName = _type.Name(); len(ServiceName) < 3 || ServiceName[0:2] != "In" {
+		logger.Lshortfile.Panic("Api: ServiceName is empty")
+	}
+	ServiceName = ServiceName[2:]
+	//first byte of ServiceName should be lower case
+	if ServiceName[0] >= 'A' && ServiceName[0] <= 'Z' {
+		ServiceName = string(ServiceName[0]+32) + ServiceName[1:]
+	}
+	//create Api context
 	ctx = New[i, o](ServiceName)
+	//create a goroutine to process the job
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
 			out            o
@@ -67,9 +87,11 @@ func Api[i any, o any](ServiceName string, f func(paramIn i) (ret o, err error))
 		_, err = pipline.Exec(ctx)
 		return err
 	}
+	//register Api
 	apiServices[ctx.ServiceName] = &ApiInfo{
 		ApiName: ctx.ServiceName,
 		ApiFunc: ProcessOneJob,
 	}
+	//return Api context
 	return ctx
 }

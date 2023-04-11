@@ -7,11 +7,11 @@ import (
 	"github.com/yangkequn/saavuu/api"
 )
 
-type testReq struct {
+type InDemo struct {
 	Data string
 }
 
-var apiTest = api.Api("demo", func(parmIn *testReq) (data string, err error) {
+var apiTest = api.Api(func(parmIn *InDemo) (data string, err error) {
 	// your logic here
 	fmt.Println("test api ok" + parmIn.Data)
 	return "apiTestedSuccess", nil
@@ -22,6 +22,6 @@ func CreateTestApi() {
 }
 func TestApi() {
 	now := time.Now()
-	go apiTest.DoAt(&testReq{"messageok"}, &now)
+	go apiTest.DoAt(&InDemo{"messageok"}, &now)
 	api.RunningAllApis()
 }

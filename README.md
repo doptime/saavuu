@@ -36,12 +36,12 @@ import (
 	"github.com/yangkequn/saavuu/api"
 )
 
-type ReqInput struct {
+type InDemo struct {
 	Data   []uint16
 	Id   string `msgpack:"alias:JWT_id"`
 }
 //define api with input/output data structure
-var ApiDemo=api.Api("demo",func(req *ReqInput) (ret string, err error) {
+var ApiDemo=api.Api(func(req *InDemo) (ret string, err error) {
     // your logic here
     if req.Id == "" || len(req.Data) == 0 {
         return nil, saavuu.ErrInvalidInput
