@@ -41,7 +41,7 @@ type ReqInput struct {
 	Id   string `msgpack:"alias:JWT_id"`
 }
 //define api with input/output data structure
-var ApiDemo=api.Api[*ReqInput,string]("demo",func(req *ReqInput) (ret string, err error) {
+var ApiDemo=api.Api("demo",func(req *ReqInput) (ret string, err error) {
     // your logic here
     if req.Id == "" || len(req.Data) == 0 {
         return nil, saavuu.ErrInvalidInput
