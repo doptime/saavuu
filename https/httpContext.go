@@ -42,7 +42,9 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	if svcContext.Key = r.FormValue("K"); len(svcContext.Key) == 0 {
 		svcContext.Key = svcContext.Cmd
 	}
+	//url decoded already
 	svcContext.Field = r.FormValue("F")
+
 	//for response
 	if svcContext.ResponseFields = svcContext.Req.FormValue("QF"); len(svcContext.ResponseFields) == 0 {
 		svcContext.ResponseFields = "*"

@@ -11,14 +11,14 @@ type testReq struct {
 	Data string
 }
 
-var apiTest = api.New[*testReq, string]("test")
+var apiTest = api.Api("demo", func(parmIn *testReq) (data string, err error) {
+	// your logic here
+	fmt.Println("test api ok" + parmIn.Data)
+	return "apiTestedSuccess", nil
+})
 
 func CreateTestApi() {
-	apiTest.Api(func(parmIn *testReq) (data string, err error) {
-		// your logic here
-		fmt.Println("test api ok" + parmIn.Data)
-		return "apiTestedSuccess", nil
-	})
+
 }
 func TestApi() {
 	now := time.Now()
