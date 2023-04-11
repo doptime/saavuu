@@ -14,8 +14,12 @@ import (
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-// crate Api
-// ServiceName is defined as "In" + ServiceName in the first parameter
+// crate Api context. the created context is used :
+//  1. to call api service,using Do() or DoAt()
+//  2. to be called by web client or another language client
+//
+// ServiceName is defined as "In" + ServiceName in the InServiceName parameter
+// ServiceName is automatically converted to lower case
 func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
 	//get ServiceName
 	var ServiceName string
@@ -24,15 +28,21 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 	for _type.Kind() == reflect.Ptr {
 		_type = _type.Elem()
 	}
-
+	//ensure SerivceName Starts with "In",
+	//1. To make sure you know the definition of ServiceName
+	//2. By noticing "In" in ServiceName, you can easily find the definition of Service
 	if ServiceName = _type.Name(); len(ServiceName) < 3 || ServiceName[0:2] != "In" {
 		logger.Lshortfile.Panic("Api: ServiceName is empty")
 	}
+	//remove "In" from ServiceName
 	ServiceName = ServiceName[2:]
 	//first byte of ServiceName should be lower case
 	if ServiceName[0] >= 'A' && ServiceName[0] <= 'Z' {
 		ServiceName = string(ServiceName[0]+32) + ServiceName[1:]
 	}
+	//Serivce name should Start with "api:"
+	ServiceName = "api:" + ServiceName
+
 	//create Api context
 	ctx = New[i, o](ServiceName)
 	//create a goroutine to process the job
