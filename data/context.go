@@ -20,7 +20,7 @@ func NewStruct[v any]() *Ctx[v] {
 	var Key string
 	_type := reflect.TypeOf((*v)(nil))
 	//take name of type v as key
-	for _type.Kind() == reflect.Ptr {
+	for _type.Kind() == reflect.Ptr || _type.Kind() == reflect.Slice {
 		_type = _type.Elem()
 	}
 	Key = _type.Name()

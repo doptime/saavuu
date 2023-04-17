@@ -49,7 +49,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 
 	//BLPop 返回结果 [key1,value1,key2,value2]
 	//cmd.Val() is the stream id, the result will be poped from the list with this id
-	if results, err = ac.Rds.BLPop(ac.Ctx, time.Second*20, cmd.Val()).Result(); err != nil {
+	if results, err = ac.Rds.BLPop(ac.Ctx, time.Second*6, cmd.Val()).Result(); err != nil {
 		return out, err
 	}
 
