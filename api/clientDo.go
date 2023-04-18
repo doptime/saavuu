@@ -20,7 +20,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	//if F is not nil, call F directly
+	//if LocalFunc is not nil, call LocalFunc directly, to reduce the network traffic
 	if ac.LocalFunc != nil && dueTime == nil {
 		return ac.LocalFunc(paramIn)
 	}
