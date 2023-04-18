@@ -67,7 +67,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	oValueWithPointer := reflect.New(oType).Interface().(*o)
 	return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 }
-func (ac *Ctx[i, o]) DoLocal(paramIn i, dueTime *time.Time) (out o, err error) {
+func (ac *Ctx[i, o]) DoLocal(paramIn i) (out o, err error) {
 	if ac.LocalFunc == nil {
 		return out, errors.New("LocalFunc is nil")
 	}
