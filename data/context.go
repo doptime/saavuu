@@ -24,10 +24,18 @@ func NewStruct[v any]() *Ctx[v] {
 		_type = _type.Elem()
 	}
 	Key = _type.Name()
+	//panic if Key is empty
+	if Key == "" {
+		panic("Key is empty, please give a key for this data")
+	}
 	return &Ctx[v]{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
 }
 
 func New[v any](Key string) *Ctx[v] {
+	//panic if Key is empty
+	if Key == "" {
+		panic("Key is empty, please give a key for this data")
+	}
 	return &Ctx[v]{Ctx: context.Background(), Rds: config.DataRds, Key: Key}
 }
 func (ctx *Ctx[v]) WithContext(c context.Context) *Ctx[v] {
