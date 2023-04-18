@@ -20,10 +20,6 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	//if LocalFunc is not nil, call LocalFunc directly, to reduce the network traffic
-	if ac.LocalFunc != nil && dueTime == nil {
-		return ac.LocalFunc(paramIn)
-	}
 	//ensure the paramIn is a map or struct
 	paramType := reflect.TypeOf(paramIn)
 	if paramType.Kind() == reflect.Struct {
@@ -70,6 +66,12 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	}
 	oValueWithPointer := reflect.New(oType).Interface().(*o)
 	return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
+}
+func (ac *Ctx[i, o]) DoLocal(paramIn i, dueTime *time.Time) (out o, err error) {
+	if ac.LocalFunc == nil {
+		return out, errors.New("LocalFunc is nil")
+	}
+	return ac.LocalFunc(paramIn)
 }
 func (ac *Ctx[i, o]) DoAt(paramIn i, dueTime *time.Time) (err error) {
 	_, err = ac.do(paramIn, dueTime)
