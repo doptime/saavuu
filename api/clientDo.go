@@ -20,6 +20,10 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		cmd     *redis.StringCmd
 		Values  []string
 	)
+	//if F is not nil, call F directly
+	if ac.LocalFunc != nil && dueTime == nil {
+		return ac.LocalFunc(paramIn)
+	}
 	//ensure the paramIn is a map or struct
 	paramType := reflect.TypeOf(paramIn)
 	if paramType.Kind() == reflect.Struct {
