@@ -45,5 +45,3 @@ func (ctx *Ctx[v]) WithContext(c context.Context) *Ctx[v] {
 func (db *Ctx[v]) Time() (tm time.Time, err error) {
 	return rds.Time(db.Ctx, db.Rds)
 }
-
-var NonKey = NewStruct[interface{}]()
