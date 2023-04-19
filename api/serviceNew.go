@@ -45,7 +45,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 
 	//create Api context
 	ctx = New[i, o](ServiceName)
-	ctx.Func = f
+	ctx.DoLocal = f
 
 	//create a goroutine to process the job
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
