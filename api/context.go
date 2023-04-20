@@ -12,7 +12,7 @@ type Ctx[i any, o any] struct {
 	Rds         *redis.Client
 	Debug       bool
 	ServiceName string
-	DoLocal     func(InServiceName i) (ret o, err error)
+	Func        func(InServiceName i) (ret o, err error)
 }
 
 // create Api context.
