@@ -95,7 +95,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 		ctx := context.Background()
 		pipline := config.ParamRds.Pipeline()
 		pipline.RPush(ctx, BackToID, marshaledBytes)
-		pipline.Expire(ctx, BackToID, time.Second*6)
+		pipline.Expire(ctx, BackToID, time.Second*20)
 		_, err = pipline.Exec(ctx)
 		return err
 	}
