@@ -8,8 +8,9 @@ import (
 )
 
 type Ctx[i any, o any] struct {
-	Ctx         context.Context
-	Rds         *redis.Client
+	Ctx context.Context
+	Rds *redis.Client
+
 	Debug       bool
 	ServiceName string
 	Func        func(InServiceName i) (ret o, err error)
@@ -26,9 +27,18 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 
 	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.ParamRds, Debug: false, ServiceName: ServiceName}
 }
-func (ctx *Ctx[i, o]) WithDebug() *Ctx[i, o] {
-	return &Ctx[i, o]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: true, ServiceName: ctx.ServiceName}
+
+// allow setting breakpoint for input decoding
+func (ctx *Ctx[i, o]) UseDebug() *Ctx[i, o] {
+	return &Ctx[i, o]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: true, ServiceName: ctx.ServiceName, Func: ctx.Func}
 }
-func (ctx *Ctx[i, o]) WithContext(c context.Context) *Ctx[i, o] {
-	return &Ctx[i, o]{Ctx: c, Rds: ctx.Rds, ServiceName: ctx.ServiceName}
+
+// force use new context
+func (ctx *Ctx[i, o]) UseContext(c context.Context) *Ctx[i, o] {
+	return &Ctx[i, o]{Ctx: c, Rds: ctx.Rds, Debug: ctx.Debug, ServiceName: ctx.ServiceName, Func: ctx.Func}
+}
+
+// force use RPC mode
+func (ctx *Ctx[i, o]) UseRPC() *Ctx[i, o] {
+	return &Ctx[i, o]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: ctx.Debug, ServiceName: ctx.ServiceName, Func: nil}
 }

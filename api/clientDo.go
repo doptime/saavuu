@@ -73,12 +73,8 @@ func (ac *Ctx[i, o]) DoAt(paramIn i, dueTime *time.Time) (err error) {
 }
 
 func (ac *Ctx[i, o]) Do(paramIn i) (out o, err error) {
-	return ac.do(paramIn, nil)
-}
-
-func (ac *Ctx[i, o]) DoLocal(paramIn i) (out o, err error) {
-	if ac.Func == nil {
-		panic("LocalFunc is nil")
+	if ac.Func != nil {
+		return ac.Func(paramIn)
 	}
-	return ac.Func(paramIn)
+	return ac.do(paramIn, nil)
 }
