@@ -3,12 +3,9 @@ services:
   saavuu:
     image: saavuu:latest
     environment:
-      - REDIS_ADDR_PARAM=docker.vm:6379
-      - REDIS_PASSWORD_PARAM=
-      - REDIS_DB_PARAM=0
-      - REDIS_ADDR_DATA=docker.vm:6379
-      - REDIS_PASSWORD_DATA=
-      - REDIS_DB_DATA=9
+      - REDIS_ADDR=docker.vm:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
       - JWT_SECRET=6DA/8QqWyBJN3
       - JWT_IGNORE_FIELDS=iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at
       - CORES=*

@@ -6,13 +6,9 @@ import (
 
 type Configuration struct {
 	//on redis server
-	RedisAddressParam  string
-	RedisPasswordParam string
-	RedisDbParam       int
-
-	RedisAddressData  string
-	RedisPasswordData string
-	RedisDbData       int
+	RedisAddress  string
+	RedisPassword string
+	RedisDb       int
 
 	//DevelopMode should never be true in production
 	DevelopMode   bool

@@ -12,10 +12,10 @@ import (
 )
 
 var lastLoadPermissionInfo map[string]string = make(map[string]string)
-var permitKeyPut string = "RedisPutPermission"
-var permitKeyPost string = "RedisPostPermission"
-var permitKeyGet string = "RedisGetPermission"
-var permitKeyDel string = "RedisDeletePermission"
+var permitKeyPut string = "saavuuPermissionPut"
+var permitKeyPost string = "saavuuPermissionPost"
+var permitKeyGet string = "saavuuPermissionGet"
+var permitKeyDel string = "saavuuPermissionDel"
 
 func LoadPPermissionFromRedis() {
 	// read RedisPutPermission usiing ParamRds

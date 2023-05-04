@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/logger"
 )
 
@@ -20,16 +21,11 @@ func init() {
 	var err error
 	logger.Std.Println("App Start! load config from OS env")
 
-	Cfg.RedisAddressParam = loadOSEnv("REDIS_ADDR_PARAM", "Error: Can not load REDIS_ADDR_PARAM from env")
-	Cfg.RedisPasswordParam = loadOSEnv("REDIS_PASSWORD_PARAM", "")
-	json.Unmarshal([]byte(loadOSEnv("REDIS_DB_PARAM", "Error: REDIS_DB_PARAM is not set ")), &Cfg.RedisDbParam)
+	Cfg.RedisAddress = loadOSEnv("REDIS_ADDR", "Error: Can not load REDIS_ADDR from env")
+	Cfg.RedisPassword = loadOSEnv("REDIS_PASSWORD", "")
+	json.Unmarshal([]byte(loadOSEnv("REDIS_DB", "Error: REDIS_DB is not set ")), &Cfg.RedisDb)
 
 	//try load from env
-	Cfg.RedisAddressData = loadOSEnv("REDIS_ADDR_DATA", "Error: Can not load REDIS_ADDR_DATA from env")
-	Cfg.RedisPasswordData = loadOSEnv("REDIS_PASSWORD_DATA", "")
-	if Cfg.RedisDbData, err = strconv.Atoi(loadOSEnv("REDIS_DB_DATA", "Error: REDIS_DB_DATA is not set ")); err != nil {
-		logger.Lshortfile.Panicln("Error: REDIS_DB_DATA is not a number")
-	}
 	Cfg.JwtSecret = loadOSEnv("JWT_SECRET", "Error: JWT_SECRET Can not load from env")
 	if Cfg.JwtFieldsKept = loadOSEnv("JWT_FIELDS_KEPT", ""); Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
@@ -50,8 +46,13 @@ func init() {
 		logger.Std.Println("SERVICE_BATCH_SIZE is set to ", Cfg.ServiceBatchSize)
 	}
 
-	useParamRedis()
-	useDataRedis()
+	//apply configuration
+	redisOption := &redis.Options{
+		Addr:     Cfg.RedisAddress,
+		Password: Cfg.RedisPassword, // no password set
+		DB:       Cfg.RedisDb,       // use default DB
+	}
+	ParamRds = redis.NewClient(redisOption)
 
 	logger.Lshortfile.Println("Load config from env success")
 }

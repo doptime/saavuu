@@ -1,11 +1,6 @@
-RedisAddressParam = "127.0.0.1:6379"
-RedisPasswordParam = ""
-RedisDbParam = 0
-
-RedisAdressData = "127.0.0.1:6379"
-RedisPasswordData = ""
-RedisDbData = 1
-
+RedisAddress = "127.0.0.1:6379"
+RedisPassword = ""
+RedisDb = 0
 
 JwtSecret = "secret"
 JWT_FIELDS_KEPT="id,sub,pub"
