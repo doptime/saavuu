@@ -33,6 +33,8 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 		//append default stream id
 		streams = append(streams, ">")
 	}
+
+	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
 	return args
 }
@@ -40,11 +42,11 @@ func XGroupCreate(c context.Context) (err error) {
 	//if there is no group, create a group, and create a consumer
 	for _, serviceName := range apiServiceNames() {
 		//continue if the group already exists
-		if cmd := config.ParamRds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
+		if cmd := config.Rds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
 			continue
 		}
 		//create a group if none exists
-		if cmd := config.ParamRds.XGroupCreateMkStream(c, serviceName, "group0", "$"); cmd.Err() != nil {
+		if cmd := config.Rds.XGroupCreateMkStream(c, serviceName, "group0", "$"); cmd.Err() != nil {
 			return cmd.Err()
 		}
 	}
@@ -66,7 +68,7 @@ func receiveJobs() {
 	//deprecate using list command LRange, to avoid continually query consumption
 	//use xreadgroup to receive data ,2023-01-31
 	for args := defaultXReadGroupArgs(); ; {
-		if cmd = config.ParamRds.XReadGroup(c, args); cmd.Err() == redis.Nil {
+		if cmd = config.Rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
 			logger.Lshortfile.Println("receiveApiJobs error:", cmd.Err())

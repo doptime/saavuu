@@ -29,7 +29,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		return "false", ErrOperationNotPermited
 	}
 
-	//db := &data.Ctx{Ctx: svcCtx.Ctx, Rds: config.DataRds, Key: svcCtx.Key}
+	//db := &data.Ctx{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	db := data.New[interface{}](svcCtx.Key)
 
 	if svcCtx.Cmd == "API" {

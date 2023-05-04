@@ -12,7 +12,7 @@ import (
 
 // put parameter to redis ,make it persistent
 func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
-	if cmd := config.ParamRds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
+	if cmd := config.Rds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
 		logger.Lshortfile.Println(cmd.Err())
 		return
 	}
@@ -31,7 +31,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
-	pipeline := config.ParamRds.Pipeline()
+	pipeline := config.Rds.Pipeline()
 	pipeline.HGet(context.Background(), serviceName+":delay", dueTimeStr)
 	pipeline.HDel(context.Background(), serviceName+":delay", dueTimeStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
@@ -50,7 +50,7 @@ func delayTasksLoad() {
 		cmd         []redis.Cmder
 		err         error
 	)
-	pipeline := config.ParamRds.Pipeline()
+	pipeline := config.Rds.Pipeline()
 	for _, service := range services {
 		pipeline.HKeys(context.Background(), service+":delay")
 	}

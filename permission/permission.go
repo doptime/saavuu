@@ -45,14 +45,14 @@ func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], Permissio
 	}
 
 	// if using develop mode, then add operation to white list; else add operation to black list
-	if config.Cfg.DevelopMode {
+	if config.Cfg.AutoPermission {
 		permission.WhiteList = append(permission.WhiteList, operation)
 	} else {
 		permission.BlackList = append(permission.BlackList, operation)
 	}
 	PermissionMap.Set(dataKey, permission)
 	//save to redis
-	var paramRds = data.Ctx[Permission]{Rds: config.ParamRds, Ctx: context.Background(), Key: *PermissionKey}
+	var paramRds = data.Ctx[Permission]{Rds: config.Rds, Ctx: context.Background(), Key: *PermissionKey}
 	paramRds.HSet(dataKey, permission)
-	return config.Cfg.DevelopMode
+	return config.Cfg.AutoPermission
 }

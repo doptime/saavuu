@@ -3,6 +3,6 @@ RedisPassword = ""
 RedisDb = 0
 
 JwtSecret = "secret"
-JWT_FIELDS_KEPT="id,sub,pub"
+JwtFieldsKept="id,sub,pub"
 MaxBufferSize = 33000000
 CORS = "*"

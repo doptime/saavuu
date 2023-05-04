@@ -18,7 +18,7 @@ var permitKeyGet string = "saavuuPermissionGet"
 var permitKeyDel string = "saavuuPermissionDel"
 
 func LoadPPermissionFromRedis() {
-	// read RedisPutPermission usiing ParamRds
+	// read RedisPutPermission usiing Rds
 	// RedisPutPermission is a hash
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
 
@@ -29,7 +29,7 @@ func LoadPPermissionFromRedis() {
 	for i, key := range keys {
 
 		var _map map[string]Permission = make(map[string]Permission)
-		var paramRds = data.Ctx[Permission]{Rds: config.ParamRds, Ctx: context.Background(), Key: key}
+		var paramRds = data.Ctx[Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
 		if err := paramRds.HGetAll(_map); err != nil {
 			logger.Lshortfile.Println("loading " + key + "  error: " + err.Error())
 		} else {
@@ -43,6 +43,9 @@ func LoadPPermissionFromRedis() {
 			*desMap[i] = mapDes
 		}
 	}
+	go ContinuousReloadPermission()
+}
+func ContinuousReloadPermission() {
 	time.Sleep(time.Second * 10)
-	go LoadPPermissionFromRedis()
+	LoadPPermissionFromRedis()
 }

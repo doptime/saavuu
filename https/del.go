@@ -29,13 +29,13 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		if svcCtx.Field == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		cmd := config.DataRds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
+		cmd := config.Rds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err
 	case "DEL":
-		cmd := config.ParamRds.HDel(svcCtx.Ctx, svcCtx.Key, "del")
+		cmd := config.Rds.HDel(svcCtx.Ctx, svcCtx.Key, "del")
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
@@ -47,14 +47,14 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		for i, v := range MemberStr {
 			Member[i] = v
 		}
-		if err = config.DataRds.ZRem(svcCtx.Ctx, svcCtx.Key, Member...).Err(); err == nil {
+		if err = config.Rds.ZRem(svcCtx.Ctx, svcCtx.Key, Member...).Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err
 	case "ZREMRANGEBYSCORE":
 		var Min = svcCtx.Req.FormValue("Min")
 		var Max = svcCtx.Req.FormValue("Max")
-		if err = config.DataRds.ZRemRangeByScore(svcCtx.Ctx, svcCtx.Key, Min, Max).Err(); err == nil {
+		if err = config.Rds.ZRemRangeByScore(svcCtx.Ctx, svcCtx.Key, Min, Max).Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err

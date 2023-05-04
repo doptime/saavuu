@@ -46,7 +46,6 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 	//create Api context
 	ctx = New[i, o](ServiceName)
 	ctx.Func = f
-
 	//create a goroutine to process the job
 	ProcessOneJob := func(BackToID string, s []byte) (err error) {
 		var (
@@ -59,7 +58,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 		}
 		//process one job
 		//check configureation is loaded
-		if config.ParamRds == nil {
+		if config.Rds == nil {
 			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
 		}
 
@@ -93,7 +92,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 			return err
 		}
 		ctx := context.Background()
-		pipline := config.ParamRds.Pipeline()
+		pipline := config.Rds.Pipeline()
 		pipline.RPush(ctx, BackToID, marshaledBytes)
 		pipline.Expire(ctx, BackToID, time.Second*20)
 		_, err = pipline.Exec(ctx)

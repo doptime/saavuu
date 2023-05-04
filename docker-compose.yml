@@ -3,13 +3,13 @@ services:
   saavuu:
     image: saavuu:latest
     environment:
-      - REDIS_ADDR=docker.vm:6379
-      - REDIS_PASSWORD=
-      - REDIS_DB=0
-      - JWT_SECRET=6DA/8QqWyBJN3
+      - RedisAddress=docker.vm:6379
+      - RedisPassword=
+      - RedisDb=0
+      - JWTSecret=6DA/8QqWyBJN3
       - JWT_IGNORE_FIELDS=iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at
       - CORES=*
-      - MAX_BUFFER_SIZE=3024024
+      - MaxBufferSize=3024024
       - SERVICE_BATCH_SIZE=256
     ports:
       - 3025:8080

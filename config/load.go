@@ -3,48 +3,48 @@ package config
 import (
 	"encoding/json"
 	"os"
-	"strconv"
+	"reflect"
 	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/logger"
 )
 
-func loadOSEnv(key string, panicString string) (value string) {
-	if value = os.Getenv(key); panicString != "" && value == "" {
-		logger.Lshortfile.Panicln(panicString)
+func loadOSEnv(key string, des interface{}, defaultValue interface{}) {
+	var value string
+	if value = os.Getenv(key); defaultValue == nil && value == "" {
+		logger.Lshortfile.Panicln("Panic:", key, " Can not load from env")
+	} else if defaultValue != nil && value == "" {
+		//des is a pointer, so we can set it to defaultValue using reflection
+		reflect.ValueOf(des).Elem().Set(reflect.ValueOf(defaultValue))
+		return
 	}
-	return value
+	if err := json.Unmarshal([]byte(value), des); err == nil {
+	} else if _, ok := des.(*string); ok {
+		*des.(*string) = value
+	} else {
+		logger.Lshortfile.Panicln("Error: bad type of env: ", key)
+	}
+	logger.Std.Println("env", key, "is set to ", reflect.ValueOf(des).Elem().Interface())
 }
 
 func init() {
-	var err error
 	logger.Std.Println("App Start! load config from OS env")
 
-	Cfg.RedisAddress = loadOSEnv("REDIS_ADDR", "Error: Can not load REDIS_ADDR from env")
-	Cfg.RedisPassword = loadOSEnv("REDIS_PASSWORD", "")
-	json.Unmarshal([]byte(loadOSEnv("REDIS_DB", "Error: REDIS_DB is not set ")), &Cfg.RedisDb)
-
+	loadOSEnv("RedisAddress", &Cfg.RedisAddress, nil)
+	loadOSEnv("RedisPassword", &Cfg.RedisPassword, "")
+	loadOSEnv("RedisDb", &Cfg.RedisDb, nil)
+	loadOSEnv("JWTSecret", &Cfg.JWTSecret, "")
 	//try load from env
-	Cfg.JwtSecret = loadOSEnv("JWT_SECRET", "Error: JWT_SECRET Can not load from env")
-	if Cfg.JwtFieldsKept = loadOSEnv("JWT_FIELDS_KEPT", ""); Cfg.JwtFieldsKept != "" {
+	if loadOSEnv("JwtFieldsKept", &Cfg.JwtFieldsKept, ""); Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
-	if Cfg.MaxBufferSize, err = strconv.ParseInt(loadOSEnv("MAX_BUFFER_SIZE", "Error: MAX_BUFFER_SIZE is not set "), 10, 64); err != nil {
-		logger.Lshortfile.Panicln("Error: MAX_BUFFER_SIZE is not a number")
-	}
-	if dev := loadOSEnv("DEVELOP_MODE", ""); len(dev) > 0 {
-		if Cfg.DevelopMode, err = strconv.ParseBool(dev); err != nil {
-			logger.Lshortfile.Println("Error: bad string of env: DEVELOP_MODE")
-		}
-		logger.Std.Println("DEVELOP_MODE is set to ", Cfg.DevelopMode)
-	}
-	if ServiceBatchSize := loadOSEnv("SERVICE_BATCH_SIZE", ""); len(ServiceBatchSize) > 0 {
-		if Cfg.ServiceBatchSize, err = strconv.ParseInt(ServiceBatchSize, 10, 64); err != nil {
-			logger.Lshortfile.Println("Error: bad string of env: SERVICE_BATCH_SIZE")
-		}
-		logger.Std.Println("SERVICE_BATCH_SIZE is set to ", Cfg.ServiceBatchSize)
-	}
+	loadOSEnv("CORS", &Cfg.CORS, "*")
+	loadOSEnv("MaxBufferSize", &Cfg.MaxBufferSize, 5*1024*1024)
+	loadOSEnv("ServiceBatchSize", &Cfg.ServiceBatchSize, 256)
+	loadOSEnv("AutoPermission", &Cfg.AutoPermission, false)
+	loadOSEnv("ServerPort", &Cfg.ServerPort, 8000)
+	loadOSEnv("ServerPath", &Cfg.ServerPath, "/")
 
 	//apply configuration
 	redisOption := &redis.Options{
@@ -52,7 +52,7 @@ func init() {
 		Password: Cfg.RedisPassword, // no password set
 		DB:       Cfg.RedisDb,       // use default DB
 	}
-	ParamRds = redis.NewClient(redisOption)
+	Rds = redis.NewClient(redisOption)
 
 	logger.Lshortfile.Println("Load config from env success")
 }

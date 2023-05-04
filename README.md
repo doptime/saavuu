@@ -78,15 +78,15 @@ HGET("UserInfo", id).then((data) => {
     configuration is read from enviroment variables. Make sure enviroment variables are added to your IDE (launch.json for vs code) or docker. 
     these are the default example:
 ```
-    "REDIS_ADDR_PARAM": "127.0.0.1:6379",
-    "REDIS_PASSWORD_PARAM": "",
-    "REDIS_DB_PARAM": "0",
-    "REDIS_ADDR_DATA": "127.0.0.1:6379",
-    "REDIS_PASSWORD_DATA": "",
-    "REDIS_DB_DATA": "0",
-    "JWT_SECRET": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
+    "RedisAddress_PARAM": "127.0.0.1:6379",
+    "RedisPassword_PARAM": "",
+    "RedisDb_PARAM": "0",
+    "RedisAddress_DATA": "127.0.0.1:6379",
+    "RedisPassword_DATA": "",
+    "RedisDb_DATA": "0",
+    "JWTSecret": "WyBJujUQzWg4YiQqLe9N36DA/7QqZcOkg2o=",
     "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
     "CORS": "*",
-    "MAX_BUFFER_SIZE": "3145728",
-    "DEVELOP_MODE": "true",
+    "MaxBufferSize": "3145728",
+    "AutoPermission": "true",
 ```

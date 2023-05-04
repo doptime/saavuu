@@ -25,20 +25,23 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 		ServiceName = "api:" + ServiceName
 	}
 
-	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.ParamRds, Debug: false, ServiceName: ServiceName}
+	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds, Debug: false, ServiceName: ServiceName}
 }
 
 // allow setting breakpoint for input decoding
 func (ctx *Ctx[i, o]) UseDebug() *Ctx[i, o] {
-	return &Ctx[i, o]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: true, ServiceName: ctx.ServiceName, Func: ctx.Func}
+	ctx.Debug = true
+	return ctx
 }
 
 // force use new context
 func (ctx *Ctx[i, o]) UseContext(c context.Context) *Ctx[i, o] {
-	return &Ctx[i, o]{Ctx: c, Rds: ctx.Rds, Debug: ctx.Debug, ServiceName: ctx.ServiceName, Func: ctx.Func}
+	ctx.Ctx = c
+	return ctx
 }
 
 // force use RPC mode
 func (ctx *Ctx[i, o]) UseRPC() *Ctx[i, o] {
-	return &Ctx[i, o]{Ctx: ctx.Ctx, Rds: ctx.Rds, Debug: ctx.Debug, ServiceName: ctx.ServiceName, Func: nil}
+	ctx.Func = nil
+	return ctx
 }

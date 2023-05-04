@@ -33,7 +33,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
 			return "false", err
 		}
-		cmd := config.DataRds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
+		cmd := config.Rds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
 		}
@@ -46,7 +46,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
 			return "false", err
 		}
-		cmd := config.DataRds.RPush(svcCtx.Ctx, svcCtx.Key, bytes)
+		cmd := config.Rds.RPush(svcCtx.Ctx, svcCtx.Key, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
 		}
