@@ -36,8 +36,6 @@ var Cfg Configuration = Configuration{
 // All parameter from web client are post to this redis server first
 var ParamRds *redis.Client
 
-var AppMode string
-
 const AppModeFRAMEWROK, AppModeSERVICE = "framework", "service"
 
 // DataRds usually slower But with Flash Storage support ,such as Pikadb, and later may be KeyDB or DragonflyDB

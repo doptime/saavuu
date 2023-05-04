@@ -89,5 +89,4 @@ HGET("UserInfo", id).then((data) => {
     "CORS": "*",
     "MAX_BUFFER_SIZE": "3145728",
     "DEVELOP_MODE": "true",
-    "APP_MODE":"framework",
 ```
