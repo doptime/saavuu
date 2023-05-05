@@ -1,10 +1,8 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"reflect"
-	"time"
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
@@ -47,14 +45,14 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 	ctx = New[i, o](ServiceName)
 	ctx.Func = f
 	//create a goroutine to process the job
-	ProcessOneJob := func(BackToID string, s []byte) (err error) {
+	ProcessOneJob := func(s []byte) (ret []byte, err error) {
 		var (
 			out            o
 			marshaledBytes []byte
 			param          map[string]interface{} = map[string]interface{}{}
 		)
 		if err = msgpack.Unmarshal(s, &param); err != nil {
-			return err
+			return nil, err
 		}
 		//process one job
 		//check configureation is loaded
@@ -71,35 +69,30 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 				ctx.Debug = !ctx.Debug
 			}
 			if err = data.MapsToStructure(param, vValue); err != nil {
-				return err
+				return nil, err
 			}
 			if out, err = f(vValue); err != nil {
-				return err
+				return nil, err
 			}
 
 		} else {
 			vValueWithPointer := reflect.New(vType).Interface().(*i)
 			if err = data.MapsToStructure(param, vValueWithPointer); err != nil {
-				return err
+				return nil, err
 			}
 			if out, err = f(*vValueWithPointer); err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 		//Post Back
 		if marshaledBytes, err = msgpack.Marshal(out); err != nil {
-			return err
+			return nil, err
 		}
-		ctx := context.Background()
-		pipline := config.Rds.Pipeline()
-		pipline.RPush(ctx, BackToID, marshaledBytes)
-		pipline.Expire(ctx, BackToID, time.Second*20)
-		_, err = pipline.Exec(ctx)
-		return err
+		return marshaledBytes, err
 	}
 	//register Api
-	apiServices[ctx.ServiceName] = &ApiInfo{
+	ApiServices[ctx.ServiceName] = &ApiInfo{
 		ApiName: ctx.ServiceName,
 		ApiFunc: ProcessOneJob,
 	}

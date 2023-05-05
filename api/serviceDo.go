@@ -13,13 +13,13 @@ type ApiInfo struct {
 	// ApiName is the name of the service
 	ApiName string
 	// ApiFunc is the function of the service
-	ApiFunc func(backTo string, s []byte) (err error)
+	ApiFunc func(s []byte) (ret []byte, err error)
 }
 
-var apiServices map[string]*ApiInfo = map[string]*ApiInfo{}
+var ApiServices map[string]*ApiInfo = map[string]*ApiInfo{}
 
 func apiServiceNames() (serviceNames []string) {
-	for _, serviceInfo := range apiServices {
+	for _, serviceInfo := range ApiServices {
 		serviceNames = append(serviceNames, serviceInfo.ApiName)
 	}
 	return serviceNames
@@ -84,10 +84,24 @@ func receiveJobs() {
 				if dueTimeStr, ok := message.Values["dueTime"]; ok {
 					go delayTaskAddOne(apiName, dueTimeStr.(string), bytesValue)
 				} else {
-					go apiServices[apiName].ApiFunc(message.ID, []byte(bytesValue))
+					go DoOneJob(apiName, apiName, []byte(bytesValue))
 				}
 				apiCounter.Add(apiName, 1)
 			}
 		}
 	}
+}
+func DoOneJob(apiName, BackToID string, s []byte) (err error) {
+	var (
+		msgPackResult []byte
+	)
+	if msgPackResult, err = ApiServices[apiName].ApiFunc(s); err != nil {
+		return err
+	}
+	ctx := context.Background()
+	pipline := config.Rds.Pipeline()
+	pipline.RPush(ctx, BackToID, msgPackResult)
+	pipline.Expire(ctx, BackToID, time.Second*20)
+	_, err = pipline.Exec(ctx)
+	return err
 }

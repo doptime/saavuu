@@ -11,6 +11,23 @@ import (
 	"github.com/yangkequn/saavuu/logger"
 )
 
+func EncodeApiInput(paramIn interface{}) (out []byte, err error) {
+	//ensure the paramIn is a map or struct
+	paramType := reflect.TypeOf(paramIn)
+	if paramType.Kind() == reflect.Struct {
+	} else if paramType.Kind() == reflect.Map {
+	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
+	} else {
+		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
+		return nil, err
+	}
+
+	if out, err = msgpack.Marshal(paramIn); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
 func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
@@ -20,19 +37,10 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	//ensure the paramIn is a map or struct
-	paramType := reflect.TypeOf(paramIn)
-	if paramType.Kind() == reflect.Struct {
-	} else if paramType.Kind() == reflect.Map {
-	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
-	} else {
-		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
+	if b, err = EncodeApiInput(paramIn); err != nil {
 		return out, err
 	}
 
-	if b, err = msgpack.Marshal(paramIn); err != nil {
-		return out, err
-	}
 	if dueTime != nil {
 		Values = []string{"dueTime", strconv.FormatInt(dueTime.UnixMilli(), 10), "data", string(b)}
 	} else {

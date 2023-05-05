@@ -32,8 +32,18 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//db := &data.Ctx{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	db := data.New[interface{}](svcCtx.Key)
 
+	//service name is stored in svcCtx.Key
 	if svcCtx.Cmd == "API" {
 		svcCtx.MergeJwtField(paramIn)
+		//if function is stored locally, call it directly. This is alias monolithic mode
+		if fuc, ok := api.ApiServices[svcCtx.Key]; ok {
+			if msgpackBytes, err := api.EncodeApiInput(paramIn); err != nil {
+				return nil, err
+			} else {
+				return fuc.ApiFunc(msgpackBytes)
+			}
+		}
+
 		ret, err = api.New[map[string]interface{}, interface{}](svcCtx.Key).Do(paramIn)
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64

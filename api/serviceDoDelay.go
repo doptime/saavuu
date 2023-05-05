@@ -20,7 +20,7 @@ func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
 }
 func delayTaskDoOne(serviceName, dueTimeStr string) {
 	var (
-		bytes                                      []byte
+		bytes, msgPackResult                       []byte
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
 		err                                        error
 		cmd                                        []redis.Cmder
@@ -39,7 +39,17 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
-		apiServices[serviceName].ApiFunc(serviceName, bytes)
+		if msgPackResult, err = ApiServices[serviceName].ApiFunc(bytes); err != nil {
+			logger.Lshortfile.Println(err)
+			return
+		}
+
+		ctx := context.Background()
+		pipline := config.Rds.Pipeline()
+		var BackToID = serviceName
+		pipline.RPush(ctx, BackToID, msgPackResult)
+		pipline.Expire(ctx, BackToID, time.Second*20)
+		pipline.Exec(ctx)
 	}
 }
 

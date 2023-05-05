@@ -12,8 +12,8 @@ var apiCounter tools.Counter = tools.Counter{}
 
 func reportStates() {
 	// all keys of ServiceMap to []string serviceNames
-	var serviceNames []string = make([]string, 0, len(apiServices))
-	for serviceName := range apiServices {
+	var serviceNames []string = make([]string, 0, len(ApiServices))
+	for serviceName := range ApiServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
 	logger.Lshortfile.Println(len(serviceNames), "apis:", serviceNames)
