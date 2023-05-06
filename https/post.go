@@ -18,6 +18,8 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	var (
 		paramIn   map[string]interface{} = map[string]interface{}{}
 		operation string
+		fuc       *api.ApiInfo
+		ok        bool
 	)
 	if paramIn, err = svcCtx.BodyMessage(); err != nil {
 		return nil, errors.New("data error")
@@ -35,16 +37,17 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//service name is stored in svcCtx.Key
 	if svcCtx.Cmd == "API" {
 		svcCtx.MergeJwtField(paramIn)
-		//if function is stored locally, call it directly. This is alias monolithic mode
-		if fuc, ok := api.ApiServices[svcCtx.Key]; ok {
-			if msgpackBytes, err := api.EncodeApiInput(paramIn); err != nil {
-				return nil, err
-			} else {
-				return fuc.ApiFunc(msgpackBytes)
-			}
+		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
+		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
+		if fuc, ok = api.ApiServices[_api.ServiceName]; !ok {
+			return _api.Do(paramIn)
 		}
-
-		ret, err = api.New[map[string]interface{}, interface{}](svcCtx.Key).Do(paramIn)
+		//if function is stored locally, call it directly. This is alias monolithic mode
+		if msgpackBytes, err := api.EncodeApiInput(paramIn); err != nil {
+			return nil, err
+		} else {
+			return fuc.ApiFunc(msgpackBytes)
+		}
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64
 		var obj interface{}
