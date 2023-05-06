@@ -8,34 +8,31 @@ import (
 	"github.com/yangkequn/saavuu/data"
 )
 
-type InTimeLocker struct {
-	Key            string
-	LockDurationMs int64
-}
-type OutTimeLocker struct {
-	Locked bool
+type InKeyLocker struct {
+	Key        string
+	DurationMs int64
 }
 
 var keyTimeLocker = data.New[bool]("TimeLocker")
-var lastRemoveTimeLockerExpiredTime int64 = time.Now().UnixNano() / 1000000 //ms
+var lastRemoveKeyLocker int64 = time.Now().UnixMicro()
 
-var ApiTimeLocker = Api(func(req *InTimeLocker) (out *OutTimeLocker, err error) {
+var ApiKeyLocker = Api(func(req *InKeyLocker) (Locked bool, err error) {
 
 	var (
-		now     int64 = time.Now().UnixNano() / 1000000
-		dueTime int64 = now + req.LockDurationMs
+		now     int64 = time.Now().UnixMicro()
+		dueTime int64 = now + req.DurationMs
 		score   float64
 	)
-	out = &OutTimeLocker{Locked: false}
+	Locked = false
 	if score, err = keyTimeLocker.ZScore(req.Key); err == nil && score > float64(now) {
-		out.Locked = true
+		Locked = true
 	}
 	keyTimeLocker.ZAdd(redis.Z{Score: float64(dueTime), Member: req.Key})
 
-	if now > lastRemoveTimeLockerExpiredTime {
+	if now > lastRemoveKeyLocker {
 		//remove key which expired every 1 hour
-		lastRemoveTimeLockerExpiredTime += 36000 * 1000
+		lastRemoveKeyLocker += 36000 * 1000
 		keyTimeLocker.ZRemRangeByScore("0", strconv.FormatInt(now, 10))
 	}
-	return out, nil
+	return Locked, nil
 })
