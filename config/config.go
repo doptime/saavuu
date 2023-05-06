@@ -5,6 +5,7 @@ import (
 )
 
 type Configuration struct {
+	RPCFirst bool
 	//on redis server
 	RedisAddress  string
 	RedisPassword string
@@ -25,6 +26,7 @@ type Configuration struct {
 }
 
 var Cfg Configuration = Configuration{
+	RPCFirst:      false,
 	JWTSecret:     "",
 	MaxBufferSize: 32 << 20,
 	CORS:          "*",

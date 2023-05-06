@@ -31,6 +31,7 @@ func loadOSEnv(key string, des interface{}, defaultValue interface{}) {
 func init() {
 	logger.Std.Println("App Start! load config from OS env")
 
+	loadOSEnv("RPCFirst", &Cfg.RPCFirst, false)
 	loadOSEnv("RedisAddress", &Cfg.RedisAddress, nil)
 	loadOSEnv("RedisPassword", &Cfg.RedisPassword, "")
 	loadOSEnv("RedisDb", &Cfg.RedisDb, nil)

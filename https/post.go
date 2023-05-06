@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/api"
+	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
 )
@@ -39,7 +40,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		svcCtx.MergeJwtField(paramIn)
 		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices[_api.ServiceName]; !ok {
+		if fuc, ok = api.ApiServices[_api.ServiceName]; config.Cfg.RPCFirst || !ok {
 			return _api.Do(paramIn)
 		}
 		//if function is stored locally, call it directly. This is alias monolithic mode
