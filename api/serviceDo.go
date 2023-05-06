@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
 )
@@ -13,7 +14,7 @@ type ApiInfo struct {
 	// ApiName is the name of the service
 	ApiName string
 	// ApiFunc is the function of the service
-	ApiFunc func(s []byte) (ret []byte, err error)
+	ApiFunc func(s []byte) (ret interface{}, err error)
 }
 
 var ApiServices map[string]*ApiInfo = map[string]*ApiInfo{}
@@ -94,9 +95,13 @@ func receiveJobs() {
 func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 	var (
 		msgPackResult []byte
+		ret           interface{}
 	)
-	if msgPackResult, err = ApiServices[apiName].ApiFunc(s); err != nil {
+	if ret, err = ApiServices[apiName].ApiFunc(s); err != nil {
 		return err
+	}
+	if msgPackResult, err = msgpack.Marshal(ret); err != nil {
+		return
 	}
 	ctx := context.Background()
 	pipline := config.Rds.Pipeline()

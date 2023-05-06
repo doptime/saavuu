@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
 )
@@ -20,6 +21,7 @@ func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
 }
 func delayTaskDoOne(serviceName, dueTimeStr string) {
 	var (
+		ret                                        interface{}
 		bytes, msgPackResult                       []byte
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
 		err                                        error
@@ -39,11 +41,15 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
-		if msgPackResult, err = ApiServices[serviceName].ApiFunc(bytes); err != nil {
+		if ret, err = ApiServices[serviceName].ApiFunc(bytes); err != nil {
 			logger.Lshortfile.Println(err)
 			return
 		}
+		if msgPackResult, err = msgpack.Marshal(ret); err != nil {
+			return
+		}
 
+		//Post Back
 		ctx := context.Background()
 		pipline := config.Rds.Pipeline()
 		var BackToID = serviceName

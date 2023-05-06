@@ -45,11 +45,10 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 	ctx = New[i, o](ServiceName)
 	ctx.Func = f
 	//create a goroutine to process the job
-	ProcessOneJob := func(s []byte) (ret []byte, err error) {
+	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		var (
-			out            o
-			marshaledBytes []byte
-			param          map[string]interface{} = map[string]interface{}{}
+			out   o
+			param map[string]interface{} = map[string]interface{}{}
 		)
 		if err = msgpack.Unmarshal(s, &param); err != nil {
 			return nil, err
@@ -84,12 +83,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 				return nil, err
 			}
 		}
-
-		//Post Back
-		if marshaledBytes, err = msgpack.Marshal(out); err != nil {
-			return nil, err
-		}
-		return marshaledBytes, err
+		return out, err
 	}
 	//register Api
 	ApiServices[ctx.ServiceName] = &ApiInfo{
