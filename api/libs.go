@@ -18,7 +18,7 @@ var removeCounter int64 = 90
 
 var ApiLockKey = Api(func(req *InLockKey) (ok bool, err error) {
 	var (
-		now     int64 = time.Now().UnixMicro()
+		now     int64 = time.Now().UnixMilli()
 		dueTime int64 = now + req.DurationMs
 		score   float64
 	)
@@ -38,8 +38,7 @@ var ApiLockKey = Api(func(req *InLockKey) (ok bool, err error) {
 	}
 
 	//auto remove expired keys
-	removeCounter += 1
-	if removeCounter > 100 {
+	if removeCounter++; removeCounter > 100 {
 		removeCounter = 0
 		go config.Rds.ZRemRangeByScore(context.Background(), "KeyLocker", "0", strconv.FormatInt(now, 10))
 	}
