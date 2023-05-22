@@ -1,7 +1,6 @@
 package data
 
 import (
-	"fmt"
 	"reflect"
 
 	"github.com/redis/go-redis/v9"
@@ -46,14 +45,8 @@ func MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
 	return ret, nil
 }
 
-var ErrOutSliceType = fmt.Errorf("out should be *[] Type")
-
 func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
 	out = make([]v, 0, len(members))
-	//out should be *[] Type
-	if reflect.TypeOf(out).Kind() != reflect.Ptr || reflect.TypeOf(out).Elem().Kind() != reflect.Slice {
-		return nil, ErrOutSliceType
-	}
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
 	elemType := reflect.TypeOf(out).Elem()
 	//don't set elemType to elemType.Elem() again, because out is a slice of pointer
@@ -62,10 +55,7 @@ func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
 		if err := msgpack.Unmarshal([]byte(member), &elem); err != nil {
 			return out, err
 		}
-		//append elem to out, elem is a pointer
-		//the following code error: interface {}(string) "reflect.Set: value of type *map[string]interface {} is not assignable to type map[string]interface {}"
-		//reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), reflect.ValueOf(elem)))
-		reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), reflect.ValueOf(elem).Elem()))
+		out = append(out, elem.(v))
 	}
 
 	return out, nil
@@ -77,10 +67,6 @@ func (db *Ctx[v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64,
 		ok  bool
 	)
 	out = make([]v, 0, len(members))
-	//out should be *[] Type
-	if reflect.TypeOf(out).Kind() != reflect.Ptr || reflect.TypeOf(out).Elem().Kind() != reflect.Slice {
-		return nil, nil, ErrOutSliceType
-	}
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
 	elemType := reflect.TypeOf(out).Elem()
 	scores = make([]float64, len(members))
@@ -88,12 +74,11 @@ func (db *Ctx[v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64,
 		if str, ok = member.Member.(string); !ok || str == "" {
 			continue
 		}
-		elem := reflect.New(elemType)
-		if err := msgpack.Unmarshal([]byte(str), elem.Interface()); err != nil {
+		elem := reflect.New(elemType).Interface()
+		if err := msgpack.Unmarshal([]byte(str), &elem); err != nil {
 			return nil, nil, err
 		}
-		//append elem to out, elem is a pointer
-		reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), elem.Elem()))
+		out = append(out, elem.(v))
 
 		scores[i] = member.Score
 	}
