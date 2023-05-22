@@ -38,6 +38,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		tm                      time.Time
 		map_interface_interface map[interface{}]interface{}
 		operation               string
+		members                 []interface{} = []interface{}{}
 	)
 	svcCtx.MergeJwtField(jwts)
 
@@ -90,8 +91,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return tm.UnixMilli(), nil
 	case "ZRANGE":
 		var (
-			start, stop int64         = 0, -1
-			result      []interface{} = []interface{}{}
+			start, stop int64 = 0, -1
 		)
 		if start, err = strconv.ParseInt(svcCtx.Req.FormValue("Start"), 10, 64); err != nil {
 			return "", errors.New("parse start error:" + err.Error())
@@ -102,42 +102,40 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		// ZRANGE key start stop [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
 			var scores []float64
-			if scores, err = db.ZRangeWithScores(start, stop, &result); err != nil {
+			if members, scores, err = db.ZRangeWithScores(start, stop); err != nil {
 				return "", err
 			}
-			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+			return json.Marshal(map[string]interface{}{"members": members, "scores": scores})
 		}
 		// ZRANGE key start stop [WITHSCORES==false]
-		if err = db.ZRange(start, stop, &result); err != nil {
+		if members, err = db.ZRange(start, stop); err != nil {
 			return "", err
 		}
-		return json.Marshal(result)
+		return json.Marshal(members)
 	case "ZRANGEBYSCORE":
 		var (
 			offset, count int64
 			scores        []float64
-			result        []interface{} = []interface{}{}
 		)
 		if Min, Max = svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"); Min == "" || Max == "" {
 			return "", errors.New("no Min or Max")
 		}
 		//ZRANGEBYSCORE key min max [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
-			if scores, err = db.ZRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+			if members, scores, err = db.ZRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}); err != nil {
 				return "", err
 			}
 			//marshal result to json
-			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+			return json.Marshal(map[string]interface{}{"members": members, "scores": scores})
 		}
 		//ZRANGEBYSCORE key min max [WITHSCORES==false]
-		if err = db.ZRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+		if members, err = db.ZRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}); err != nil {
 			return "", err
 		}
-		return json.Marshal(result)
+		return json.Marshal(members)
 	case "ZREVRANGE":
 		var (
-			start, stop int64         = 0, -1
-			result      []interface{} = []interface{}{}
+			start, stop int64 = 0, -1
 		)
 		if start, err = strconv.ParseInt(svcCtx.Req.FormValue("Start"), 10, 64); err != nil {
 			return "", errors.New("parse start error:" + err.Error())
@@ -148,38 +146,37 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		// ZREVRANGE key start stop [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
 			var scores []float64
-			if scores, err = db.ZRevRangeWithScores(start, stop, &result); err != nil {
+			if members, scores, err = db.ZRevRangeWithScores(start, stop); err != nil {
 				return "", err
 			}
-			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+			return json.Marshal(map[string]interface{}{"members": members, "scores": scores})
 		}
 		// ZREVRANGE key start stop [WITHSCORES==false]
-		if err = db.ZRevRange(start, stop, &result); err != nil {
+		if members, err = db.ZRevRange(start, stop); err != nil {
 			return "", err
 		}
-		return json.Marshal(result)
+		return json.Marshal(members)
 	case "ZREVRANGEBYSCORE":
 		var (
 			offset, count int64
 			scores        []float64
-			result        []interface{} = []interface{}{}
 		)
 		if Min, Max = svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"); Min == "" || Max == "" {
 			return "", errors.New("no Min or Max")
 		}
 		//ZREVRANGEBYSCORE key max min [WITHSCORES==true]
 		if svcCtx.Req.FormValue("WITHSCORES") == "true" {
-			if scores, err = db.ZRevRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+			if members, scores, err = db.ZRevRangeByScoreWithScores(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}); err != nil {
 				return "", err
 			}
 			//marshal result to json
-			return json.Marshal(map[string]interface{}{"members": result, "scores": scores})
+			return json.Marshal(map[string]interface{}{"members": members, "scores": scores})
 		}
 		//ZREVRANGEBYSCORE key max min [WITHSCORES==false]
-		if err = db.ZRevRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}, &result); err != nil {
+		if members, err = db.ZRevRangeByScore(&redis.ZRangeBy{Min: Min, Max: Max, Offset: offset, Count: count}); err != nil {
 			return "", err
 		}
-		return json.Marshal(result)
+		return json.Marshal(members)
 	case "ZCARD":
 		return db.ZCard()
 	case "ZRANK":

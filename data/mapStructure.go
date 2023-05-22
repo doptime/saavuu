@@ -48,39 +48,41 @@ func MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
 
 var ErrOutSliceType = fmt.Errorf("out should be *[] Type")
 
-func UnmarshalStrings(members []string, outSlice interface{}) (err error) {
+func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
+	out = make([]v, 0, len(members))
 	//out should be *[] Type
-	if reflect.TypeOf(outSlice).Kind() != reflect.Ptr || reflect.TypeOf(outSlice).Elem().Kind() != reflect.Slice {
-		return ErrOutSliceType
+	if reflect.TypeOf(out).Kind() != reflect.Ptr || reflect.TypeOf(out).Elem().Kind() != reflect.Slice {
+		return nil, ErrOutSliceType
 	}
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
-	elemType := reflect.TypeOf(outSlice).Elem().Elem()
+	elemType := reflect.TypeOf(out).Elem()
 	//don't set elemType to elemType.Elem() again, because out is a slice of pointer
 	for _, member := range members {
 		elem := reflect.New(elemType).Interface()
 		if err := msgpack.Unmarshal([]byte(member), &elem); err != nil {
-			return err
+			return out, err
 		}
 		//append elem to out, elem is a pointer
 		//the following code error: interface {}(string) "reflect.Set: value of type *map[string]interface {} is not assignable to type map[string]interface {}"
 		//reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), reflect.ValueOf(elem)))
-		reflect.ValueOf(outSlice).Elem().Set(reflect.Append(reflect.ValueOf(outSlice).Elem(), reflect.ValueOf(elem).Elem()))
+		reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), reflect.ValueOf(elem).Elem()))
 	}
 
-	return nil
+	return out, nil
 }
 
-func UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores []float64, err error) {
+func (db *Ctx[v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64, err error) {
 	var (
 		str string
 		ok  bool
 	)
+	out = make([]v, 0, len(members))
 	//out should be *[] Type
-	if reflect.TypeOf(outSlice).Kind() != reflect.Ptr || reflect.TypeOf(outSlice).Elem().Kind() != reflect.Slice {
-		return nil, ErrOutSliceType
+	if reflect.TypeOf(out).Kind() != reflect.Ptr || reflect.TypeOf(out).Elem().Kind() != reflect.Slice {
+		return nil, nil, ErrOutSliceType
 	}
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
-	elemType := reflect.TypeOf(outSlice).Elem().Elem()
+	elemType := reflect.TypeOf(out).Elem()
 	scores = make([]float64, len(members))
 	for i, member := range members {
 		if str, ok = member.Member.(string); !ok || str == "" {
@@ -88,19 +90,12 @@ func UnmarshalRedisZ(members []redis.Z, outSlice interface{}) (scores []float64,
 		}
 		elem := reflect.New(elemType)
 		if err := msgpack.Unmarshal([]byte(str), elem.Interface()); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		//append elem to out, elem is a pointer
-		reflect.ValueOf(outSlice).Elem().Set(reflect.Append(reflect.ValueOf(outSlice).Elem(), elem.Elem()))
+		reflect.ValueOf(out).Elem().Set(reflect.Append(reflect.ValueOf(out).Elem(), elem.Elem()))
 
 		scores[i] = member.Score
 	}
-	return scores, nil
-}
-func MarshalRedisZ(members ...redis.Z) {
-	for i := range members {
-		if members[i].Member != nil {
-			members[i].Member, _ = msgpack.Marshal(members[i].Member)
-		}
-	}
+	return out, scores, nil
 }
