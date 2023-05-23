@@ -158,7 +158,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return json.Marshal(members)
 	case "ZREVRANGEBYSCORE":
 		var (
-			offset, count int64
+			offset, count int64 = 0, -1
 			scores        []float64
 		)
 		if Min, Max = svcCtx.Req.FormValue("Min"), svcCtx.Req.FormValue("Max"); Min == "" || Max == "" {
