@@ -52,10 +52,10 @@ func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
 	//don't set elemType to elemType.Elem() again, because out is a slice of pointer
 	for _, member := range members {
 		elem := reflect.New(elemType).Interface()
-		if err := msgpack.Unmarshal([]byte(member), &elem); err != nil {
+		if err := msgpack.Unmarshal([]byte(member), elem); err != nil {
 			return out, err
 		}
-		out = append(out, elem.(v))
+		out = append(out, *elem.(*v))
 	}
 
 	return out, nil
@@ -75,10 +75,10 @@ func (db *Ctx[v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64,
 			continue
 		}
 		elem := reflect.New(elemType).Interface()
-		if err := msgpack.Unmarshal([]byte(str), &elem); err != nil {
+		if err := msgpack.Unmarshal([]byte(str), elem); err != nil {
 			return nil, nil, err
 		}
-		out = append(out, elem.(v))
+		out = append(out, *elem.(*v))
 
 		scores[i] = member.Score
 	}
