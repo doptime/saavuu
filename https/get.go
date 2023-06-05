@@ -78,7 +78,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return db.HLen()
 	case "HVALS":
 		var values []interface{}
-		if err = db.HVals(&values); err != nil {
+		if values, err = db.HVals(); err != nil {
 			return "", err
 		}
 		return values, nil
