@@ -184,7 +184,7 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 }
 
 // 约定，来自客户端的fields，如果是[]string，则是真实的fields,那么就不需要再次marshal
-func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, mapOut interface{}) (err error) {
+func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, values interface{}) (err error) {
 	var (
 		cmd *redis.SliceCmd
 	)
@@ -196,7 +196,7 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	}
 	fieldsElem := reflect.ValueOf(fields)
 	//mapOut should be a map
-	mapElem := reflect.TypeOf(mapOut)
+	mapElem := reflect.TypeOf(values)
 	//if mapOut is  a pointer to  map , such as: var mapOut *map[uint32]interface{}
 	if mapElem.Kind() == reflect.Ptr {
 		if mapElem.Elem().Kind() != reflect.Map {
@@ -205,20 +205,20 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 		}
 		//if mapOut is a pointer to nil map, make a new one
 		//i.g. var mapOut map[uint32]interface{}   =>  var mapOut map[uint32]interface{} = make(map[uint32]interface{})
-		if reflect.ValueOf(mapOut).Elem().IsNil() {
-			reflect.ValueOf(mapOut).Elem().Set(reflect.MakeMap(mapElem.Elem()))
+		if reflect.ValueOf(values).Elem().IsNil() {
+			reflect.ValueOf(values).Elem().Set(reflect.MakeMap(mapElem.Elem()))
 		}
 		//make sure mapElem is a map
 		mapElem = mapElem.Elem()
-		mapOut = reflect.ValueOf(mapOut).Elem().Interface()
+		values = reflect.ValueOf(values).Elem().Interface()
 	}
 	if mapElem.Kind() != reflect.Map {
 		logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{}")
 		return errors.New("mapOut must be a map[interface{}] interface{}")
 	}
 	//if mapOut is nil, make a new one
-	if reflect.ValueOf(mapOut).IsNil() {
-		reflect.ValueOf(mapOut).Set(reflect.MakeMap(mapElem))
+	if reflect.ValueOf(values).IsNil() {
+		reflect.ValueOf(values).Set(reflect.MakeMap(mapElem))
 	}
 	//if fieldsElem is not []string, marshal each field to string
 	var fieldsString []string
@@ -258,12 +258,12 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 		}
 		if v == nil {
 			//set _map with nil
-			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.Zero(valueStructSupposed))
+			reflect.ValueOf(values).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.Zero(valueStructSupposed))
 			continue
 		}
 		obj := reflect.New(valueStructSupposed).Interface()
 		if err = msgpack.Unmarshal([]byte(v.(string)), &obj); err == nil {
-			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.ValueOf(obj).Elem())
+			reflect.ValueOf(values).SetMapIndex(reflect.ValueOf(key).Elem(), reflect.ValueOf(obj).Elem())
 		}
 	}
 	return cmd.Err()

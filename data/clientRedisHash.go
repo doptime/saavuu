@@ -45,8 +45,9 @@ func (db *Ctx[v]) HDel(field interface{}) (err error) {
 func (db *Ctx[v]) HKeys(fields interface{}) (err error) {
 	return rds.HKeys(db.Ctx, db.Rds, db.Key, fields)
 }
-func (db *Ctx[v]) HVals(values interface{}) (err error) {
-	return rds.HVals(db.Ctx, db.Rds, db.Key, values)
+func (db *Ctx[v]) HVals() (values []v, err error) {
+	values = make([]v, 0)
+	return values, rds.HVals(db.Ctx, db.Rds, db.Key, &values)
 }
 func (db *Ctx[v]) HIncrBy(field interface{}, increment int64) (err error) {
 	return rds.HIncrBy(db.Ctx, db.Rds, db.Key, field, increment)
