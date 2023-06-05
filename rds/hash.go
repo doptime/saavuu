@@ -186,15 +186,12 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 // 约定，来自客户端的fields，如果是[]string，则是真实的fields,那么就不需要再次marshal
 func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}, values interface{}) (err error) {
 	var (
-		cmd *redis.SliceCmd
+		cmd          *redis.SliceCmd
+		fieldsString []string
 	)
-	//make sure fields should be a slice
-	fieldsType := reflect.TypeOf(fields)
-	if fieldsType.Kind() != reflect.Slice {
-		logger.Lshortfile.Println("fields must be a slice")
-		return errors.New("fields must be a slice")
+	if fieldsString, err = FieldsToSlice(fields); err != nil {
+		return err
 	}
-	fieldsElem := reflect.ValueOf(fields)
 	//mapOut should be a map
 	mapElem := reflect.TypeOf(values)
 	//if mapOut is  a pointer to  map , such as: var mapOut *map[uint32]interface{}
@@ -220,22 +217,6 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	if reflect.ValueOf(values).IsNil() {
 		reflect.ValueOf(values).Set(reflect.MakeMap(mapElem))
 	}
-	//if fieldsElem is not []string, marshal each field to string
-	var fieldsString []string
-	var fieldsIsString bool
-	//约定，来自客户端的fields，如果是[]string，则是真实的fields,那么就不需要再次marshal
-	if fieldsString, fieldsIsString = fields.([]string); !fieldsIsString {
-		//marshal each field to string
-		fieldsString = make([]string, 0, fieldsElem.Len())
-		for i := 0; i < fieldsElem.Len(); i++ {
-			b, err := json.Marshal(reflect.ValueOf(fields).Index(i).Interface())
-			if err != nil {
-				logger.Lshortfile.Println("HMGET: field marshal error:", err)
-				continue
-			}
-			fieldsString = append(fieldsString, string(b))
-		}
-	}
 	if cmd = rc.HMGet(ctx, key, fieldsString...); cmd.Err() != nil {
 		return cmd.Err()
 	}
@@ -248,7 +229,7 @@ func HMGET(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	//save all data to mapOut
 	for i, v := range cmd.Val() {
 		key := reflect.New(KeyStructSupposed).Interface()
-		if KeyStructSupposedIsStringOrInterface && fieldsIsString {
+		if KeyStructSupposedIsStringOrInterface && fields.([]string) != nil {
 			//reflect set key using  fieldsString[i]
 			reflect.ValueOf(key).Elem().Set(reflect.ValueOf(fieldsString[i]))
 		} else if err = json.Unmarshal([]byte(fieldsString[i]), &key); err != nil {

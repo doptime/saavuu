@@ -3,6 +3,9 @@ package data
 import (
 	"reflect"
 
+	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
+
 	"github.com/yangkequn/saavuu/rds"
 )
 
@@ -33,6 +36,37 @@ func (db *Ctx[v]) HSetAll(_map interface{}) (err error) {
 }
 func (db *Ctx[v]) HMGET(fields interface{}, mapOut interface{}) (err error) {
 	return rds.HMGET(db.Ctx, db.Rds, db.Key, fields, mapOut)
+}
+
+func (db *Ctx[v]) HMGETSlice(fields interface{}) (values []v, err error) {
+	var (
+		cmd          *redis.SliceCmd
+		fieldsString []string
+	)
+	if fieldsString, err = rds.FieldsToSlice(fields); err != nil {
+		return nil, err
+	}
+
+	if cmd = db.Rds.HMGet(db.Ctx, db.Key, fieldsString...); cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+	values = make([]v, 0, len(fieldsString))
+	valueStruct := reflect.TypeOf((*v)(nil)).Elem()
+
+	//save all data to mapOut
+	for _, val := range cmd.Val() {
+		if val == nil {
+			values = append(values, reflect.Zero(valueStruct).Interface().(v))
+			continue
+		}
+		obj := reflect.New(valueStruct).Interface()
+		if err = msgpack.Unmarshal([]byte(val.(string)), &obj); err == nil {
+			values = append(values, obj.(v))
+		} else {
+			values = append(values, reflect.Zero(valueStruct).Interface().(v))
+		}
+	}
+	return values, nil
 }
 
 func (db *Ctx[v]) HLen() (length int64, err error) {
