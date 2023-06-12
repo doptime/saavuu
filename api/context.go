@@ -20,10 +20,16 @@ type Ctx[i any, o any] struct {
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
 func New[i any, o any](ServiceName string) *Ctx[i, o] {
-	//ensure ServiceKey start with "api:"
-	if len(ServiceName) < 4 || ServiceName[:4] != "api:" {
-		ServiceName = "api:" + ServiceName
+	//remove "api:" prefix
+	if len(ServiceName) >= 4 && ServiceName[:4] != "api:" {
+		ServiceName = ServiceName[4:]
 	}
+	//first byte of ServiceName should be lower case
+	if ServiceName[0] >= 'A' && ServiceName[0] <= 'Z' {
+		ServiceName = string(ServiceName[0]+32) + ServiceName[1:]
+	}
+	//ensure ServiceKey start with "api:"
+	ServiceName = "api:" + ServiceName
 
 	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds, Debug: false, ServiceName: ServiceName}
 }
