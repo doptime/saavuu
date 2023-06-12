@@ -21,7 +21,7 @@ type Ctx[i any, o any] struct {
 // If the API is defined in this package, use Api() instead.
 func New[i any, o any](ServiceName string) *Ctx[i, o] {
 	//remove "api:" prefix
-	if len(ServiceName) >= 4 && ServiceName[:4] != "api:" {
+	if len(ServiceName) >= 4 && ServiceName[:4] == "api:" {
 		ServiceName = ServiceName[4:]
 	}
 	//first byte of ServiceName should be lower case
