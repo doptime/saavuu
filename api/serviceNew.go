@@ -27,7 +27,7 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 		_type = _type.Elem()
 	}
 	//if SerivceName Starts with "In", remove it
-	if ServiceName = _type.Name(); len(ServiceName) >= 3 && ServiceName[0:2] != "In" {
+	if ServiceName = _type.Name(); len(ServiceName) >= 2 && ServiceName[0:2] == "In" {
 		ServiceName = ServiceName[2:]
 	}
 	if len(ServiceName) == 0 {
