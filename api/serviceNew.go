@@ -12,27 +12,8 @@ import (
 
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
-// crate Api context. the created context is used :
-//  1. to call api service,using Do() or DoAt()
-//  2. to be called by web client or another language client
-//
-// ServiceName is defined as "In" + ServiceName in the InServiceName parameter
-// ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
-	//get ServiceName
-	var ServiceName string
-	_type := reflect.TypeOf((*i)(nil))
-	//take name of type v as key
-	for _type.Kind() == reflect.Ptr {
-		_type = _type.Elem()
-	}
-	//if SerivceName Starts with "In", remove it
-	if ServiceName = _type.Name(); len(ServiceName) >= 2 && ServiceName[0:2] == "In" {
-		ServiceName = ServiceName[2:]
-	}
-	if len(ServiceName) == 0 {
-		logger.Lshortfile.Panic("Api: ServiceName is empty")
-	}
+// Key purpose of ApiNamed is to allow different API to have the same input type
+func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
@@ -85,4 +66,25 @@ func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, 
 	}
 	//return Api context
 	return ctx
+}
+
+// crate Api context. the created context is used :
+//  1. to call api service,using Do() or DoAt()
+//  2. to be called by web client or another language client
+//
+// ServiceName is defined as "In" + ServiceName in the InServiceName parameter
+// ServiceName is automatically converted to lower case
+func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
+	//get ServiceName
+	var ServiceName string
+	_type := reflect.TypeOf((*i)(nil))
+	//take name of type v as key
+	for _type.Kind() == reflect.Ptr {
+		_type = _type.Elem()
+	}
+	//if SerivceName Starts with "In", remove it
+	if ServiceName = _type.Name(); len(ServiceName) >= 2 && ServiceName[0:2] == "In" {
+		ServiceName = ServiceName[2:]
+	}
+	return ApiNamed[i, o](ServiceName, f)
 }

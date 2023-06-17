@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
 )
 
@@ -24,9 +25,19 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 	if len(ServiceName) >= 4 && ServiceName[:4] == "api:" {
 		ServiceName = ServiceName[4:]
 	}
+
+	//if SerivceName Starts with "In", remove it
+	if len(ServiceName) >= 2 && (ServiceName[0:2] == "In" || ServiceName[0:2] == "in") {
+		ServiceName = ServiceName[2:]
+	}
+
 	//first byte of ServiceName should be lower case
 	if ServiceName[0] >= 'A' && ServiceName[0] <= 'Z' {
 		ServiceName = string(ServiceName[0]+32) + ServiceName[1:]
+	}
+
+	if len(ServiceName) == 0 {
+		log.Panic().Msg("Empty ServiceName is empty")
 	}
 	//ensure ServiceKey start with "api:"
 	ServiceName = "api:" + ServiceName
