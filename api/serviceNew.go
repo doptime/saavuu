@@ -75,16 +75,10 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 // ServiceName is defined as "In" + ServiceName in the InServiceName parameter
 // ServiceName is automatically converted to lower case
 func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
-	//get ServiceName
-	var ServiceName string
-	_type := reflect.TypeOf((*i)(nil))
+	//get default ServiceName
+	var _type reflect.Type
 	//take name of type v as key
-	for _type.Kind() == reflect.Ptr {
-		_type = _type.Elem()
+	for _type = reflect.TypeOf((*i)(nil)); _type.Kind() == reflect.Ptr; _type = _type.Elem() {
 	}
-	//if SerivceName Starts with "In", remove it
-	if ServiceName = _type.Name(); len(ServiceName) >= 2 && ServiceName[0:2] == "In" {
-		ServiceName = ServiceName[2:]
-	}
-	return ApiNamed[i, o](ServiceName, f)
+	return ApiNamed[i, o](_type.Name(), f)
 }

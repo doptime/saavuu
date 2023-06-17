@@ -6,6 +6,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
+	"golang.org/x/exp/slices"
 )
 
 type Ctx[i any, o any] struct {
@@ -16,6 +17,8 @@ type Ctx[i any, o any] struct {
 	ServiceName string
 	Func        func(InServiceName i) (ret o, err error)
 }
+
+var disAllowedServiceNames = []string{"string", "int32", "int64", "float32", "float64", "int", "uint", "float", "bool", "byte", "rune", "complex64", "complex128"}
 
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
@@ -38,6 +41,10 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 
 	if len(ServiceName) == 0 {
 		log.Panic().Msg("Empty ServiceName is empty")
+	}
+	//panic if servicename is string int32 int64 float32 float64, int, uint, float, bool, byte, rune, complex64, complex128
+	if slices.Contains(disAllowedServiceNames, ServiceName) {
+		log.Panic().Str("ServiceName misnamed. Check your code", ServiceName)
 	}
 	//ensure ServiceKey start with "api:"
 	ServiceName = "api:" + ServiceName
