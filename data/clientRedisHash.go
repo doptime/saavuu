@@ -54,7 +54,6 @@ func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
 	//save all data to mapOut
 	for i, val := range cmd.Val() {
 		if val == nil {
-			values = append(values, reflect.Zero(valueStruct).Interface().(v))
 			continue
 		}
 		obj := reflect.New(valueStruct).Interface()
