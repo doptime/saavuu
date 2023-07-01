@@ -47,20 +47,25 @@ func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
 	if cmd = db.Rds.HMGet(db.Ctx, db.Key, fieldsString...); cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
-	values = make([]v, 0, len(fieldsString))
+	values = make([]v, len(fieldsString))
 	valueStruct := reflect.TypeOf((*v)(nil)).Elem()
+	isElemPtr := valueStruct.Kind() == reflect.Ptr
 
 	//save all data to mapOut
-	for _, val := range cmd.Val() {
+	for i, val := range cmd.Val() {
 		if val == nil {
 			values = append(values, reflect.Zero(valueStruct).Interface().(v))
 			continue
 		}
 		obj := reflect.New(valueStruct).Interface()
+		if isElemPtr {
+			if err = msgpack.Unmarshal([]byte(val.(string)), obj); err == nil {
+				values[i] = *obj.(*v)
+			}
+			continue
+		}
 		if err = msgpack.Unmarshal([]byte(val.(string)), &obj); err == nil {
-			values = append(values, obj.(v))
-		} else {
-			values = append(values, reflect.Zero(valueStruct).Interface().(v))
+			values[i] = obj.(v)
 		}
 	}
 	return values, nil

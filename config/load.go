@@ -32,8 +32,8 @@ func init() {
 	logger.Std.Println("App Start! load config from OS env")
 
 	loadOSEnv("RPCFirst", &Cfg.RPCFirst, false)
-	loadOSEnv("RedisAddress", &Cfg.RedisAddress, nil)
 	loadOSEnv("RedisPassword", &Cfg.RedisPassword, "")
+	loadOSEnv("RedisAddress", &Cfg.RedisAddress, nil)
 	loadOSEnv("RedisDb", &Cfg.RedisDb, nil)
 	loadOSEnv("JWTSecret", &Cfg.JWTSecret, "")
 	//try load from env
