@@ -61,10 +61,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
 	case "HMGET":
-		if err = db.HMGET(strings.Split(svcCtx.Field, ","), &map_interface_interface); err != nil {
-			return nil, err
-		}
-		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
+		return db.HMGET(strings.Split(svcCtx.Field, ","))
 	case "HKEYS":
 		var keys []string
 		if err := db.HKeys(&keys); err != nil {

@@ -34,11 +34,8 @@ func (db *Ctx[v]) HGetAll(mapOut interface{}) (err error) {
 func (db *Ctx[v]) HSetAll(_map interface{}) (err error) {
 	return rds.HSetAll(db.Ctx, db.Rds, db.Key, _map)
 }
-func (db *Ctx[v]) HMGET(fields interface{}, mapOut interface{}) (err error) {
-	return rds.HMGET(db.Ctx, db.Rds, db.Key, fields, mapOut)
-}
 
-func (db *Ctx[v]) HMGETSlice(fields interface{}) (values []v, err error) {
+func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
 	var (
 		cmd          *redis.SliceCmd
 		fieldsString []string
