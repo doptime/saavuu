@@ -16,7 +16,7 @@ type InLockKey struct {
 
 var removeCounter int64 = 90
 
-var ApiLockKey = Api(func(req *InLockKey) (ok bool, err error) {
+var ApiLockKey, ApiLockKeyCtx = Api(func(req *InLockKey) (ok bool, err error) {
 	var (
 		now     int64 = time.Now().UnixMilli()
 		dueTime int64 = now + req.DurationMs

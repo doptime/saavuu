@@ -13,7 +13,7 @@ import (
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
-func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
+func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
@@ -65,7 +65,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 		ApiFunc: ProcessOneJob,
 	}
 	//return Api context
-	return ctx
+	return f, ctx
 }
 
 // crate Api context. the created context is used :
@@ -74,7 +74,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 //
 // ServiceName is defined as "In" + ServiceName in the InServiceName parameter
 // ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InServiceName i) (ret o, err error)) (ctx *Ctx[i, o]) {
+func Api[i any, o any](f func(InParam i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
 	//get default ServiceName
 	var _type reflect.Type
 	//take name of type v as key
