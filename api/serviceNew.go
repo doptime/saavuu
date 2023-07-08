@@ -1,15 +1,12 @@
 package api
 
 import (
-	"errors"
 	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
 )
-
-var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
 func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
@@ -67,9 +64,9 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 	return f, ctx
 }
 
-// crate Api context. the created context is used :
-//  1. to call api service,using Do() or DoAt()
-//  2. to be called by web client or another language client
+// crate ApiFun, ApiContext. the created Api is used :
+//  1. to call api service,using ApiFun() or ApiContext.DoAt()
+//  2. Api can be called by web client or another language client
 //
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
