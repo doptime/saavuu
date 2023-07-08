@@ -12,18 +12,18 @@ import (
 var ErrBackTo = errors.New("param[\"backTo\"] is not a string")
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
-func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
+func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
+	// JWT info is stored in Field MsgPack.
+	type InParamWithMsgPack struct {
+		OriginalInputParam i
+		MsgPack            []byte
+	}
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
 	ctx.Func = f
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
-		// JWT info is stored in Field MsgPack.
-		type InParamWithMsgPack struct {
-			OriginalInputParam i
-			MsgPack            []byte
-		}
 		var (
 			out   o
 			param InParamWithMsgPack
@@ -78,7 +78,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 //  1. to call api service,using Do() or DoAt()
 //  2. to be called by web client or another language client
 //
-// ServiceName is defined as "In" + ServiceName in the InServiceName parameter
+// ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
 func Api[i any, o any](f func(InParam i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
 	//get default ServiceName
