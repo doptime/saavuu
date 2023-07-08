@@ -19,13 +19,9 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 	ctx.Func = f
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
-		type JWTInfoMsgpacked struct {
-			MsgPack []byte
-		}
+		type JWTInfoMsgpacked struct{ MsgPack []byte }
 		var (
 			in  i
-			pIn *i
-			out o
 			jwt JWTInfoMsgpacked
 		)
 		//check configureation is loaded
@@ -34,40 +30,33 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		}
 
 		//step 1, try to unmarshal MsgPack
-		err = msgpack.Unmarshal(s, &jwt)
-
-		vType := reflect.TypeOf((*i)(nil)).Elem()
-		// case double pointer decoding
-		if err == nil && vType.Kind() == reflect.Ptr {
-			in = reflect.New(vType.Elem()).Interface().(i)
-			//step 2, try to unmarshal OriginalInputParam
-			err = msgpack.Unmarshal(s, in)
-			if err == nil && len(jwt.MsgPack) > 0 {
-				//step 3, try to unmarshal MsgPack
-				err = msgpack.Unmarshal(jwt.MsgPack, in)
+		if err = msgpack.Unmarshal(s, &jwt); err == nil {
+			// case double pointer decoding
+			if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
+				in = reflect.New(vType.Elem()).Interface().(i)
+				//step 2, try to unmarshal OriginalInputParam
+				if err = msgpack.Unmarshal(s, in); err == nil && len(jwt.MsgPack) > 0 {
+					//step 3, try to unmarshal MsgPack
+					err = msgpack.Unmarshal(jwt.MsgPack, in)
+				}
+			} else {
+				var pIn *i = reflect.New(vType).Interface().(*i)
+				//step 2, try to unmarshal OriginalInputParam
+				if err = msgpack.Unmarshal(s, pIn); err == nil && len(jwt.MsgPack) > 0 {
+					//step 3, try to unmarshal MsgPackƒ
+					err = msgpack.Unmarshal(jwt.MsgPack, pIn)
+				}
+				in = *pIn
 			}
-		} else if err == nil {
-			pIn = reflect.New(vType).Interface().(*i)
-			//step 2, try to unmarshal OriginalInputParam
-			err = msgpack.Unmarshal(s, pIn)
-			if err == nil && len(jwt.MsgPack) > 0 {
-				//step 3, try to unmarshal MsgPackƒ
-				err = msgpack.Unmarshal(jwt.MsgPack, pIn)
-			}
-			in = *pIn
 		}
-		//print the unmarshal error
 		if err != nil {
+			//print the unmarshal error
 			if ctx.Debug {
 				logger.Lshortfile.Println(err)
 			}
 			return nil, err
 		}
-		if out, err = f(in); err != nil {
-			return nil, err
-		}
-
-		return out, err
+		return f(in)
 	}
 	//register Api
 	ApiServices[ctx.ServiceName] = &ApiInfo{
