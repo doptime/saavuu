@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/logger"
 	"golang.org/x/exp/slices"
 )
 
@@ -40,11 +40,11 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 	}
 
 	if len(ServiceName) == 0 {
-		log.Panic().Msg("Empty ServiceName is empty")
+		logger.Lshortfile.Panic("Empty ServiceName is empty")
 	}
 	//panic if servicename is string int32 int64 float32 float64, int, uint, float, bool, byte, rune, complex64, complex128
 	if slices.Contains(disAllowedServiceNames, ServiceName) {
-		log.Panic().Str("ServiceName misnamed. Check your code", ServiceName)
+		logger.Lshortfile.Panic(ServiceName + ":ServiceName misnamed. Check your code")
 	}
 	//ensure ServiceKey start with "api:"
 	ServiceName = "api:" + ServiceName
