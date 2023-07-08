@@ -7,32 +7,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func MapsToStructure(parmIn map[string]interface{}, outStruct interface{}) (err error) {
-	var (
-		bytes, bytes_web []byte
-		ok               bool
-	)
-	//the source of MsgPack if from web client
-	if bytes_web, ok = parmIn["MsgPack"].([]byte); ok {
-		delete(parmIn, "MsgPack")
-	}
-	if bytes, err = msgpack.Marshal(parmIn); err != nil {
-		return err
-	}
-	if err = msgpack.Unmarshal(bytes, outStruct); err != nil {
-		return err
-	}
-	if ok {
-		//msgpackBytes should unmarshal after mapstructure.Decode
-		//allowing JWT_*** to Cover the value in outStruct
-		if err = msgpack.Unmarshal(bytes_web, outStruct); err != nil {
-			return err
-		}
-		parmIn["MsgPack"] = bytes_web
-	}
-	return nil
-}
-
 func MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
 	var bytes []byte
 	ret = make([][]byte, len(members))

@@ -6,7 +6,6 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/logger"
 )
 
@@ -18,31 +17,39 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
 	ctx.Func = f
-	//create a goroutine to process the job
+	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
-		var (
-			out    o
-			param  map[string]interface{} = map[string]interface{}{}
-			vValue i
-		)
-		if err = msgpack.Unmarshal(s, &param); err != nil {
-			return nil, err
+		// JWT info is stored in Field MsgPack.
+		type InParamWithMsgPack struct {
+			OriginalInputParam i
+			MsgPack            []byte
 		}
-		//process one job
+		var (
+			out   o
+			param InParamWithMsgPack
+		)
 		//check configureation is loaded
 		if config.Rds == nil {
 			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
 		}
 
-		vType := reflect.TypeOf((*i)(nil)).Elem()
-		if vType.Kind() == reflect.Ptr {
-			vValue = reflect.New(vType.Elem()).Interface().(i)
-			err = data.MapsToStructure(param, vValue)
-		} else {
-			var valueWithPointer *i = reflect.New(vType).Interface().(*i)
-			//MapsToStructure does not support double pointer decoding
-			if err = data.MapsToStructure(param, valueWithPointer); err == nil {
-				vValue = *valueWithPointer
+		//step 1, try to unmarshal MsgPack
+		err = msgpack.Unmarshal(s, &param)
+
+		// case double pointer decoding
+		if vType := reflect.TypeOf((*i)(nil)).Elem(); err == nil && vType.Kind() == reflect.Ptr {
+			//step 2, try to unmarshal OriginalInputParam
+			err = msgpack.Unmarshal(s, param.OriginalInputParam)
+			if err == nil && len(param.MsgPack) > 0 {
+				//step 3, try to unmarshal MsgPack
+				err = msgpack.Unmarshal(param.MsgPack, param.OriginalInputParam)
+			}
+		} else if err == nil {
+			//step 2, try to unmarshal OriginalInputParam
+			err = msgpack.Unmarshal(s, &param.OriginalInputParam)
+			if err == nil && len(param.MsgPack) > 0 {
+				//step 3, try to unmarshal MsgPackƒ
+				err = msgpack.Unmarshal(param.MsgPack, &param.OriginalInputParam)
 			}
 		}
 		//print the unmarshal error
@@ -52,7 +59,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 			}
 			return nil, err
 		}
-		if out, err = f(vValue); err != nil {
+		if out, err = f(param.OriginalInputParam); err != nil {
 			return nil, err
 		}
 
