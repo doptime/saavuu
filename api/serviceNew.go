@@ -24,6 +24,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		}
 		var (
 			in  i
+			pIn *i
 			out o
 			jwt JWTInfoMsgpacked
 		)
@@ -35,8 +36,10 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		//step 1, try to unmarshal MsgPack
 		err = msgpack.Unmarshal(s, &jwt)
 
+		vType := reflect.TypeOf((*i)(nil)).Elem()
 		// case double pointer decoding
-		if vType := reflect.TypeOf((*i)(nil)).Elem(); err == nil && vType.Kind() == reflect.Ptr {
+		if err == nil && vType.Kind() == reflect.Ptr {
+			in = reflect.New(vType.Elem()).Interface().(i)
 			//step 2, try to unmarshal OriginalInputParam
 			err = msgpack.Unmarshal(s, in)
 			if err == nil && len(jwt.MsgPack) > 0 {
@@ -44,12 +47,14 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 				err = msgpack.Unmarshal(jwt.MsgPack, in)
 			}
 		} else if err == nil {
+			pIn = reflect.New(vType).Interface().(*i)
 			//step 2, try to unmarshal OriginalInputParam
-			err = msgpack.Unmarshal(s, &in)
+			err = msgpack.Unmarshal(s, pIn)
 			if err == nil && len(jwt.MsgPack) > 0 {
 				//step 3, try to unmarshal MsgPackƒ
-				err = msgpack.Unmarshal(jwt.MsgPack, &in)
+				err = msgpack.Unmarshal(jwt.MsgPack, pIn)
 			}
+			in = *pIn
 		}
 		//print the unmarshal error
 		if err != nil {
