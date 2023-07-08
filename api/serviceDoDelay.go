@@ -41,7 +41,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
-		if ret, err = ApiServices[serviceName].ApiFunc(bytes); err != nil {
+		if ret, err = ApiServices[serviceName].ApiFuncWithMsgpackedParam(bytes); err != nil {
 			logger.Lshortfile.Println(err)
 			return
 		}

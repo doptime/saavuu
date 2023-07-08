@@ -13,8 +13,8 @@ import (
 type ApiInfo struct {
 	// ApiName is the name of the service
 	ApiName string
-	// ApiFunc is the function of the service
-	ApiFunc func(s []byte) (ret interface{}, err error)
+	// ApiFuncWithMsgpackedParam is the function of the service
+	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
 
 var ApiServices map[string]*ApiInfo = map[string]*ApiInfo{}
@@ -97,7 +97,7 @@ func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 		msgPackResult []byte
 		ret           interface{}
 	)
-	if ret, err = ApiServices[apiName].ApiFunc(s); err != nil {
+	if ret, err = ApiServices[apiName].ApiFuncWithMsgpackedParam(s); err != nil {
 		return err
 	}
 	if msgPackResult, err = msgpack.Marshal(ret); err != nil {

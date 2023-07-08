@@ -21,8 +21,9 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 	//create a goroutine to process the job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		var (
-			out   o
-			param map[string]interface{} = map[string]interface{}{}
+			out    o
+			param  map[string]interface{} = map[string]interface{}{}
+			vValue i
 		)
 		if err = msgpack.Unmarshal(s, &param); err != nil {
 			return nil, err
@@ -35,34 +36,32 @@ func ApiNamed[i any, o any](ServiceName string, f func(InServiceName i) (ret o, 
 
 		vType := reflect.TypeOf((*i)(nil)).Elem()
 		if vType.Kind() == reflect.Ptr {
-			vValue := reflect.New(vType.Elem()).Interface().(i)
-			if ctx.Debug {
-				//just allow stop here to see the input data
-				ctx.Debug = !ctx.Debug
-				ctx.Debug = !ctx.Debug
-			}
-			if err = data.MapsToStructure(param, vValue); err != nil {
-				return nil, err
-			}
-			if out, err = f(vValue); err != nil {
-				return nil, err
-			}
-
+			vValue = reflect.New(vType.Elem()).Interface().(i)
+			err = data.MapsToStructure(param, vValue)
 		} else {
-			vValueWithPointer := reflect.New(vType).Interface().(*i)
-			if err = data.MapsToStructure(param, vValueWithPointer); err != nil {
-				return nil, err
-			}
-			if out, err = f(*vValueWithPointer); err != nil {
-				return nil, err
+			var valueWithPointer *i = reflect.New(vType).Interface().(*i)
+			//MapsToStructure does not support double pointer decoding
+			if err = data.MapsToStructure(param, valueWithPointer); err == nil {
+				vValue = *valueWithPointer
 			}
 		}
+		//print the unmarshal error
+		if err != nil {
+			if ctx.Debug {
+				logger.Lshortfile.Println(err)
+			}
+			return nil, err
+		}
+		if out, err = f(vValue); err != nil {
+			return nil, err
+		}
+
 		return out, err
 	}
 	//register Api
 	ApiServices[ctx.ServiceName] = &ApiInfo{
-		ApiName: ctx.ServiceName,
-		ApiFunc: ProcessOneJob,
+		ApiName:                   ctx.ServiceName,
+		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	}
 	//return Api context
 	return f, ctx

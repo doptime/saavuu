@@ -47,7 +47,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		if msgpackBytes, err := api.EncodeApiInput(paramIn); err != nil {
 			return nil, err
 		} else {
-			return fuc.ApiFunc(msgpackBytes)
+			return fuc.ApiFuncWithMsgpackedParam(msgpackBytes)
 		}
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64
