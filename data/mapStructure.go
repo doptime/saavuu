@@ -7,18 +7,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func MarshalSlice(members ...interface{}) (ret [][]byte, err error) {
-	var bytes []byte
-	ret = make([][]byte, len(members))
-	for i, member := range members {
-		if bytes, err = msgpack.Marshal(member); err != nil {
-			return nil, err
-		}
-		ret[i] = bytes
-	}
-	return ret, nil
-}
-
 func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
 	out = make([]v, 0, len(members))
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out

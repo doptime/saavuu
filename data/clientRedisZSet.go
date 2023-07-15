@@ -16,13 +16,20 @@ func (db *Ctx[v]) ZAdd(members ...redis.Z) (err error) {
 	return status.Err()
 }
 func (db *Ctx[v]) ZRem(members ...interface{}) (err error) {
-	//msgpack marshal members
-	var memberBytes [][]byte
-	if memberBytes, err = MarshalSlice(members...); err != nil {
-		return err
+	//msgpack marshal members to slice of bytes
+	var bytes = make([][]byte, len(members))
+	for i, member := range members {
+		if bytes[i], err = msgpack.Marshal(member); err != nil {
+			return err
+		}
 	}
-	status := db.Rds.ZRem(db.Ctx, db.Key, memberBytes)
-	return status.Err()
+	var redisPipe = db.Rds.Pipeline()
+	for _, memberBytes := range bytes {
+		redisPipe.ZRem(db.Ctx, db.Key, memberBytes)
+	}
+	_, err = redisPipe.Exec(db.Ctx)
+
+	return err
 }
 func (db *Ctx[v]) ZRange(start, stop int64) (members []v, err error) {
 	var cmd *redis.StringSliceCmd
