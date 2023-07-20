@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
@@ -33,14 +34,15 @@ func mapConvertWithKeyFromInterfaceToString(m map[interface{}]interface{}) (m2 m
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		jwts                    map[string]interface{} = map[string]interface{}{}
+		paramIn                 map[string]interface{} = map[string]interface{}{}
 		Min, Max                string
 		tm                      time.Time
 		map_interface_interface map[interface{}]interface{}
 		operation               string
 		members                 []interface{} = []interface{}{}
+		buf                     []byte
 	)
-	svcCtx.MergeJwtField(jwts)
+	svcCtx.MergeJwtField(paramIn)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
@@ -53,6 +55,29 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	db := data.Ctx[interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
+	case "API":
+		var (
+			fuc *api.ApiInfo
+			ok  bool
+		)
+		if len(svcCtx.Field) > 0 {
+			paramIn["JsonPack"] = svcCtx.Field
+		}
+		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
+			paramIn["MsgPack"] = MsgPack
+		}
+
+		var _api = api.New[interface{}, interface{}](svcCtx.Key)
+		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
+		if fuc, ok = api.ApiServices[_api.ServiceName]; config.Cfg.RPCFirst || !ok {
+			return _api.Do(paramIn)
+		}
+
+		//if function is stored locally, call it directly. This is alias monolithic mode
+		if buf, err = api.EncodeApiInput(paramIn); err != nil {
+			return nil, err
+		}
+		return fuc.ApiFuncWithMsgpackedParam(buf)
 	case "HGET":
 		return db.HGet(svcCtx.Field)
 	case "HGETALL":

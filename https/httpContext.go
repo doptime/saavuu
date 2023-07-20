@@ -64,17 +64,6 @@ func (svc *HttpContext) SetContentType() {
 	}
 }
 
-func (svc *HttpContext) BodyMessage() (param map[string]interface{}, err error) {
-	var data []byte = nil
-	if data, err = svc.BodyBytes(); err != nil {
-		return nil, err
-	}
-	if len(data) == 0 {
-		return nil, errors.New("empty body")
-	}
-	return map[string]interface{}{"MsgPack": data}, nil
-}
-
 func (svc *HttpContext) BodyBytes() (data []byte, err error) {
 	var (
 		ctype string = svc.Req.Header.Get("Content-Type")

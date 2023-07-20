@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"reflect"
 
 	"github.com/vmihailenco/msgpack/v5"
@@ -16,10 +17,13 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 	ctx.Func = f
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
-		type JWTInfoMsgpacked struct{ MsgPack []byte }
+		type DataPacked struct {
+			MsgPack  []byte
+			JsonPack string
+		}
 		var (
-			in  i
-			jwt JWTInfoMsgpacked
+			in       i
+			datapack DataPacked
 		)
 		//check configureation is loaded
 		if config.Rds == nil {
@@ -27,21 +31,28 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		}
 
 		//step 1, try to unmarshal MsgPack
-		if err = msgpack.Unmarshal(s, &jwt); err == nil {
+		if err = msgpack.Unmarshal(s, &datapack); err == nil {
 			// case double pointer decoding
 			if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
 				in = reflect.New(vType.Elem()).Interface().(i)
 				//step 2, try to unmarshal OriginalInputParam
-				if err = msgpack.Unmarshal(s, in); err == nil && len(jwt.MsgPack) > 0 {
+				if err = msgpack.Unmarshal(s, in); err == nil && len(datapack.MsgPack) > 0 {
 					//step 3, try to unmarshal MsgPack
-					err = msgpack.Unmarshal(jwt.MsgPack, in)
+					err = msgpack.Unmarshal(datapack.MsgPack, in)
 				}
+				if err == nil && len(datapack.JsonPack) > 0 {
+					err = json.Unmarshal([]byte(datapack.JsonPack), in)
+				}
+
 			} else {
 				var pIn *i = reflect.New(vType).Interface().(*i)
 				//step 2, try to unmarshal OriginalInputParam
-				if err = msgpack.Unmarshal(s, pIn); err == nil && len(jwt.MsgPack) > 0 {
+				if err = msgpack.Unmarshal(s, pIn); err == nil && len(datapack.MsgPack) > 0 {
 					//step 3, try to unmarshal MsgPackƒ
-					err = msgpack.Unmarshal(jwt.MsgPack, pIn)
+					err = msgpack.Unmarshal(datapack.MsgPack, pIn)
+				}
+				if err == nil && len(datapack.JsonPack) > 0 {
+					err = json.Unmarshal([]byte(datapack.JsonPack), pIn)
 				}
 				in = *pIn
 			}

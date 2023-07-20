@@ -22,9 +22,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		fuc       *api.ApiInfo
 		ok        bool
 	)
-	if paramIn, err = svcCtx.BodyMessage(); err != nil {
-		return nil, errors.New("data error")
-	}
+
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
 	}
@@ -37,6 +35,12 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 
 	//service name is stored in svcCtx.Key
 	if svcCtx.Cmd == "API" {
+		if len(svcCtx.Field) > 0 {
+			paramIn["JsonPack"] = svcCtx.Field
+		}
+		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
+			paramIn["MsgPack"] = MsgPack
+		}
 		svcCtx.MergeJwtField(paramIn)
 		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
@@ -52,15 +56,13 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	} else if svcCtx.Cmd == "ZADD" {
 		var Score float64
 		var obj interface{}
-		var ok bool
 		if Score, err = strconv.ParseFloat(svcCtx.Req.FormValue("Score"), 64); err != nil {
 			return "false", errors.New("parameter Score shoule be float")
 		}
 		//unmarshal msgpack
-		if _, ok = paramIn["MsgPack"]; !ok {
+		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) == 0 {
 			return "false", errors.New("missing MsgPack content")
-		}
-		if err = msgpack.Unmarshal(paramIn["MsgPack"].([]byte), &obj); err != nil {
+		} else if err = msgpack.Unmarshal(MsgPack, &obj); err != nil {
 			return "false", err
 		}
 		if err = db.ZAdd(redis.Z{Score: Score, Member: obj}); err != nil {
