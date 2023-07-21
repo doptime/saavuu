@@ -11,17 +11,8 @@ import (
 )
 
 func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], PermissionKey *string, dataKey string, operation string) (ok bool) {
-	dataKey = strings.Split(dataKey, ":")[0]
-	// only care non-digit part of dataKey
-	//split dataKey with number digit char, and get the first part
-	//for example, if dataKey is "user1x3", then dataKey will be "user"
-	for i, v := range dataKey {
-		if v >= '0' && v <= '9' {
-			dataKey = dataKey[:i]
-			break
-		}
-	}
-	if len(dataKey) == 0 {
+	//for example, if dataKey is "user:1x3", then dataKey will be "user"
+	if dataKey = strings.Split(dataKey, ":")[0]; len(dataKey) == 0 {
 		return false
 	}
 

@@ -8,21 +8,21 @@ import (
 
 func (db *Ctx[v]) YMD(tm time.Time) *Ctx[v] {
 	//year is 4 digits, month is 2 digits, day is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYMD:%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YMD%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
 }
 func (db *Ctx[v]) YM(tm time.Time) *Ctx[v] {
 	//year is 4 digits, month is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYM:%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YM%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
 }
 func (db *Ctx[v]) Y(tm time.Time) *Ctx[v] {
 	//year is 4 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sY:%04v", db.Key, tm.Year())}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:Y%04v", db.Key, tm.Year())}
 }
 func (db *Ctx[v]) YW(tm time.Time) *Ctx[v] {
 	tm = tm.UTC()
 	isoYear, isoWeek := tm.ISOWeek()
 	//year is 4 digits, week is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%sYW:%04v%02v", db.Key, isoYear, isoWeek)}
+	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YW%04v%02v", db.Key, isoYear, isoWeek)}
 }
 func ConcatedKeys(fields ...interface{}) string {
 	//	concacate all fields with ':'
