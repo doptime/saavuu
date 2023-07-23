@@ -1,6 +1,7 @@
 package https
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -21,6 +22,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		operation string
 		fuc       *api.ApiInfo
 		ok        bool
+		JsonMap   map[string]string = map[string]string{}
 	)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
@@ -35,8 +37,14 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 
 	//service name is stored in svcCtx.Key
 	if svcCtx.Cmd == "API" {
-		if len(svcCtx.Field) > 0 {
-			paramIn["JsonPack"] = svcCtx.Field
+		//convert query fields to JsonPack. but ignore K field(api name )
+		for k, v := range svcCtx.Req.Form {
+			if k != "K" {
+				JsonMap[k] = v[0]
+			}
+		}
+		if len(JsonMap) > 0 {
+			paramIn["JsonPack"], _ = json.Marshal(JsonMap)
 		}
 		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
 			paramIn["MsgPack"] = MsgPack
