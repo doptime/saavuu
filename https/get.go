@@ -65,12 +65,13 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		for k, v := range svcCtx.Req.Form {
-			var val interface{}
-			if json.Unmarshal([]byte(v[0]), &val) == nil {
-				JsonMap[k] = val
-			} else {
-				JsonMap[k] = string(v[0])
-			}
+			JsonMap[k] = string(v[0])
+			// var val interface{}
+			// if json.Unmarshal([]byte(v[0]), &val) == nil {
+			// 	JsonMap[k] = val
+			// } else {
+			// 	JsonMap[k] = string(v[0])
+			// }
 		}
 		if len(JsonMap) > 0 {
 			paramIn["JsonPack"], _ = json.Marshal(JsonMap)
