@@ -42,7 +42,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		operation               string
 		members                 []interface{} = []interface{}{}
 		buf                     []byte
-		JsonMap                 map[string]interface{} = map[string]interface{}{}
 	)
 	svcCtx.MergeJwtField(paramIn)
 
