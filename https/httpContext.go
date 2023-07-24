@@ -21,7 +21,6 @@ type HttpContext struct {
 	Key   string
 	Field string
 
-	ResponseFields      string
 	ResponseContentType string
 }
 
@@ -33,32 +32,14 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	//i.g. https://url.com/rSvc/HGET=UserAvatar=fa4Y3oyQk2swURaJ?Queries=*&RspType=image/jpeg
-	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
+	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 2 {
 		return nil, ErrIncompleteRequest
 	}
-	//this last part of url is cmd and key and field, i.g. /HGET?K=UserAvatar&F=fa4Y3oyQk2swURaJ
-	//read first param as cmd
-	if CmdKey := CmdKeyFields[len(CmdKeyFields)-1]; len(CmdKey) > 0 {
-		IndexOfDash := strings.Index(CmdKey, "-")
-		if IndexOfDash > 0 {
-			svcContext.Cmd = CmdKey[:IndexOfDash]
-		}
-		if IndexOfDash < len(CmdKey)-1 {
-			svcContext.Key = CmdKey[IndexOfDash+1:]
-		}
-	}
-	if len(svcContext.Key) == 0 {
-		svcContext.Key = svcContext.Cmd
-	}
+	// cmd and key and field, i.g. /HGET/UserAvatar?F=fa4Y3oyQk2swURaJ
+	svcContext.Cmd = CmdKeyFields[len(CmdKeyFields)-2]
+	svcContext.Key = CmdKeyFields[len(CmdKeyFields)-1]
 	//url decoded already
 	svcContext.Field = r.FormValue("F")
-
-	//for response
-	if svcContext.ResponseFields = svcContext.Req.FormValue("QF"); len(svcContext.ResponseFields) == 0 {
-		svcContext.ResponseFields = "*"
-	} else if svcContext.ResponseFields == "null" {
-		svcContext.ResponseFields = ""
-	}
 
 	//default response content type: application/json
 	if svcContext.ResponseContentType = svcContext.Req.FormValue("RspType"); svcContext.ResponseContentType == "" {
@@ -67,7 +48,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	return svcContext, nil
 }
 func (svc *HttpContext) SetContentType() {
-	if len(svc.ResponseContentType) > 0 && len(svc.ResponseFields) > 0 {
+	if len(svc.ResponseContentType) > 0 {
 		svc.Rsb.Header().Set("Content-Type", svc.ResponseContentType)
 	}
 }

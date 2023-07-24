@@ -58,13 +58,10 @@ func RedisHttpStart(path string, port int64) {
 		} else if b, ok = result.([]byte); ok {
 		} else if s, ok = result.(string); ok {
 			b = []byte(s)
-		} else if len(svcCtx.ResponseFields) > 0 {
-			//keep fields exits in svcContext.QueryFields only
-			if b, err = json.Marshal(result); err != nil {
-				//reponse result json to client
-				httpStatus = http.StatusInternalServerError
-				b = []byte(err.Error())
-			}
+		} else if b, err = json.Marshal(result); err != nil {
+			//reponse result json to client
+			httpStatus = http.StatusInternalServerError
+			b = []byte(err.Error())
 		}
 
 		svcCtx.SetContentType()
