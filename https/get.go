@@ -41,6 +41,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		operation               string
 		members                 []interface{} = []interface{}{}
 		buf                     []byte
+		JsonMap                 map[string]interface{} = map[string]interface{}{}
 	)
 	svcCtx.MergeJwtField(paramIn)
 
@@ -55,18 +56,25 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	db := data.Ctx[interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
-	case "API":
+	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
+	// this is used to support 3rd party api
+	case "JSAPI":
 		var (
 			fuc *api.ApiInfo
 			ok  bool
 		)
-		if len(svcCtx.Field) > 0 {
-			paramIn["JsonPack"] = svcCtx.Field
+		//convert query fields to JsonPack. but ignore K field(api name )
+		for k, v := range svcCtx.Req.Form {
+			var val interface{}
+			if json.Unmarshal([]byte(v[0]), &val) == nil {
+				JsonMap[k] = val
+			} else {
+				JsonMap[k] = string(v[0])
+			}
 		}
-		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
-			paramIn["MsgPack"] = MsgPack
+		if len(JsonMap) > 0 {
+			paramIn["JsonPack"], _ = json.Marshal(JsonMap)
 		}
-
 		var _api = api.New[interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
 		if fuc, ok = api.ApiServices[_api.ServiceName]; config.Cfg.RPCFirst || !ok {
@@ -78,6 +86,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			return nil, err
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
+
 	case "HGET":
 		return db.HGet(svcCtx.Field)
 	case "HGETALL":
