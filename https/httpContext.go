@@ -38,13 +38,13 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	}
 	//this last part of url is cmd and key and field, i.g. /HGET?K=UserAvatar&F=fa4Y3oyQk2swURaJ
 	//read first param as cmd
-	if svcContext.Cmd = CmdKeyFields[len(CmdKeyFields)-1]; len(svcContext.Cmd) > 0 {
-		IndexOfDash := strings.Index(svcContext.Cmd, "-")
+	if CmdKey := CmdKeyFields[len(CmdKeyFields)-1]; len(CmdKey) > 0 {
+		IndexOfDash := strings.Index(CmdKey, "-")
 		if IndexOfDash > 0 {
-			svcContext.Cmd = svcContext.Cmd[:IndexOfDash]
+			svcContext.Cmd = CmdKey[:IndexOfDash]
 		}
-		if IndexOfDash < len(svcContext.Cmd)-1 {
-			svcContext.Key = svcContext.Cmd[IndexOfDash+1:]
+		if IndexOfDash < len(CmdKey)-1 {
+			svcContext.Key = CmdKey[IndexOfDash+1:]
 		}
 	}
 	if len(svcContext.Key) == 0 {
