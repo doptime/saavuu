@@ -21,6 +21,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		operation string
 		fuc       *api.ApiInfo
 		ok        bool
+		buf       []byte
 	)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
@@ -34,10 +35,31 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	db := data.New[interface{}](svcCtx.Key)
 
 	//service name is stored in svcCtx.Key
-	if svcCtx.Cmd == "API" {
-		if len(svcCtx.Field) > 0 {
-			paramIn["JsonPack"] = svcCtx.Field
+	switch svcCtx.Cmd {
+	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
+	// this is used to support 3rd party api
+	case "JSAPI":
+		var (
+			fuc *api.ApiInfo
+			ok  bool
+		)
+		//convert query fields to JsonPack. but ignore K field(api name )
+		svcCtx.Req.ParseForm()
+		if len(svcCtx.Req.Form) > 0 {
+			paramIn["JsonPack"], _ = msgpack.Marshal(svcCtx.Req.Form)
 		}
+		var _api = api.New[interface{}, interface{}](svcCtx.Key)
+		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
+		if fuc, ok = api.ApiServices[_api.ServiceName]; config.Cfg.RPCFirst || !ok {
+			return _api.Do(paramIn)
+		}
+
+		//if function is stored locally, call it directly. This is alias monolithic mode
+		if buf, err = api.EncodeApiInput(paramIn); err != nil {
+			return nil, err
+		}
+		return fuc.ApiFuncWithMsgpackedParam(buf)
+	case "API":
 		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
 			paramIn["MsgPack"] = MsgPack
 		}
@@ -48,12 +70,11 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 			return _api.Do(paramIn)
 		}
 		//if function is stored locally, call it directly. This is alias monolithic mode
-		if msgpackBytes, err := api.EncodeApiInput(paramIn); err != nil {
+		if buf, err = api.EncodeApiInput(paramIn); err != nil {
 			return nil, err
-		} else {
-			return fuc.ApiFuncWithMsgpackedParam(msgpackBytes)
 		}
-	} else if svcCtx.Cmd == "ZADD" {
+		return fuc.ApiFuncWithMsgpackedParam(buf)
+	case "ZADD":
 		var Score float64
 		var obj interface{}
 		if Score, err = strconv.ParseFloat(svcCtx.Req.FormValue("Score"), 64); err != nil {
@@ -69,7 +90,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 			return "false", err
 		}
 		return "true", nil
-	} else {
+	default:
 		err = ErrBadCommand
 	}
 
