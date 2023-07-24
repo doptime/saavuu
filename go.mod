@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.0.0-rc.1
+	github.com/gorilla/schema v1.2.0
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/vmihailenco/msgpack/v5 v5.3.5

@@ -1,9 +1,10 @@
 package api
 
 import (
-	"encoding/json"
+	"net/url"
 	"reflect"
 
+	"github.com/gorilla/schema"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/logger"
@@ -19,7 +20,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		type DataPacked struct {
 			MsgPack  []byte
-			JsonPack string
+			JsonPack []byte
 		}
 		var (
 			in       i
@@ -35,24 +36,36 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 			// case double pointer decoding
 			if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
 				in = reflect.New(vType.Elem()).Interface().(i)
-				//step 2, try to unmarshal OriginalInputParam
-				if err = msgpack.Unmarshal(s, in); err == nil && len(datapack.MsgPack) > 0 {
-					//step 3, try to unmarshal MsgPack
+				//step 2, try to unmarshal jwt
+				err = msgpack.Unmarshal(s, in)
+				//step 3, try to unmarshal MsgPack
+				if err == nil && len(datapack.MsgPack) > 0 {
 					err = msgpack.Unmarshal(datapack.MsgPack, in)
 				}
+				//step 4, unmarshal JsonPack
 				if err == nil && len(datapack.JsonPack) > 0 {
-					err = json.Unmarshal([]byte(datapack.JsonPack), in)
+					var form url.Values = make(map[string][]string)
+					err = msgpack.Unmarshal(datapack.JsonPack, form)
+					if err == nil {
+						err = schema.NewDecoder().Decode(in, form)
+					}
 				}
 
 			} else {
 				var pIn *i = reflect.New(vType).Interface().(*i)
-				//step 2, try to unmarshal OriginalInputParam
-				if err = msgpack.Unmarshal(s, pIn); err == nil && len(datapack.MsgPack) > 0 {
-					//step 3, try to unmarshal MsgPackƒ
+				//step 2, try to unmarshal jwt
+				err = msgpack.Unmarshal(s, pIn)
+				//step 3, try to unmarshal MsgPackƒ
+				if err == nil && len(datapack.MsgPack) > 0 {
 					err = msgpack.Unmarshal(datapack.MsgPack, pIn)
 				}
+				//step 4, unmarshal JsonPack
 				if err == nil && len(datapack.JsonPack) > 0 {
-					err = json.Unmarshal([]byte(datapack.JsonPack), pIn)
+					var form url.Values = make(map[string][]string)
+					err = msgpack.Unmarshal(datapack.JsonPack, form)
+					if err == nil {
+						err = schema.NewDecoder().Decode(pIn, form)
+					}
 				}
 				in = *pIn
 			}

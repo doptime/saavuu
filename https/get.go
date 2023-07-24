@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
@@ -64,17 +65,9 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 			ok  bool
 		)
 		//convert query fields to JsonPack. but ignore K field(api name )
-		for k, v := range svcCtx.Req.Form {
-			JsonMap[k] = string(v[0])
-			// var val interface{}
-			// if json.Unmarshal([]byte(v[0]), &val) == nil {
-			// 	JsonMap[k] = val
-			// } else {
-			// 	JsonMap[k] = string(v[0])
-			// }
-		}
-		if len(JsonMap) > 0 {
-			paramIn["JsonPack"], _ = json.Marshal(JsonMap)
+		svcCtx.Req.ParseForm()
+		if len(svcCtx.Req.Form) > 0 {
+			paramIn["JsonPack"], _ = msgpack.Marshal(svcCtx.Req.Form)
 		}
 		var _api = api.New[interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
