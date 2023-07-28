@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 type ApiInfo struct {
@@ -62,7 +62,7 @@ func receiveJobs() {
 	c := context.Background()
 	//create group if none exists
 	for err := XGroupCreate(c); err != nil; err = XGroupCreate(c) {
-		logger.Lshortfile.Println("receiveApiJobs error:", err)
+		log.Info().Str("receiveApiJobs error:", err.Error())
 		time.Sleep(time.Second)
 	}
 
@@ -72,7 +72,7 @@ func receiveJobs() {
 		if cmd = config.Rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
-			logger.Lshortfile.Println("receiveApiJobs error:", cmd.Err())
+			log.Info().Str("receiveApiJobs error:", cmd.Err().Error())
 			time.Sleep(time.Second)
 			continue
 		}

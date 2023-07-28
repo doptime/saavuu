@@ -6,15 +6,15 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 // put parameter to redis ,make it persistent
 func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
 	if cmd := config.Rds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
-		logger.Lshortfile.Println(cmd.Err())
+		log.Info().Err(cmd.Err())
 		return
 	}
 	go delayTaskDoOne(serviceName, dueTimeStr)
@@ -29,7 +29,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 	)
 	nowUnixMilliSecond = time.Now().UnixMilli()
 	if dueTimeUnixMilliSecond, err = strconv.ParseInt(dueTimeStr, 10, 64); err != nil {
-		logger.Lshortfile.Println(err)
+		log.Info().Err(err)
 		return
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
@@ -37,12 +37,12 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 	pipeline.HGet(context.Background(), serviceName+":delay", dueTimeStr)
 	pipeline.HDel(context.Background(), serviceName+":delay", dueTimeStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
-		logger.Lshortfile.Println(err)
+		log.Info().Err(err)
 		return
 	}
 	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
 		if ret, err = ApiServices[serviceName].ApiFuncWithMsgpackedParam(bytes); err != nil {
-			logger.Lshortfile.Println(err)
+			log.Info().Err(err)
 			return
 		}
 		if msgPackResult, err = msgpack.Marshal(ret); err != nil {
@@ -71,7 +71,7 @@ func delayTasksLoad() {
 		pipeline.HKeys(context.Background(), service+":delay")
 	}
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
-		logger.Lshortfile.Println("err LoadDelayApiTask, ", err)
+		log.Info().Str("err LoadDelayApiTask, ", err.Error())
 		return
 	}
 	for i, service := range services {

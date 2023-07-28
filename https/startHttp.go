@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/logger"
 	"github.com/yangkequn/saavuu/permission"
 )
 
@@ -68,7 +68,7 @@ func RedisHttpStart(path string, port int64) {
 		w.WriteHeader(httpStatus)
 		w.Write(b)
 	})
-	logger.Lshortfile.Println("http server started on port ", port, " , path is "+path)
+	log.Info().Any("port ", port).Any("path is ", path).Msg("http server started")
 
 	server := &http.Server{
 		Addr:              ":" + strconv.FormatInt(port, 10),

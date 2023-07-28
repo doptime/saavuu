@@ -7,8 +7,8 @@ import (
 	"reflect"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 var ErrInvalidField = errors.New("invalid field")
@@ -107,7 +107,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 	//if mapOut is  a pointer to  map , such as: var mapOut *map[uint32]interface{}
 	if mapElem.Kind() == reflect.Ptr {
 		if mapElem.Elem().Kind() != reflect.Map {
-			logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
+			log.Info().Msg("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
 			return errors.New("mapOut must be a map[interface{}] interface{} or *map[interface{}] interface{}")
 		}
 		//if mapOut is a pointer to nil map, make a new one
@@ -120,7 +120,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 	}
 	//make sure mapElem is a map
 	if mapElem.Kind() != reflect.Map {
-		logger.Lshortfile.Println("mapOut must be a map[interface{}] interface{}")
+		log.Info().Msg("mapOut must be a map[interface{}] interface{}")
 		return errors.New("mapOut must be a map[interface{}] interface{}")
 	}
 	if cmd = rc.HGetAll(ctx, key); cmd.Err() != nil {
@@ -135,7 +135,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 		//make a copy of stru , to valObj
 		valObj := reflect.New(valueStructSupposed).Interface()
 		if err = msgpack.Unmarshal([]byte(v), &valObj); err != nil {
-			logger.Lshortfile.Println("HGetAll: value unmarshal error:", err)
+			log.Info().AnErr("HGetAll: value unmarshal error:", err)
 			continue
 		}
 		//case key is  string, no need to unmarshal key
@@ -151,7 +151,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 			//if KeyStructSupposed is interface{}, save key as string
 			reflect.ValueOf(mapOut).SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(valObj).Elem())
 		} else {
-			logger.Lshortfile.Println("HGetAll: key unmarshal error:", err)
+			log.Info().AnErr("HGetAll: key unmarshal error:", err)
 		}
 	}
 	return err
@@ -159,7 +159,7 @@ func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface
 func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{}) (err error) {
 	mapElem := reflect.TypeOf(mapIn)
 	if mapElem.Kind() != reflect.Map {
-		logger.Lshortfile.Println("mapIn must be a map[interface{}] struct/interface{}")
+		log.Info().Msg("mapIn must be a map[interface{}] struct/interface{}")
 		return errors.New("mapIn must be a map[interface{}] struct/interface{}")
 	}
 	mapOut := make(map[string]interface{})
@@ -168,13 +168,13 @@ func HSetAll(ctx context.Context, rc *redis.Client, key string, mapIn interface{
 		//marshal key to bytes
 		keyBytes, err := json.Marshal(k.Interface())
 		if err != nil {
-			logger.Lshortfile.Println("HSetMap: key marshal error:", err)
+			log.Info().AnErr("HSetMap: key marshal error:", err)
 			continue
 		}
 		//marshal value to bytes
 		valueBytes, err := msgpack.Marshal(reflect.ValueOf(mapIn).MapIndex(k).Interface())
 		if err != nil {
-			logger.Lshortfile.Println("HSetMap: value marshal error:", err)
+			log.Info().AnErr("HSetMap: value marshal error:", err)
 			continue
 		}
 		mapOut[string(keyBytes)] = valueBytes
@@ -196,7 +196,7 @@ func isPointerToSlice(obj interface{}) (ok bool) {
 
 func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
 	if !isPointerToSlice(fields) {
-		logger.Lshortfile.Println("fields must be a pointer to slice")
+		log.Info().Msg("fields must be a pointer to slice")
 		return errors.New("fields must be a pointer to slice")
 	}
 	cmd := rc.HKeys(ctx, key)
@@ -214,7 +214,7 @@ func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}
 	for _, v := range cmd.Val() {
 		field := reflect.New(structFields).Interface()
 		if err = json.Unmarshal([]byte(v), &field); err != nil {
-			logger.Lshortfile.Println("HKeys1: field unmarshal error:", err)
+			log.Info().AnErr("HKeys1: field unmarshal error:", err)
 			continue
 		}
 		//*fields = append(*fields, field)
@@ -225,7 +225,7 @@ func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}
 
 func HVals(ctx context.Context, rc *redis.Client, key string, values interface{}) (err error) {
 	if !isPointerToSlice(values) {
-		logger.Lshortfile.Println("values must be a pointer to slice")
+		log.Info().Msg("values must be a pointer to slice")
 		return errors.New("values must be a pointer to slice")
 	}
 	cmd := rc.HVals(ctx, key)
@@ -237,7 +237,7 @@ func HVals(ctx context.Context, rc *redis.Client, key string, values interface{}
 	for _, v := range cmd.Val() {
 		value := reflect.New(structFields).Interface()
 		if err = msgpack.Unmarshal([]byte(v), &value); err != nil {
-			logger.Lshortfile.Println("HVals: value unmarshal error:", err)
+			log.Info().AnErr("HVals: value unmarshal error:", err)
 			continue
 		}
 		//*values = append(*values, value)

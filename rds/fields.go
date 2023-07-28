@@ -5,14 +5,14 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/yangkequn/saavuu/logger"
+	"github.com/rs/zerolog/log"
 )
 
 func FieldsToSlice(fields interface{}) (fieldsString []string, err error) {
 	//make sure fields should be a slice
 	fieldsType := reflect.TypeOf(fields)
 	if fieldsType.Kind() != reflect.Slice {
-		logger.Lshortfile.Println("fields must be a slice")
+		log.Info().Msg("fields must be a slice")
 		return nil, errors.New("fields must be a slice")
 	}
 	//if  fields is []string, return directly
@@ -27,7 +27,7 @@ func FieldsToSlice(fields interface{}) (fieldsString []string, err error) {
 	for i := 0; i < fieldsElem.Len(); i++ {
 		b, err := json.Marshal(reflect.ValueOf(fields).Index(i).Interface())
 		if err != nil {
-			logger.Lshortfile.Println("HMGET: field marshal error:", err)
+			log.Info().Any("HMGET: field marshal error:", err)
 			continue
 		}
 		fieldsString = append(fieldsString, string(b))

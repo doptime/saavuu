@@ -5,9 +5,9 @@ import (
 	"reflect"
 
 	"github.com/gorilla/schema"
+	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
@@ -28,7 +28,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		)
 		//check configureation is loaded
 		if config.Rds == nil {
-			logger.Lshortfile.Panic("config.ParamRedis is nil. Call config.ApiInitial first")
+			log.Panic().Msg("config.ParamRedis is nil.")
 		}
 
 		//step 1, try to unmarshal MsgPack
@@ -73,7 +73,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		if err != nil {
 			//print the unmarshal error
 			if ctx.Debug {
-				logger.Lshortfile.Println(err)
+				log.Info().AnErr("ProcessOneJob unmarshal", err)
 			}
 			return nil, err
 		}

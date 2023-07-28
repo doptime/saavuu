@@ -3,8 +3,9 @@ package data
 import (
 	"reflect"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/vmihailenco/msgpack/v5"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 // get all keys that match the pattern, and return a map of key->value
@@ -15,7 +16,7 @@ func (db *Ctx[v]) GetAll(match string, mapOut interface{}) (err error) {
 	)
 	mapElem := reflect.TypeOf(mapOut)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
+		log.Fatal().Msg("mapOut must be a map[string] struct/interface{}")
 	}
 	if keys, err = db.Scan(match, 0, 1024*1024*1024); err != nil {
 		return err
@@ -42,7 +43,7 @@ func (db *Ctx[v]) GetAll(match string, mapOut interface{}) (err error) {
 func (db *Ctx[v]) SetAll(_map interface{}) (err error) {
 	mapElem := reflect.TypeOf(_map)
 	if (mapElem.Kind() != reflect.Map) || (mapElem.Key().Kind() != reflect.String) {
-		logger.Lshortfile.Fatal("mapOut must be a map[string] struct/interface{}")
+		log.Fatal().Msg("mapOut must be a map[string] struct/interface{}")
 	}
 	//HSet each element of _map to redis
 	var result error

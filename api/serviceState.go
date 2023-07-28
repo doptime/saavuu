@@ -1,10 +1,11 @@
 package api
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/yangkequn/saavuu/logger"
+	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/tools"
 )
 
@@ -16,13 +17,13 @@ func reportStates() {
 	for serviceName := range ApiServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
-	logger.Lshortfile.Println(len(serviceNames), "apis:", serviceNames)
+	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames)
 	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]
 		for _, serviceName := range serviceNames {
 			if num, _ := apiCounter.Get(serviceName); num > 0 {
-				logger.Lshortfile.Println(now + "" + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+				log.Info().Msg(now + "" + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
 			}
 			apiCounter.DeleteAndGetLastValue(serviceName)
 		}

@@ -6,14 +6,15 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/rs/zerolog/log"
+
 	"github.com/redis/go-redis/v9"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 func loadOSEnv(key string, des interface{}, defaultValue interface{}) {
 	var value string
 	if value = os.Getenv(key); defaultValue == nil && value == "" {
-		logger.Lshortfile.Panicln("Panic:", key, " Can not load from env")
+		log.Panic().Str("Can not load env", key)
 	} else if defaultValue != nil && value == "" {
 		//des is a pointer, so we can set it to defaultValue using reflection
 		reflect.ValueOf(des).Elem().Set(reflect.ValueOf(defaultValue))
@@ -23,13 +24,13 @@ func loadOSEnv(key string, des interface{}, defaultValue interface{}) {
 	} else if _, ok := des.(*string); ok {
 		*des.(*string) = value
 	} else {
-		logger.Lshortfile.Panicln("Error: bad type of env: ", key)
+		log.Panic().Str("Bad type of env", key)
 	}
-	logger.Std.Println("env", key, "is set to ", reflect.ValueOf(des).Elem().Interface())
+	log.Info().Any("env"+key+"is set to ", reflect.ValueOf(des).Elem().Interface())
 }
 
 func init() {
-	logger.Std.Println("App Start! load config from OS env")
+	log.Info().Msg("App Start! load config from OS env")
 
 	loadOSEnv("RPCFirst", &Cfg.RPCFirst, false)
 	loadOSEnv("RedisPassword", &Cfg.RedisPassword, "")
@@ -55,5 +56,5 @@ func init() {
 	}
 	Rds = redis.NewClient(redisOption)
 
-	logger.Lshortfile.Println("Load config from env success")
+	log.Info().Msg("Load config from env success")
 }
