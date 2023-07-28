@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
-	"github.com/yangkequn/saavuu/logger"
 )
 
 func EncodeApiInput(paramIn interface{}) (out []byte, err error) {
@@ -18,7 +18,7 @@ func EncodeApiInput(paramIn interface{}) (out []byte, err error) {
 	} else if paramType.Kind() == reflect.Map {
 	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
 	} else {
-		logger.Lshortfile.Println("RdsApiBasic param should be a map or struct")
+		log.Info().Msg("RdsApiBasic param should be a map or struct")
 		return nil, err
 	}
 
@@ -48,7 +48,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	}
 	args := &redis.XAddArgs{Stream: ac.ServiceName, Values: Values, MaxLen: 4096}
 	if cmd = ac.Rds.XAdd(ac.Ctx, args); cmd.Err() != nil {
-		logger.Lshortfile.Println(cmd.Err())
+		log.Info().AnErr("Do XAdd", cmd.Err())
 		return out, cmd.Err()
 	}
 	if dueTime != nil {
