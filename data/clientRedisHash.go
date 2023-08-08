@@ -35,6 +35,20 @@ func (db *Ctx[v]) HSetAll(_map interface{}) (err error) {
 	return rds.HSetAll(db.Ctx, db.Rds, db.Key, _map)
 }
 
+func (db *Ctx[v]) HMSET(values []v) (err error) {
+	var (
+		valueBytes [][]byte
+		bytes      []byte
+	)
+	for _, value := range values {
+		if bytes, err = msgpack.Marshal(value); err != nil {
+			return err
+		}
+		valueBytes = append(valueBytes, bytes)
+	}
+	cmd := db.Rds.HMSet(db.Ctx, db.Key, valueBytes)
+	return cmd.Err()
+}
 func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
 	var (
 		cmd          *redis.SliceCmd
