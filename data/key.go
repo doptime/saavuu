@@ -6,23 +6,23 @@ import (
 	"time"
 )
 
-func (db *Ctx[v]) YMD(tm time.Time) *Ctx[v] {
+func (db *Ctx[k, v]) YMD(tm time.Time) *Ctx[k, v] {
 	//year is 4 digits, month is 2 digits, day is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YMD_%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
+	return &Ctx[k, v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YMD_%04v%02v%02v", db.Key, tm.Year(), int(tm.Month()), tm.Day())}
 }
-func (db *Ctx[v]) YM(tm time.Time) *Ctx[v] {
+func (db *Ctx[k, v]) YM(tm time.Time) *Ctx[k, v] {
 	//year is 4 digits, month is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YM_%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
+	return &Ctx[k, v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YM_%04v%02v", db.Key, tm.Year(), int(tm.Month()))}
 }
-func (db *Ctx[v]) Y(tm time.Time) *Ctx[v] {
+func (db *Ctx[k, v]) Y(tm time.Time) *Ctx[k, v] {
 	//year is 4 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:Y_%04v", db.Key, tm.Year())}
+	return &Ctx[k, v]{db.Ctx, db.Rds, fmt.Sprintf("%s:Y_%04v", db.Key, tm.Year())}
 }
-func (db *Ctx[v]) YW(tm time.Time) *Ctx[v] {
+func (db *Ctx[k, v]) YW(tm time.Time) *Ctx[k, v] {
 	tm = tm.UTC()
 	isoYear, isoWeek := tm.ISOWeek()
 	//year is 4 digits, week is 2 digits
-	return &Ctx[v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YW_%04v%02v", db.Key, isoYear, isoWeek)}
+	return &Ctx[k, v]{db.Ctx, db.Rds, fmt.Sprintf("%s:YW_%04v%02v", db.Key, isoYear, isoWeek)}
 }
 func ConcatedKeys(fields ...interface{}) string {
 	//	concacate all fields with ':'
@@ -37,7 +37,7 @@ func ConcatedKeys(fields ...interface{}) string {
 	return key[:len(key)-1]
 }
 
-func (db *Ctx[v]) Concat(fields ...interface{}) *Ctx[v] {
+func (db *Ctx[k, v]) Concat(fields ...interface{}) *Ctx[k, v] {
 	//for each field ,it it's type if float64 or float32,but it's value is integer,then convert it to int
 	for i, field := range fields {
 		if f64, ok := field.(float64); ok && f64 == float64(int64(f64)) {
@@ -53,5 +53,5 @@ func (db *Ctx[v]) Concat(fields ...interface{}) *Ctx[v] {
 	for _, field := range fields {
 		results = append(results, fmt.Sprintf("%v", field))
 	}
-	return &Ctx[v]{db.Ctx, db.Rds, strings.Join(results, ":")}
+	return &Ctx[k, v]{db.Ctx, db.Rds, strings.Join(results, ":")}
 }

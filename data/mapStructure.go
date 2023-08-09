@@ -7,7 +7,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
+func (db *Ctx[k, v]) UnmarshalToSlice(members []string) (out []v, err error) {
 	out = make([]v, 0, len(members))
 	//unmarshal each member in cmd.Result() using msgpack,to the type of element of out
 	elemType := reflect.TypeOf(out).Elem()
@@ -23,7 +23,7 @@ func (db *Ctx[v]) UnmarshalToSlice(members []string) (out []v, err error) {
 	return out, nil
 }
 
-func (db *Ctx[v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64, err error) {
+func (db *Ctx[k, v]) UnmarshalRedisZ(members []redis.Z) (out []v, scores []float64, err error) {
 	var (
 		str string
 		ok  bool

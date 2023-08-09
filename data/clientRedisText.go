@@ -7,7 +7,7 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (db *Ctx[v]) Get() (value v, err error) {
+func (db *Ctx[k, v]) Get() (value v, err error) {
 
 	vType := reflect.TypeOf((*v)(nil)).Elem()
 	if vType.Kind() == reflect.Ptr {
@@ -19,9 +19,9 @@ func (db *Ctx[v]) Get() (value v, err error) {
 	err = rds.Get(db.Ctx, db.Rds, db.Key, vValueWithPointer)
 	return *vValueWithPointer, err
 }
-func (db *Ctx[v]) Set(param v, expiration time.Duration) (err error) {
+func (db *Ctx[k, v]) Set(param v, expiration time.Duration) (err error) {
 	return rds.Set(db.Ctx, db.Rds, db.Key, param, expiration)
 }
-func (db *Ctx[v]) Del() (err error) {
+func (db *Ctx[k, v]) Del() (err error) {
 	return rds.Del(db.Ctx, db.Rds, db.Key)
 }

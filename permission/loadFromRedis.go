@@ -29,7 +29,7 @@ func LoadPPermissionFromRedis() {
 	for i, key := range keys {
 
 		var _map map[string]Permission = make(map[string]Permission)
-		var paramRds = data.Ctx[Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
+		var paramRds = data.Ctx[string, Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
 		if err := paramRds.HGetAll(_map); err != nil {
 			log.Info().Msg("loading " + key + "  error: " + err.Error())
 		} else {

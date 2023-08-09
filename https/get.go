@@ -53,7 +53,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}
 
-	db := data.Ctx[interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
+	db := data.Ctx[interface{}, interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]

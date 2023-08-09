@@ -8,7 +8,7 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 )
 
-func (db *Ctx[v]) upgradeSchemaFromRawString(raw string, upgrade func(in v) (out v)) (out v, err error) {
+func (db *Ctx[k, v]) upgradeSchemaFromRawString(raw string, upgrade func(in v) (out v)) (out v, err error) {
 	var (
 		vType       = reflect.TypeOf((*v)(nil)).Elem()
 		vIsPtr bool = vType.Kind() == reflect.Ptr
@@ -35,7 +35,7 @@ func (db *Ctx[v]) upgradeSchemaFromRawString(raw string, upgrade func(in v) (out
 	}
 }
 
-func (db *Ctx[v]) UpgradeSchema(upgrader func(in v) (out v)) (err error) {
+func (db *Ctx[k, v]) UpgradeSchema(upgrader func(in v) (out v)) (err error) {
 	var (
 		keyType string
 	)

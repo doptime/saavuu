@@ -80,25 +80,6 @@ func HExists(ctx context.Context, rc *redis.Client, key string, field interface{
 	}
 	return cmd.Result()
 }
-func HDel(ctx context.Context, rc *redis.Client, key string, field interface{}) (err error) {
-	var (
-		cmd      *redis.IntCmd
-		fieldStr string
-		ok       bool
-	)
-	if field == nil {
-		return ErrInvalidField
-	}
-	if fieldStr, ok = field.(string); ok {
-		cmd = rc.HDel(ctx, key, fieldStr)
-	} else if fieldBytes, err := json.Marshal(field); err != nil {
-		return err
-	} else {
-		cmd = rc.HDel(ctx, key, string(fieldBytes))
-	}
-	return cmd.Err()
-}
-
 func HGetAll(ctx context.Context, rc *redis.Client, key string, mapOut interface{}) (err error) {
 	var (
 		cmd *redis.MapStringStringCmd

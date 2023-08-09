@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"reflect"
 
 	"github.com/redis/go-redis/v9"
@@ -9,7 +10,7 @@ import (
 	"github.com/yangkequn/saavuu/rds"
 )
 
-func (db *Ctx[v]) HGet(field interface{}) (value v, err error) {
+func (db *Ctx[k, v]) HGet(field interface{}) (value v, err error) {
 	vType := reflect.TypeOf((*v)(nil)).Elem()
 	if vType.Kind() == reflect.Ptr {
 		vValue := reflect.New(vType.Elem()).Interface().(v)
@@ -21,21 +22,21 @@ func (db *Ctx[v]) HGet(field interface{}) (value v, err error) {
 	return *vValueWithPointer, err
 }
 
-func (db *Ctx[v]) HSet(field interface{}, value v) (err error) {
+func (db *Ctx[k, v]) HSet(field interface{}, value v) (err error) {
 	return rds.HSet(db.Ctx, db.Rds, db.Key, field, value)
 }
 
-func (db *Ctx[v]) HExists(field v) (ok bool, err error) {
+func (db *Ctx[k, v]) HExists(field v) (ok bool, err error) {
 	return rds.HExists(db.Ctx, db.Rds, db.Key, field)
 }
-func (db *Ctx[v]) HGetAll(mapOut interface{}) (err error) {
+func (db *Ctx[k, v]) HGetAll(mapOut interface{}) (err error) {
 	return rds.HGetAll(db.Ctx, db.Rds, db.Key, mapOut)
 }
-func (db *Ctx[v]) HSetAll(_map interface{}) (err error) {
+func (db *Ctx[k, v]) HSetAll(_map interface{}) (err error) {
 	return rds.HSetAll(db.Ctx, db.Rds, db.Key, _map)
 }
 
-func (db *Ctx[v]) HMSET(values []v) (err error) {
+func (db *Ctx[k, v]) HMSET(values []v) (err error) {
 	var (
 		valueBytes [][]byte
 		bytes      []byte
@@ -49,7 +50,7 @@ func (db *Ctx[v]) HMSET(values []v) (err error) {
 	cmd := db.Rds.HMSet(db.Ctx, db.Key, valueBytes)
 	return cmd.Err()
 }
-func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
+func (db *Ctx[k, v]) HMGET(fields interface{}) (values []v, err error) {
 	var (
 		cmd          *redis.SliceCmd
 		fieldsString []string
@@ -84,32 +85,55 @@ func (db *Ctx[v]) HMGET(fields interface{}) (values []v, err error) {
 	return values, nil
 }
 
-func (db *Ctx[v]) HLen() (length int64, err error) {
+func (db *Ctx[k, v]) HLen() (length int64, err error) {
 	cmd := db.Rds.HLen(db.Ctx, db.Key)
 	return cmd.Val(), cmd.Err()
 }
-func (db *Ctx[v]) HDel(field interface{}) (err error) {
-	return rds.HDel(db.Ctx, db.Rds, db.Key, field)
+func (db *Ctx[k, v]) HDel(fields ...k) (err error) {
+	var (
+		cmd       *redis.IntCmd
+		fieldStrs []string
+		bytes     []byte
+	)
+	if len(fields) == 0 {
+		return nil
+	}
+	//if k is  string, then use HDEL directly
+	if reflect.TypeOf(fields[0]).Kind() == reflect.String {
+		fieldStrs = interface{}(fields).([]string)
+	} else {
+		//if k is not string, then marshal k to string
+		fieldStrs = make([]string, len(fields))
+		for i, field := range fields {
+			if bytes, err = json.Marshal(field); err != nil {
+				return err
+			}
+			fieldStrs[i] = string(bytes)
+		}
+		return err
+	}
+	cmd = db.Rds.HDel(db.Ctx, db.Key, fieldStrs...)
+	return cmd.Err()
 }
-func (db *Ctx[v]) HKeys(fields interface{}) (err error) {
+func (db *Ctx[k, v]) HKeys(fields interface{}) (err error) {
 	return rds.HKeys(db.Ctx, db.Rds, db.Key, fields)
 }
-func (db *Ctx[v]) HVals() (values []v, err error) {
+func (db *Ctx[k, v]) HVals() (values []v, err error) {
 	values = make([]v, 0)
 	return values, rds.HVals(db.Ctx, db.Rds, db.Key, &values)
 }
-func (db *Ctx[v]) HIncrBy(field interface{}, increment int64) (err error) {
+func (db *Ctx[k, v]) HIncrBy(field interface{}, increment int64) (err error) {
 	return rds.HIncrBy(db.Ctx, db.Rds, db.Key, field, increment)
 }
-func (db *Ctx[v]) HIncrByFloat(field string, increment float64) (err error) {
+func (db *Ctx[k, v]) HIncrByFloat(field string, increment float64) (err error) {
 	return rds.HIncrByFloat(db.Ctx, db.Rds, db.Key, field, increment)
 }
-func (db *Ctx[v]) HSetNX(field interface{}, param interface{}) (err error) {
+func (db *Ctx[k, v]) HSetNX(field interface{}, param interface{}) (err error) {
 	return rds.HSetNX(db.Ctx, db.Rds, db.Key, field, param)
 }
 
 // golang version of python scan_iter
-func (db *Ctx[v]) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
+func (db *Ctx[k, v]) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
 	keys, _, err = db.Rds.Scan(db.Ctx, cursor, match, count).Result()
 	return keys, err
 }
