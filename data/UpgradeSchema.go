@@ -35,7 +35,7 @@ func (db *Ctx[v]) upgradeSchemaFromRawString(raw string, upgrade func(in v) (out
 	}
 }
 
-func (db *Ctx[v]) UpgradeSchema(upgrade func(in v) (out v)) (err error) {
+func (db *Ctx[v]) UpgradeSchema(upgrader func(in v) (out v)) (err error) {
 	var (
 		keyType string
 	)
@@ -52,7 +52,7 @@ func (db *Ctx[v]) UpgradeSchema(upgrade func(in v) (out v)) (err error) {
 		}
 		var mapOut map[string]interface{} = make(map[string]interface{})
 		for k, v := range mapIn {
-			if mapOut[k], err = db.upgradeSchemaFromRawString(v, upgrade); err != nil {
+			if mapOut[k], err = db.upgradeSchemaFromRawString(v, upgrader); err != nil {
 				return err
 			}
 		}
