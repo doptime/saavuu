@@ -42,8 +42,8 @@ func init() {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
 	loadOSEnv("CORS", &Cfg.CORS, "*")
-	loadOSEnv("MaxBufferSize", &Cfg.MaxBufferSize, 5*1024*1024)
-	loadOSEnv("ServiceBatchSize", &Cfg.ServiceBatchSize, 256)
+	loadOSEnv("MaxBufferSize", &Cfg.MaxBufferSize, int64(5*1024*1024))
+	loadOSEnv("ServiceBatchSize", &Cfg.ServiceBatchSize, int64(256))
 	loadOSEnv("AutoPermission", &Cfg.AutoPermission, false)
 	loadOSEnv("ServerPort", &Cfg.ServerPort, 8000)
 	loadOSEnv("ServerPath", &Cfg.ServerPath, "/")

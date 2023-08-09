@@ -90,8 +90,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HMGET":
 		return db.HMGET(strings.Split(svcCtx.Field, ","))
 	case "HKEYS":
-		var keys []string
-		if err := db.HKeys(&keys); err != nil {
+		var keys []interface{}
+		if keys, err = db.HKeys(); err != nil {
 			return "", err
 		} else {
 			return json.Marshal(keys)

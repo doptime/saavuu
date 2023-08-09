@@ -38,31 +38,6 @@ func HGet(ctx context.Context, rc *redis.Client, key string, field interface{}, 
 	return msgpack.Unmarshal(data, value)
 }
 
-func HSet(ctx context.Context, rc *redis.Client, key string, field interface{}, value interface{}) (err error) {
-	var (
-		fieldBytes []byte
-		valueBytes []byte
-		status     *redis.IntCmd
-	)
-	if field == nil {
-		return ErrInvalidField
-	}
-
-	if valueBytes, err = msgpack.Marshal(value); err != nil {
-		return err
-	}
-
-	if _, ok := field.(string); ok {
-		status = rc.HSet(ctx, key, field, valueBytes)
-	} else if fieldBytes, err = json.Marshal(field); err != nil {
-		return err
-	} else {
-		status = rc.HSet(ctx, key, fieldBytes, valueBytes)
-
-	}
-	return status.Err()
-}
-
 func HExists(ctx context.Context, rc *redis.Client, key string, field interface{}) (ok bool, err error) {
 	var (
 		cmd      *redis.BoolCmd
@@ -173,35 +148,6 @@ func isPointerToSlice(obj interface{}) (ok bool) {
 		return false
 	}
 	return true
-}
-
-func HKeys(ctx context.Context, rc *redis.Client, key string, fields interface{}) (err error) {
-	if !isPointerToSlice(fields) {
-		log.Info().Msg("fields must be a pointer to slice")
-		return errors.New("fields must be a pointer to slice")
-	}
-	cmd := rc.HKeys(ctx, key)
-	//if fields if *[]string, return directly
-	//not needed to unmarshal fields
-	if reflect.TypeOf(fields).Elem().Elem().Kind() == reflect.String {
-		reflect.ValueOf(fields).Elem().Set(reflect.ValueOf(cmd.Val()))
-		return cmd.Err()
-	}
-	// structFields := reflect.TypeOf(fields).Elem()
-	// *fields = make([]interface{}, 0, len(cmd.Val()))
-	structFields := reflect.TypeOf(fields).Elem().Elem()
-	slice := reflect.MakeSlice(reflect.TypeOf(fields).Elem(), 0, len(cmd.Val()))
-	reflect.ValueOf(fields).Elem().Set(slice)
-	for _, v := range cmd.Val() {
-		field := reflect.New(structFields).Interface()
-		if err = json.Unmarshal([]byte(v), &field); err != nil {
-			log.Info().AnErr("HKeys1: field unmarshal error:", err)
-			continue
-		}
-		//*fields = append(*fields, field)
-		reflect.ValueOf(fields).Elem().Set(reflect.Append(reflect.ValueOf(fields).Elem(), reflect.ValueOf(field).Elem()))
-	}
-	return cmd.Err()
 }
 
 func HVals(ctx context.Context, rc *redis.Client, key string, values interface{}) (err error) {
