@@ -20,11 +20,11 @@ func (db *Ctx[v]) upgradeSchemaFromRawString(raw string, upgrade func(in v) (out
 	} else {
 		vValue = reflect.New(vType).Interface().(*v)
 	}
-	// step1: read raw format from redis
-	msgpack.Unmarshal([]byte(raw), vValue)
-	//  step2: Advance conversion using copier, i.e. copy from string to float32
+	//  step1: Advance conversion using copier, i.e. copy from string to float32
 	msgpack.Unmarshal([]byte(raw), &obj)
 	copier.Copy(vValue, &obj)
+	// step2: read raw format from redis
+	msgpack.Unmarshal([]byte(raw), vValue)
 	// step3: upgrade scheme using user defined function
 	// this is used, to allow user break point to work
 
