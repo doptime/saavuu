@@ -83,7 +83,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGET":
 		return db.HGet(svcCtx.Field)
 	case "HGETALL":
-		if err := db.HGetAll(&map_interface_interface); err != nil {
+		if map_interface_interface, err = db.HGetAll(); err != nil {
 			return nil, err
 		}
 		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)

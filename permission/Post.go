@@ -8,7 +8,7 @@ import (
 	cmap "github.com/orcaman/concurrent-map/v2"
 )
 
-var PermittedPostOp cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
+var PermittedPostOp cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
 
 func LoaIsPermittedPostField(operation string, Field *string, token *jwt.Token) (operationNew string, err error) {
 	var (

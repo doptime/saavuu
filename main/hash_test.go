@@ -51,40 +51,49 @@ func TestStringKey(t *testing.T) {
 	}
 }
 func TestObjectKey(t *testing.T) {
+	type Key struct {
+		Id   int32
+		Name string
+	}
 	var (
-		keys   []int32
-		err    error
-		values []*TestHash
-		value  *TestHash
+		keys  []*Key
+		err   error
+		value *TestHash
+		k1    = &Key{Id: 123, Name: "field1"}
+		k2    = &Key{Id: 456, Name: "field2"}
+		v1    = &TestHash{Name: "value1"}
+		v2    = &TestHash{Name: "value2"}
 	)
 	//create a http context
 
-	var keyTestInDemo = data.NewStruct[int32, *TestHash]()
-	if err = keyTestInDemo.HSet(123, &TestHash{Name: "value1"}); err != nil {
+	var keyTestInDemo = data.NewStruct[*Key, *TestHash]()
+	if err = keyTestInDemo.HSet(k1, v1); err != nil {
 		t.Error(err)
 	}
-	if value, err = keyTestInDemo.HGet(123); err != nil {
+	if value, err = keyTestInDemo.HGet(k1); err != nil {
 		t.Error(err)
 	} else if value.Name != "value1" {
 		t.Error("value.Name != value1")
 	}
-	keyTestInDemo.HSet(456, &TestHash{Name: "value2"})
-	values, err = keyTestInDemo.HMGET([]int32{123, 456}...)
-	if err != nil {
+
+	if err = keyTestInDemo.HSet(k1, v1, k2, v2); err != nil {
 		t.Error(err)
-	}
-	if len(values) != 2 {
-		t.Error("len(values) != 2")
-	}
-	//non nil value check
-	if values[0] == nil {
-		t.Error("values[0] == nil")
 	}
 
 	if keys, _ = keyTestInDemo.HKeys(); len(keys) != 2 {
 		t.Error(fmt.Errorf("len(keys) != 2, len(keys) = %d", len(keys)))
 	}
-	keyTestInDemo.HDel(123, 456)
+	keyTestInDemo.HDel(k1, k2)
+	if keys, _ = keyTestInDemo.HKeys(); len(keys) != 0 {
+		t.Error(fmt.Errorf("len(keys) != 0, len(keys) = %d", len(keys)))
+	}
+	if err = keyTestInDemo.HSet(map[*Key]*TestHash{k1: v1, k2: v2}); err != nil {
+		t.Error(err)
+	}
+	if keys, _ = keyTestInDemo.HKeys(); len(keys) != 2 {
+		t.Error(fmt.Errorf("len(keys) != 2, len(keys) = %d", len(keys)))
+	}
+	keyTestInDemo.HDel(k1, k2)
 	if keys, _ = keyTestInDemo.HKeys(); len(keys) != 0 {
 		t.Error(fmt.Errorf("len(keys) != 0, len(keys) = %d", len(keys)))
 	}

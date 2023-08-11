@@ -7,16 +7,15 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/rds"
 )
 
-type Ctx[k any, v any] struct {
+type Ctx[k comparable, v any] struct {
 	Ctx context.Context
 	Rds *redis.Client
 	Key string
 }
 
-func NewStruct[k any, v any]() *Ctx[k, v] {
+func NewStruct[k comparable, v any]() *Ctx[k, v] {
 	var Key string
 	_type := reflect.TypeOf((*v)(nil))
 	//take name of type v as key
@@ -31,7 +30,7 @@ func NewStruct[k any, v any]() *Ctx[k, v] {
 	return &Ctx[k, v]{Ctx: context.Background(), Rds: config.Rds, Key: Key}
 }
 
-func New[k any, v any](Key string) *Ctx[k, v] {
+func New[k comparable, v any](Key string) *Ctx[k, v] {
 	//panic if Key is empty
 	if Key == "" {
 		panic("Key is empty, please give a key for this data")
@@ -43,5 +42,6 @@ func (ctx *Ctx[k, v]) WithContext(c context.Context) *Ctx[k, v] {
 }
 
 func (db *Ctx[k, v]) Time() (tm time.Time, err error) {
-	return rds.Time(db.Ctx, db.Rds)
+	cmd := db.Rds.Time(db.Ctx)
+	return cmd.Result()
 }

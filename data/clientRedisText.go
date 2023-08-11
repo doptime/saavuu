@@ -1,27 +1,34 @@
 package data
 
 import (
-	"reflect"
 	"time"
 
-	"github.com/yangkequn/saavuu/rds"
+	"github.com/redis/go-redis/v9"
 )
 
 func (db *Ctx[k, v]) Get() (value v, err error) {
+	var (
+		cmd  *redis.StringCmd
+		data []byte
+	)
 
-	vType := reflect.TypeOf((*v)(nil)).Elem()
-	if vType.Kind() == reflect.Ptr {
-		vValue := reflect.New(vType.Elem()).Interface().(v)
-		err = rds.Get(db.Ctx, db.Rds, db.Key, vValue)
-		return vValue, err
+	if cmd = db.Rds.Get(db.Ctx, db.Key); cmd.Err() != nil {
+		return value, cmd.Err()
 	}
-	vValueWithPointer := reflect.New(vType).Interface().(*v)
-	err = rds.Get(db.Ctx, db.Rds, db.Key, vValueWithPointer)
-	return *vValueWithPointer, err
+	if data, err = cmd.Bytes(); err != nil {
+		return value, err
+	}
+	return db.toValue(data)
 }
 func (db *Ctx[k, v]) Set(param v, expiration time.Duration) (err error) {
-	return rds.Set(db.Ctx, db.Rds, db.Key, param, expiration)
+	if val, err := db.toValueStr(param); err != nil {
+		return err
+	} else {
+		status := db.Rds.Set(db.Ctx, db.Key, val, expiration)
+		return status.Err()
+	}
 }
 func (db *Ctx[k, v]) Del() (err error) {
-	return rds.Del(db.Ctx, db.Rds, db.Key)
+	status := db.Rds.Del(db.Ctx, db.Key)
+	return status.Err()
 }

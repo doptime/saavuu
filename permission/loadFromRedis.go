@@ -18,6 +18,7 @@ var permitKeyGet string = "saavuuPermissionGet"
 var permitKeyDel string = "saavuuPermissionDel"
 
 func LoadPPermissionFromRedis() {
+	var err error
 	// read RedisPutPermission usiing Rds
 	// RedisPutPermission is a hash
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
@@ -25,22 +26,22 @@ func LoadPPermissionFromRedis() {
 	//a slice name key holding  "RedisPutPermission","RedisPostPermission","RedisGetPermission","RedisDeletePermission"
 	var keys []string = []string{permitKeyPut, permitKeyPost, permitKeyGet, permitKeyDel}
 	//a slice name desMap holding  &PermittedPutOp,&PermittedPostOp,&PermittedGetOp,&PermittedDelOp
-	var desMap []*cmap.ConcurrentMap[string, Permission] = []*cmap.ConcurrentMap[string, Permission]{&PermittedPutOp, &PermittedPostOp, &PermittedGetOp, &PermittedDelOp}
+	var desMap []cmap.ConcurrentMap[string, *Permission] = []cmap.ConcurrentMap[string, *Permission]{PermittedPutOp, PermittedPostOp, PermittedGetOp, PermittedDelOp}
 	for i, key := range keys {
 
-		var _map map[string]Permission = make(map[string]Permission)
-		var paramRds = data.Ctx[string, Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
-		if err := paramRds.HGetAll(_map); err != nil {
+		var _map map[string]*Permission
+		var paramRds = data.Ctx[string, *Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
+		if _map, err = paramRds.HGetAll(); err != nil {
 			log.Info().Msg("loading " + key + "  error: " + err.Error())
 		} else {
-			var mapDes cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
+			var mapDes cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
 			mapDes.MSet(_map)
 			lastInfo, ok := lastLoadPermissionInfo[key]
 			if info := fmt.Sprint("loading "+key+" success. num keys:", mapDes.Count()); !ok || info != lastInfo {
 				log.Info().Msg(info)
 				lastLoadPermissionInfo[key] = info
 			}
-			*desMap[i] = mapDes
+			desMap[i] = mapDes
 		}
 	}
 	go ContinuousReloadPermission()

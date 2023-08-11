@@ -56,7 +56,7 @@ func (db *Ctx[k, v]) UpgradeSchema(upgrader func(in v) (out v)) (err error) {
 				return err
 			}
 		}
-		return db.HSetAll(mapOut)
+		return db.HSet(mapOut)
 	case "list":
 		//return not implemented error
 		return fmt.Errorf("not implemented")

@@ -10,7 +10,7 @@ import (
 	"github.com/yangkequn/saavuu/data"
 )
 
-func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], PermissionKey *string, dataKey string, operation string) (ok bool) {
+func IsPermitted(PermissionMap cmap.ConcurrentMap[string, *Permission], PermissionKey *string, dataKey string, operation string) (ok bool) {
 	//for example, if dataKey is "user:1x3", then dataKey will be "user"
 	if dataKey = strings.Split(dataKey, ":")[0]; len(dataKey) == 0 {
 		return false
@@ -19,7 +19,7 @@ func IsPermitted(PermissionMap cmap.ConcurrentMap[string, Permission], Permissio
 	permission, ok := PermissionMap.Get(dataKey)
 	//if datakey not in BatchPermission, then create BatchPermission, and add it to BatchPermission in redis
 	if !ok {
-		permission = Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{}}
+		permission = &Permission{Key: dataKey, CreateAt: time.Now().Unix(), WhiteList: []string{}, BlackList: []string{}}
 	}
 
 	//return true if allowed

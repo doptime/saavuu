@@ -9,7 +9,7 @@ type Permission struct {
 	BlackList []string
 }
 
-var PermittedDelOp cmap.ConcurrentMap[string, Permission] = cmap.New[Permission]()
+var PermittedDelOp cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
 
 func IsDelPermitted(dataKey string, operation string) bool {
 	return IsPermitted(PermittedDelOp, &permitKeyDel, dataKey, operation)

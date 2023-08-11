@@ -5,46 +5,88 @@ import (
 	"reflect"
 
 	"github.com/redis/go-redis/v9"
-
-	"github.com/yangkequn/saavuu/rds"
+	"github.com/rs/zerolog/log"
 )
 
-func (db *Ctx[k, v]) HGet(field interface{}) (value v, err error) {
-	vType := reflect.TypeOf((*v)(nil)).Elem()
-	if vType.Kind() == reflect.Ptr {
-		vValue := reflect.New(vType.Elem()).Interface().(v)
-		err = rds.HGet(db.Ctx, db.Rds, db.Key, field, vValue)
-		return vValue, err
+func (db *Ctx[k, v]) HGet(field k) (value v, err error) {
+
+	var (
+		cmd      *redis.StringCmd
+		valBytes []byte
+		fieldStr string
+	)
+	if fieldStr, err = db.toKeyStr(field); err != nil {
+		return value, err
 	}
-	vValueWithPointer := reflect.New(vType).Interface().(*v)
-	err = rds.HGet(db.Ctx, db.Rds, db.Key, field, vValueWithPointer)
-	return *vValueWithPointer, err
+
+	if cmd = db.Rds.HGet(db.Ctx, db.Key, fieldStr); cmd.Err() != nil {
+		return value, cmd.Err()
+	}
+	if valBytes, err = cmd.Bytes(); err != nil {
+		return value, err
+	}
+	return db.toValue(valBytes)
 }
 
+// HSet accepts values in following formats:
+//
+//   - HSet("myhash", "key1", "value1", "key2", "value2")
+//
+//   - HSet("myhash", []string{"key1", "value1", "key2", "value2"})
+//
+//   - HSet("myhash", map[string]interface{}{"key1": "value1", "key2": "value2"})
+//
+//     Playing struct With "redis" tag.
+//     type MyHash struct { Key1 string `redis:"key1"`; Key2 int `redis:"key2"` }
+//
+//   - HSet("myhash", MyHash{"value1", "value2"})
 func (db *Ctx[k, v]) HSet(values ...interface{}) (err error) {
 	var (
-		keyBytes   [][]byte
-		valueBytes [][]byte
-		allBytes   [][]byte
+		KeyValuesStrs []string
 	)
-	if keyBytes, valueBytes, err = db.KeyValuesToStrs(values); err != nil {
+	if KeyValuesStrs, err = db.toKeyValueStrs(values...); err != nil {
 		return err
 	}
-	for i, l := 0, len(keyBytes); i < l; i++ {
-		allBytes = append(allBytes, keyBytes[i], valueBytes[i])
-	}
-	status := db.Rds.HSet(db.Ctx, db.Key, allBytes)
+	status := db.Rds.HSet(db.Ctx, db.Key, KeyValuesStrs)
 	return status.Err()
 }
 
-func (db *Ctx[k, v]) HExists(field v) (ok bool, err error) {
-	return rds.HExists(db.Ctx, db.Rds, db.Key, field)
+func (db *Ctx[k, v]) HExists(field k) (ok bool, err error) {
+
+	var (
+		cmd      *redis.BoolCmd
+		fieldStr string
+	)
+	if fieldStr, err = db.toKeyStr(field); err != nil {
+		return false, err
+	}
+	cmd = db.Rds.HExists(db.Ctx, db.Key, fieldStr)
+	return cmd.Result()
+
 }
-func (db *Ctx[k, v]) HGetAll(mapOut interface{}) (err error) {
-	return rds.HGetAll(db.Ctx, db.Rds, db.Key, mapOut)
-}
-func (db *Ctx[k, v]) HSetAll(_map interface{}) (err error) {
-	return rds.HSetAll(db.Ctx, db.Rds, db.Key, _map)
+func (db *Ctx[k, v]) HGetAll() (mapOut map[k]v, err error) {
+	var (
+		cmd *redis.MapStringStringCmd
+		key k
+		val v
+	)
+	mapOut = make(map[k]v)
+	if cmd = db.Rds.HGetAll(db.Ctx, db.Key); cmd.Err() != nil {
+		return mapOut, cmd.Err()
+	}
+	//append all data to mapOut
+	for k, v := range cmd.Val() {
+		if key, err = db.toKey([]byte(k)); err != nil {
+			log.Info().AnErr("HGetAll: key unmarshal error:", err)
+			continue
+		}
+		if val, err = db.toValue([]byte(v)); err != nil {
+			log.Info().AnErr("HGetAll: value unmarshal error:", err)
+			continue
+		}
+		mapOut[key] = val
+	}
+	return mapOut, err
 }
 
 func (db *Ctx[k, v]) HMGET(fields ...k) (values []v, err error) {
@@ -53,10 +95,9 @@ func (db *Ctx[k, v]) HMGET(fields ...k) (values []v, err error) {
 		fieldsString []string
 		rawValues    []string
 	)
-	if fieldsString, err = rds.FieldsToSlice(fields); err != nil {
+	if fieldsString, err = db.toKeyStrs(fields...); err != nil {
 		return nil, err
 	}
-
 	if cmd = db.Rds.HMGet(db.Ctx, db.Key, fieldsString...); cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
@@ -64,7 +105,7 @@ func (db *Ctx[k, v]) HMGET(fields ...k) (values []v, err error) {
 	for i, val := range cmd.Val() {
 		rawValues[i] = val.(string)
 	}
-	return db.strsToValues(rawValues...)
+	return db.toValues(rawValues...)
 }
 
 func (db *Ctx[k, v]) HLen() (length int64, err error) {
@@ -103,24 +144,51 @@ func (db *Ctx[k, v]) HKeys() (fields []k, err error) {
 	if cmd = db.Rds.HKeys(db.Ctx, db.Key); cmd.Err() != nil {
 		return nil, cmd.Err()
 	}
-	return db.strsToKeys(cmd.Val())
+	return db.toKeys(cmd.Val())
 }
 func (db *Ctx[k, v]) HVals() (values []v, err error) {
-	values = make([]v, 0)
-	return values, rds.HVals(db.Ctx, db.Rds, db.Key, &values)
+	var cmd *redis.StringSliceCmd
+	if cmd = db.Rds.HVals(db.Ctx, db.Key); cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+	return db.toValues(cmd.Val()...)
 }
-func (db *Ctx[k, v]) HIncrBy(field interface{}, increment int64) (err error) {
-	return rds.HIncrBy(db.Ctx, db.Rds, db.Key, field, increment)
-}
-func (db *Ctx[k, v]) HIncrByFloat(field string, increment float64) (err error) {
-	return rds.HIncrByFloat(db.Ctx, db.Rds, db.Key, field, increment)
-}
-func (db *Ctx[k, v]) HSetNX(field interface{}, param interface{}) (err error) {
-	return rds.HSetNX(db.Ctx, db.Rds, db.Key, field, param)
+func (db *Ctx[k, v]) HIncrBy(field k, increment int64) (err error) {
+	var (
+		cmd      *redis.IntCmd
+		fieldStr string
+	)
+	if fieldStr, err = db.toKeyStr(field); err != nil {
+		return err
+	}
+	cmd = db.Rds.HIncrBy(db.Ctx, db.Key, fieldStr, increment)
+	return cmd.Err()
 }
 
-// golang version of python scan_iter
-func (db *Ctx[k, v]) Scan(match string, cursor uint64, count int64) (keys []string, err error) {
-	keys, _, err = db.Rds.Scan(db.Ctx, cursor, match, count).Result()
-	return keys, err
+func (db *Ctx[k, v]) HIncrByFloat(field k, increment float64) (err error) {
+	var (
+		cmd      *redis.FloatCmd
+		fieldStr string
+	)
+	if fieldStr, err = db.toKeyStr(field); err != nil {
+		return err
+	}
+	cmd = db.Rds.HIncrByFloat(db.Ctx, db.Key, fieldStr, increment)
+	return cmd.Err()
+
+}
+func (db *Ctx[k, v]) HSetNX(field k, value v) (err error) {
+	var (
+		cmd      *redis.BoolCmd
+		fieldStr string
+		valStr   string
+	)
+	if fieldStr, err = db.toKeyStr(field); err != nil {
+		return err
+	}
+	if valStr, err = db.toValueStr(value); err != nil {
+		return err
+	}
+	cmd = db.Rds.HSetNX(db.Ctx, db.Key, fieldStr, valStr)
+	return cmd.Err()
 }

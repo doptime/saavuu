@@ -1,29 +1,29 @@
 package data
 
-import (
-	"reflect"
-
-	rds "github.com/yangkequn/saavuu/rds"
-)
-
 func (db *Ctx[k, v]) RPush(param v) (err error) {
-	return rds.RPush(db.Ctx, db.Rds, db.Key, param)
+	if val, err := db.toValueStr(param); err != nil {
+		return err
+	} else {
+
+		return db.Rds.RPush(db.Ctx, db.Key, val).Err()
+	}
 }
 func (db *Ctx[k, v]) LSet(index int64, param v) (err error) {
-	return rds.LSet(db.Ctx, db.Rds, db.Key, index, param)
+	if val, err := db.toValueStr(param); err != nil {
+		return err
+	} else {
+		return db.Rds.LSet(db.Ctx, db.Key, index, val).Err()
+	}
 }
 func (db *Ctx[k, v]) LGet(index int64) (ret v, err error) {
-
-	vType := reflect.TypeOf((*v)(nil)).Elem()
-	if vType.Kind() == reflect.Ptr {
-		vValue := reflect.New(vType.Elem()).Interface().(v)
-		err = rds.LGet(db.Ctx, db.Rds, db.Key, index, vValue)
-		return vValue, err
+	cmd := db.Rds.LIndex(db.Ctx, db.Key, index)
+	if data, err := cmd.Bytes(); err != nil {
+		return ret, err
+	} else {
+		return db.toValue(data)
 	}
-	vValueWithPointer := reflect.New(vType).Interface().(*v)
-	err = rds.LGet(db.Ctx, db.Rds, db.Key, index, vValueWithPointer)
-	return *vValueWithPointer, err
 }
 func (db *Ctx[k, v]) LLen() (length int64, err error) {
-	return rds.LLen(db.Ctx, db.Rds, db.Key)
+	cmd := db.Rds.LLen(db.Ctx, db.Key)
+	return cmd.Result()
 }
