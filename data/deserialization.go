@@ -24,7 +24,12 @@ func (db *Ctx[k, v]) toKeys(valStr []string) (keys []k, err error) {
 			keys[i] = reflect.New(keyStruct.Elem()).Interface().(k)
 			err = json.Unmarshal([]byte(val), keys[i])
 		} else {
-			err = json.Unmarshal([]byte(val), &keys[i])
+			//if key is type of string, just return string
+			if keyStruct.Kind() == reflect.String {
+				keys[i] = interface{}(string(val)).(k)
+			} else {
+				err = json.Unmarshal([]byte(val), &keys[i])
+			}
 		}
 		if err != nil {
 			log.Info().AnErr("HKeys: field unmarshal error:", err)
@@ -76,6 +81,10 @@ func (db *Ctx[k, v]) toKey(valBytes []byte) (key k, err error) {
 		key = reflect.New(keyStruct.Elem()).Interface().(k)
 		return key, json.Unmarshal(valBytes, key)
 	} else {
+		//if key is type of string, just return string
+		if keyStruct.Kind() == reflect.String {
+			return reflect.ValueOf(string(valBytes)).Interface().(k), nil
+		}
 		err = json.Unmarshal(valBytes, &key)
 		return key, err
 	}
