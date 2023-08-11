@@ -32,14 +32,7 @@ func (db *Ctx[k, v]) HGet(field k) (value v, err error) {
 //
 //   - HSet("myhash", "key1", "value1", "key2", "value2")
 //
-//   - HSet("myhash", []string{"key1", "value1", "key2", "value2"})
-//
 //   - HSet("myhash", map[string]interface{}{"key1": "value1", "key2": "value2"})
-//
-//     Playing struct With "redis" tag.
-//     type MyHash struct { Key1 string `redis:"key1"`; Key2 int `redis:"key2"` }
-//
-//   - HSet("myhash", MyHash{"value1", "value2"})
 func (db *Ctx[k, v]) HSet(values ...interface{}) (err error) {
 	var (
 		KeyValuesStrs []string
