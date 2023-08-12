@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -17,33 +16,14 @@ import (
 	"github.com/yangkequn/saavuu/permission"
 )
 
-func mapConvertWithKeyFromInterfaceToString(m map[interface{}]interface{}) (m2 map[string]interface{}, err error) {
-	var bytes []byte
-	m2 = make(map[string]interface{})
-	for k, v := range m {
-		//marshal to string,using json
-		if reflect.TypeOf(k).Kind() == reflect.String {
-			m2[k.(string)] = v
-			continue
-		} else if bytes, err = json.Marshal(k); err != nil {
-			return nil, err
-		}
-		m2[string(bytes)] = v
-	}
-	return m2, nil
-}
-
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	var (
-		paramIn                 map[string]interface{} = map[string]interface{}{}
-		Min, Max                string
-		tm                      time.Time
-		map_interface_interface map[interface{}]interface{}
-		operation               string
-		members                 []interface{} = []interface{}{}
-		buf                     []byte
+		Min, Max  string
+		tm        time.Time
+		operation string
+		members   []interface{} = []interface{}{}
+		buf       []byte
 	)
-	svcCtx.MergeJwtField(paramIn)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
@@ -53,16 +33,18 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}
 
-	db := data.Ctx[interface{}, interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
+	db := data.Ctx[string, interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
 	// this is used to support 3rd party api
 	case "JSAPI":
 		var (
-			fuc *api.ApiInfo
-			ok  bool
+			fuc     *api.ApiInfo
+			ok      bool
+			paramIn map[string]interface{} = map[string]interface{}{}
 		)
+		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		svcCtx.Req.ParseForm()
 		if len(svcCtx.Req.Form) > 0 {
@@ -83,19 +65,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	case "HGET":
 		return db.HGet(svcCtx.Field)
 	case "HGETALL":
-		if map_interface_interface, err = db.HGetAll(); err != nil {
-			return nil, err
-		}
-		return mapConvertWithKeyFromInterfaceToString(map_interface_interface)
+		return db.HGetAll()
 	case "HMGET":
-		return db.HMGET(strings.Split(svcCtx.Field, ","))
+		return db.HMGET(strings.Split(svcCtx.Field, ",")...)
 	case "HKEYS":
-		var keys []interface{}
-		if keys, err = db.HKeys(); err != nil {
-			return "", err
-		} else {
-			return json.Marshal(keys)
-		}
+		return db.HKeys()
 	case "HEXISTS":
 		return db.HExists(svcCtx.Field)
 	case "HLEN":
