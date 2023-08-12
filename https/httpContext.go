@@ -39,8 +39,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 		return nil, ErrIncompleteRequest
 	}
 	// cmd and key and field, i.g. /HGET/UserAvatar?F=fa4Y3oyQk2swURaJ
-	svcContext.Cmd = CmdKeyFields[len(CmdKeyFields)-2]
-	svcContext.Key = CmdKeyFields[len(CmdKeyFields)-1]
+	svcContext.Cmd, svcContext.Key = CmdKeyFields[0], CmdKeyFields[1]
 	//url decoded already
 	svcContext.Field = r.FormValue("F")
 
