@@ -32,7 +32,10 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	//i.g. https://url.com/rSvc/HGET=UserAvatar=fa4Y3oyQk2swURaJ?Queries=*&RspType=image/jpeg
-	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 2 {
+	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
+		return nil, ErrIncompleteRequest
+	}
+	if CmdKeyFields = strings.Split(CmdKeyFields[len(CmdKeyFields)-1], "--"); len(CmdKeyFields) < 2 {
 		return nil, ErrIncompleteRequest
 	}
 	// cmd and key and field, i.g. /HGET/UserAvatar?F=fa4Y3oyQk2swURaJ
@@ -42,8 +45,30 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	svcContext.Field = r.FormValue("F")
 
 	//default response content type: application/json
-	if svcContext.ResponseContentType = svcContext.Req.FormValue("RspType"); svcContext.ResponseContentType == "" {
-		svcContext.ResponseContentType = "application/json"
+	svcContext.ResponseContentType = "application/json"
+	for i, l := 2, len(CmdKeyFields); i < l; i++ {
+		//export enum RspType { json = "&RspType=application/json", jpeg = "&RspType=image/jpeg", ogg = "&RspType=audio/ogg", mpeg = "&RspType=video/mpeg", mp4 = "&RspType=video/mp4", none = "", text = "&RspType=text/plain", stream = "&RspType=application/octet-stream" }
+		//export enum RspType { json = "--!JSON", jpeg = "--!JPG", ogg = "--!OGG", mpeg = "--!MPEG", mp4 = "--!MP4", none = "", text = "--!TEXT", stream = "--!STREAM" }
+		var param string = CmdKeyFields[0]
+		if param == "" || param[0] != '!' {
+			continue
+		}
+		switch param {
+		case "!JSON":
+			svcContext.ResponseContentType = "application/json"
+		case "!JPG":
+			svcContext.ResponseContentType = "image/jpeg"
+		case "!OGG":
+			svcContext.ResponseContentType = "audio/ogg"
+		case "!MPEG":
+			svcContext.ResponseContentType = "video/mpeg"
+		case "!MP4":
+			svcContext.ResponseContentType = "video/mp4"
+		case "!TEXT":
+			svcContext.ResponseContentType = "text/plain"
+		case "!STREAM":
+			svcContext.ResponseContentType = "application/octet-stream"
+		}
 	}
 	return svcContext, nil
 }
