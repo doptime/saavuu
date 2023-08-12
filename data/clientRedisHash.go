@@ -96,6 +96,9 @@ func (db *Ctx[k, v]) HMGET(fields ...k) (values []v, err error) {
 	}
 	rawValues = make([]string, len(cmd.Val()))
 	for i, val := range cmd.Val() {
+		if val == nil {
+			continue
+		}
 		rawValues[i] = val.(string)
 	}
 	return db.toValues(rawValues...)
