@@ -72,6 +72,12 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return db.HKeys()
 	case "HEXISTS":
 		return db.HExists(svcCtx.Field)
+	case "HRANDFIELD":
+		var count int
+		if count, err = strconv.Atoi(svcCtx.Req.FormValue("Count")); err != nil {
+			return "", errors.New("parse count error:" + err.Error())
+		}
+		return db.HRandField(count)
 	case "HLEN":
 		return db.HLen()
 	case "HVALS":

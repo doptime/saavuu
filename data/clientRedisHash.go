@@ -81,6 +81,15 @@ func (db *Ctx[k, v]) HGetAll() (mapOut map[k]v, err error) {
 	}
 	return mapOut, err
 }
+func (db *Ctx[k, v]) HRandField(count int) (fields []k, err error) {
+	var (
+		cmd *redis.StringSliceCmd
+	)
+	if cmd = db.Rds.HRandField(db.Ctx, db.Key, count); cmd.Err() != nil {
+		return nil, cmd.Err()
+	}
+	return db.toKeys(cmd.Val())
+}
 
 func (db *Ctx[k, v]) HMGET(fields ...k) (values []v, err error) {
 	var (
