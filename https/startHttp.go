@@ -1,11 +1,11 @@
 package https
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -48,21 +48,22 @@ func RedisHttpStart(path string, port int64) {
 			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
 		}
 
+		if err == nil {
+			if b, ok = result.([]byte); ok {
+			} else if s, ok = result.(string); ok {
+				b = []byte(s)
+			} else {
+				b, err = json.Marshal(result)
+			}
+		}
+		//this err may be from json.marshal, so don't move it to the above else if
 		if err != nil {
-			errStr := err.Error()
-			if strings.Contains(errStr, "JWT") {
+			if b = []byte(err.Error()); bytes.Contains(b, []byte("JWT")) {
 				httpStatus = http.StatusUnauthorized
 			} else if httpStatus == http.StatusOK {
+				// this if is needed, because  httpStatus may have already setted as StatusBadRequest
 				httpStatus = http.StatusInternalServerError
 			}
-			b = []byte(err.Error())
-		} else if b, ok = result.([]byte); ok {
-		} else if s, ok = result.(string); ok {
-			b = []byte(s)
-		} else if b, err = json.Marshal(result); err != nil {
-			//reponse result json to client
-			httpStatus = http.StatusInternalServerError
-			b = []byte(err.Error())
 		}
 
 		svcCtx.SetContentType()
