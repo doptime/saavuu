@@ -32,7 +32,7 @@ func RedisHttpStart(path string, port int64) {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*12000)
 		defer cancel()
-		if svcCtx, err = NewHttpContext(ctx, r, w); err != nil {
+		if svcCtx, err = NewHttpContext(ctx, r, w); err != nil || svcCtx == nil {
 			httpStatus = http.StatusBadRequest
 		} else if r.Method == "GET" {
 			result, err = svcCtx.GetHandler()
@@ -43,6 +43,7 @@ func RedisHttpStart(path string, port int64) {
 		} else if r.Method == "DELETE" {
 			result, err = svcCtx.DelHandler()
 		}
+
 		if len(config.Cfg.CORS) > 0 {
 			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
 		}
