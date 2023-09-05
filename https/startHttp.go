@@ -66,7 +66,10 @@ func RedisHttpStart(path string, port int64) {
 			}
 		}
 
-		svcCtx.SetContentType()
+		//set Content-Type
+		if svcCtx != nil && len(svcCtx.ResponseContentType) > 0 {
+			svcCtx.Rsb.Header().Set("Content-Type", svcCtx.ResponseContentType)
+		}
 		w.WriteHeader(httpStatus)
 		w.Write(b)
 	})

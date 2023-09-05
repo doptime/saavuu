@@ -71,11 +71,6 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	}
 	return svcContext, nil
 }
-func (svc *HttpContext) SetContentType() {
-	if len(svc.ResponseContentType) > 0 {
-		svc.Rsb.Header().Set("Content-Type", svc.ResponseContentType)
-	}
-}
 
 func (svc *HttpContext) BodyBytes() (data []byte, err error) {
 	var (
