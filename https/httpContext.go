@@ -48,7 +48,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	for i, l := 2, len(CmdKeyFields); i < l; i++ {
 		//export enum RspType { json = "&RspType=application/json", jpeg = "&RspType=image/jpeg", ogg = "&RspType=audio/ogg", mpeg = "&RspType=video/mpeg", mp4 = "&RspType=video/mp4", none = "", text = "&RspType=text/plain", stream = "&RspType=application/octet-stream" }
 		//export enum RspType { json = "--!JSON", jpeg = "--!JPG", ogg = "--!OGG", mpeg = "--!MPEG", mp4 = "--!MP4", none = "", text = "--!TEXT", stream = "--!STREAM" }
-		var param string = CmdKeyFields[0]
+		var param string = CmdKeyFields[i]
 		if param == "" || param[0] != '!' {
 			continue
 		}
