@@ -53,7 +53,13 @@ func RedisHttpStart(path string, port int64) {
 			} else if s, ok = result.(string); ok {
 				b = []byte(s)
 			} else {
-				b, err = json.Marshal(result)
+				if b, err = json.Marshal(result); err == nil {
+					//json Compact b
+					var dst *bytes.Buffer = bytes.NewBuffer([]byte{})
+					if err = json.Compact(dst, b); err == nil {
+						b = dst.Bytes()
+					}
+				}
 			}
 		}
 		//this err may be from json.marshal, so don't move it to the above else if
