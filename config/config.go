@@ -55,7 +55,7 @@ func init() {
 	}
 	log.Info().Any("Current Envs:", Cfg).Msg("Load config from env success")
 
-	log.Info().Str("Start checking redis connection", Cfg.RedisAddress).Send()
+	log.Info().Str("Redis connection Start checking ", Cfg.RedisAddress).Send()
 	//ping the address of redisAddress, if failed, print to log
 	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
 	//apply configuration
@@ -71,6 +71,9 @@ func init() {
 	if _, err := rds.Ping(context.Background()).Result(); err != nil {
 		log.Fatal().Err(err).Msg("Redis connection failed: " + Cfg.RedisAddress)
 	}
+	log.Info().Msg("Redis connection Success: " + Cfg.RedisAddress)
+	timeCmd := rds.Time(context.Background())
+	log.Info().Any("Redis server time: ", timeCmd.Val().String()).Send()
 	Rds = rds
 
 }
