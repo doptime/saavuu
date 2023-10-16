@@ -28,7 +28,7 @@ func LoadPPermissionFromRedis() {
 	//a slice name desMap holding  &PermittedPutOp,&PermittedPostOp,&PermittedGetOp,&PermittedDelOp
 	var desMap []cmap.ConcurrentMap[string, *Permission] = []cmap.ConcurrentMap[string, *Permission]{PermittedPutOp, PermittedPostOp, PermittedGetOp, PermittedDelOp}
 	for i, key := range keys {
-
+		log.Info().Msg("Start load " + key + "  error: " + err.Error())
 		var _map map[string]*Permission
 		var paramRds = data.Ctx[string, *Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
 		if _map, err = paramRds.HGetAll(); err != nil {

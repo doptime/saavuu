@@ -1,10 +1,14 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Netflix/go-env"
+	"github.com/go-ping/ping"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 )
@@ -44,6 +48,17 @@ func init() {
 	if Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
+	redisAddress := Cfg.RedisAddress
+	//if redisAddress  is not of format address:port , add default port 6379
+	if !strings.Contains(redisAddress, ":") {
+		redisAddress = redisAddress + ":6379"
+	}
+	//ping the address of redisAddress, if failed, print to log
+	address := strings.Split(redisAddress, ":")[0]
+	if len(address) == 0 {
+		log.Fatal().Msg("RedisAddress is empty")
+	}
+	go pingServer(address)
 	//apply configuration
 	redisOption := &redis.Options{
 		Addr:     Cfg.RedisAddress,
@@ -52,7 +67,38 @@ func init() {
 		PoolSize: 200,
 	}
 	Rds = redis.NewClient(redisOption)
+	//test connection
+	if _, err := Rds.Ping(context.Background()).Result(); err != nil {
+		log.Fatal().Err(err).Msg("Redis connection failed")
+	}
 
 	jsBytes, _ := json.Marshal(Cfg)
 	log.Info().Str("Current Envs:", string(jsBytes)).Msg("Load config from env success")
+}
+func pingServer(domain string) {
+	pinger, err := ping.NewPinger(domain)
+	if err != nil {
+		log.Info().AnErr("ERROR Ping", err)
+	}
+
+	pinger.Count = 4
+	pinger.Timeout = time.Second * 10
+
+	pinger.OnRecv = func(pkt *ping.Packet) {
+		fmt.Printf("Ping Received packet from %s: icmp_seq=%d time=%v\n",
+			pkt.IPAddr, pkt.Seq, pkt.Rtt)
+	}
+
+	pinger.OnFinish = func(stats *ping.Statistics) {
+		fmt.Printf("\n--- %s ping statistics ---\n", stats.Addr)
+		fmt.Printf("%d Ping packets transmitted, %d packets received, %v%% packet loss\n",
+			stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)
+		fmt.Printf("Ping round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
+			stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
+	}
+
+	fmt.Printf("Pinging %s:\n", domain)
+	if err := pinger.Run(); err != nil {
+		log.Info().AnErr("ERROR Ping", err)
+	}
 }
