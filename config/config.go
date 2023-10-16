@@ -49,20 +49,15 @@ func init() {
 	if Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
+	//if redisAddress  is not of format address:port , add default port 6379
+	if !strings.Contains(Cfg.RedisAddress, ":") {
+		Cfg.RedisAddress = Cfg.RedisAddress + ":6379"
+	}
 	log.Info().Any("Current Envs:", Cfg).Msg("Load config from env success")
 
-	redisAddress := Cfg.RedisAddress
-	//if redisAddress  is not of format address:port , add default port 6379
-	if !strings.Contains(redisAddress, ":") {
-		redisAddress = redisAddress + ":6379"
-	}
-	address := strings.Split(redisAddress, ":")[0]
-	if len(address) == 0 {
-		log.Fatal().Msg("RedisAddress is empty")
-	}
-	log.Info().Str("Start checking redis connection", address).Send()
+	log.Info().Str("Start checking redis connection", Cfg.RedisAddress).Send()
 	//ping the address of redisAddress, if failed, print to log
-	go pingServer(address)
+	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
 	//apply configuration
 	redisOption := &redis.Options{
 		Addr:        Cfg.RedisAddress,
@@ -74,7 +69,7 @@ func init() {
 	rds := redis.NewClient(redisOption)
 	//test connection
 	if _, err := rds.Ping(context.Background()).Result(); err != nil {
-		log.Fatal().Err(err).Msg("Redis connection failed: " + redisAddress)
+		log.Fatal().Err(err).Msg("Redis connection failed: " + Cfg.RedisAddress)
 	}
 	Rds = rds
 
