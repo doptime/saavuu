@@ -17,7 +17,7 @@ func reportStates() {
 	for serviceName := range ApiServices {
 		serviceNames = append(serviceNames, serviceName)
 	}
-	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames)
+	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames).Send()
 	for {
 		time.Sleep(time.Second * 60)
 		now := time.Now().String()[11:19]

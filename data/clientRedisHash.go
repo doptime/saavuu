@@ -70,11 +70,11 @@ func (db *Ctx[k, v]) HGetAll() (mapOut map[k]v, err error) {
 	//append all data to mapOut
 	for k, v := range cmd.Val() {
 		if key, err = db.toKey([]byte(k)); err != nil {
-			log.Info().AnErr("HGetAll: key unmarshal error:", err)
+			log.Info().AnErr("HGetAll: key unmarshal error:", err).Send()
 			continue
 		}
 		if val, err = db.toValue([]byte(v)); err != nil {
-			log.Info().AnErr("HGetAll: value unmarshal error:", err)
+			log.Info().AnErr("HGetAll: value unmarshal error:", err).Send()
 			continue
 		}
 		mapOut[key] = val

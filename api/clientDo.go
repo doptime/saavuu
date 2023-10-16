@@ -48,7 +48,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	}
 	args := &redis.XAddArgs{Stream: ac.ServiceName, Values: Values, MaxLen: 4096}
 	if cmd = ac.Rds.XAdd(ac.Ctx, args); cmd.Err() != nil {
-		log.Info().AnErr("Do XAdd", cmd.Err())
+		log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 		return out, cmd.Err()
 	}
 	if dueTime != nil {

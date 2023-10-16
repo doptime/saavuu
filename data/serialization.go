@@ -81,11 +81,11 @@ func (db *Ctx[k, v]) toKeyValueStrs(keyValue ...interface{}) (keyValStrs []strin
 		for i := 0; i < l; i += 2 {
 			//type check, should be of type k and v
 			if key, ok = interface{}(keyValue[i]).(k); !ok {
-				log.Info().Any(" key must be of type k", key)
+				log.Info().Any(" key must be of type k", key).Send()
 				return nil, saavuu.ErrInvalidField
 			}
 			if value, ok = interface{}(keyValue[i+1]).(v); !ok {
-				log.Info().Any(" value must be of type v", value)
+				log.Info().Any(" value must be of type v", value).Send()
 				return nil, saavuu.ErrInvalidField
 			}
 			if strkey, err = db.toKeyStr(key); err != nil {

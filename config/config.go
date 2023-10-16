@@ -9,6 +9,7 @@ import (
 	"github.com/Netflix/go-env"
 	"github.com/go-ping/ping"
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,6 +40,7 @@ var Rds *redis.Client = nil
 
 func init() {
 	log.Info().Msg("App Start! load config from OS env")
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	if _, err := env.UnmarshalFromEnviron(&Cfg); err != nil {
 		log.Fatal().Err(err).Msg("Load config from env failed")
@@ -58,7 +60,7 @@ func init() {
 	if len(address) == 0 {
 		log.Fatal().Msg("RedisAddress is empty")
 	}
-	log.Info().Str("Start checking redis connection", address)
+	log.Info().Str("Start checking redis connection", address).Send()
 	//ping the address of redisAddress, if failed, print to log
 	go pingServer(address)
 	//apply configuration
@@ -80,7 +82,7 @@ func init() {
 func pingServer(domain string) {
 	pinger, err := ping.NewPinger(domain)
 	if err != nil {
-		log.Info().AnErr("ERROR Ping", err)
+		log.Info().AnErr("ERROR Ping", err).Send()
 	}
 	pinger.Count = 4
 	pinger.Timeout = time.Second * 10
@@ -100,6 +102,6 @@ func pingServer(domain string) {
 
 	fmt.Printf("start pinging %s", domain)
 	if err := pinger.Run(); err != nil {
-		log.Info().AnErr("ERROR Ping", err)
+		log.Info().AnErr("ERROR Ping", err).Send()
 	}
 }

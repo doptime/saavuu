@@ -73,7 +73,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		if err != nil {
 			//print the unmarshal error
 			if ctx.Debug {
-				log.Info().AnErr("ProcessOneJob unmarshal", err)
+				log.Info().AnErr("ProcessOneJob unmarshal", err).Send()
 			}
 			return nil, err
 		}
