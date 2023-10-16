@@ -60,11 +60,13 @@ func init() {
 	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
 	//apply configuration
 	redisOption := &redis.Options{
-		Addr:        Cfg.RedisAddress,
-		Password:    Cfg.RedisPassword, // no password set
-		DB:          Cfg.RedisDb,       // use default DB
-		PoolSize:    200,
-		DialTimeout: time.Second * 10,
+		Addr:         Cfg.RedisAddress,
+		Password:     Cfg.RedisPassword, // no password set
+		DB:           Cfg.RedisDb,       // use default DB
+		PoolSize:     200,
+		DialTimeout:  time.Second * 10,
+		ReadTimeout:  time.Second * 30,
+		WriteTimeout: time.Second * 30,
 	}
 	rds := redis.NewClient(redisOption)
 	//test connection
