@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -48,14 +47,13 @@ func init() {
 	if Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)
 	}
+	log.Info().Any("Current Envs:", Cfg).Msg("Load config from env success")
+
 	redisAddress := Cfg.RedisAddress
 	//if redisAddress  is not of format address:port , add default port 6379
 	if !strings.Contains(redisAddress, ":") {
 		redisAddress = redisAddress + ":6379"
 	}
-	jsBytes, _ := json.Marshal(Cfg)
-	log.Info().Str("Current Envs:", string(jsBytes)).Msg("Load config from env success")
-
 	address := strings.Split(redisAddress, ":")[0]
 	if len(address) == 0 {
 		log.Fatal().Msg("RedisAddress is empty")
