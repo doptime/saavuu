@@ -19,6 +19,10 @@ var permitKeyDel string = "saavuuPermissionDel"
 
 func LoadPPermissionFromRedis() {
 	var err error
+	//wait while config.Rds is nil
+	for config.Rds == nil {
+		time.Sleep(time.Millisecond * 100)
+	}
 	// read RedisPutPermission usiing Rds
 	// RedisPutPermission is a hash
 	// split each value of RedisPutPermission into string[] and store in PermittedPutOp

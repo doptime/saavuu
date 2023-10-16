@@ -36,7 +36,7 @@ type Configuration struct {
 
 var Cfg Configuration = Configuration{}
 
-var Rds *redis.Client
+var Rds *redis.Client = nil
 
 func init() {
 	log.Info().Msg("App Start! load config from OS env")
@@ -53,27 +53,31 @@ func init() {
 	if !strings.Contains(redisAddress, ":") {
 		redisAddress = redisAddress + ":6379"
 	}
-	//ping the address of redisAddress, if failed, print to log
+	jsBytes, _ := json.Marshal(Cfg)
+	log.Info().Str("Current Envs:", string(jsBytes)).Msg("Load config from env success")
+
 	address := strings.Split(redisAddress, ":")[0]
 	if len(address) == 0 {
 		log.Fatal().Msg("RedisAddress is empty")
 	}
+	log.Info().Str("Start checking redis connection", address)
+	//ping the address of redisAddress, if failed, print to log
 	go pingServer(address)
 	//apply configuration
 	redisOption := &redis.Options{
-		Addr:     Cfg.RedisAddress,
-		Password: Cfg.RedisPassword, // no password set
-		DB:       Cfg.RedisDb,       // use default DB
-		PoolSize: 200,
+		Addr:        Cfg.RedisAddress,
+		Password:    Cfg.RedisPassword, // no password set
+		DB:          Cfg.RedisDb,       // use default DB
+		PoolSize:    200,
+		DialTimeout: time.Second * 10,
 	}
-	Rds = redis.NewClient(redisOption)
+	rds := redis.NewClient(redisOption)
 	//test connection
-	if _, err := Rds.Ping(context.Background()).Result(); err != nil {
+	if _, err := rds.Ping(context.Background()).Result(); err != nil {
 		log.Fatal().Err(err).Msg("Redis connection failed: " + redisAddress)
 	}
+	Rds = rds
 
-	jsBytes, _ := json.Marshal(Cfg)
-	log.Info().Str("Current Envs:", string(jsBytes)).Msg("Load config from env success")
 }
 func pingServer(domain string) {
 	pinger, err := ping.NewPinger(domain)
