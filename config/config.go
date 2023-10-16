@@ -80,7 +80,6 @@ func pingServer(domain string) {
 	if err != nil {
 		log.Info().AnErr("ERROR Ping", err)
 	}
-
 	pinger.Count = 4
 	pinger.Timeout = time.Second * 10
 
@@ -97,7 +96,7 @@ func pingServer(domain string) {
 			stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
 	}
 
-	fmt.Printf("Pinging %s:\n", domain)
+	fmt.Printf("start pinging %s", domain)
 	if err := pinger.Run(); err != nil {
 		log.Info().AnErr("ERROR Ping", err)
 	}
