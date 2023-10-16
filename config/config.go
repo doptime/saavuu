@@ -69,7 +69,7 @@ func init() {
 	Rds = redis.NewClient(redisOption)
 	//test connection
 	if _, err := Rds.Ping(context.Background()).Result(); err != nil {
-		log.Fatal().Err(err).Msg("Redis connection failed")
+		log.Fatal().Err(err).Msg("Redis connection failed: " + redisAddress)
 	}
 
 	jsBytes, _ := json.Marshal(Cfg)
