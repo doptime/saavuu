@@ -100,5 +100,5 @@ func init() {
 		time.Sleep(time.Millisecond * 10)
 	}
 	log.Info().Any("port ", config.Cfg.HTTPPort).Any("path is ", config.Cfg.HTTPPath).Msg("http server is starting")
-	RedisHttpStart(config.Cfg.HTTPPath, config.Cfg.HTTPPort)
+	go RedisHttpStart(config.Cfg.HTTPPath, config.Cfg.HTTPPort)
 }
