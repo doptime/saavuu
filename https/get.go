@@ -28,7 +28,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
 	}
-	if !permission.IsGetPermitted(svcCtx.Key, operation) {
+	if !permission.IsPermitted(permission.Get, svcCtx.Key, operation) {
 		// check operation permission
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}

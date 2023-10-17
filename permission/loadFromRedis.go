@@ -2,7 +2,6 @@ package permission
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -11,42 +10,38 @@ import (
 	"github.com/yangkequn/saavuu/data"
 )
 
-var lastLoadPermissionInfo map[string]string = make(map[string]string)
-var permitKeyPut string = "saavuuPermissionPut"
-var permitKeyPost string = "saavuuPermissionPost"
-var permitKeyGet string = "saavuuPermissionGet"
-var permitKeyDel string = "saavuuPermissionDel"
 var ConfigurationLoaded bool = false
+var PermitMaps []cmap.ConcurrentMap[string, *Permission] = []cmap.ConcurrentMap[string, *Permission]{cmap.New[*Permission](), cmap.New[*Permission](), cmap.New[*Permission](), cmap.New[*Permission]()}
+var PermitKeys []string = []string{"saavuuPermissionPost", "saavuuPermissionPut", "saavuuPermissionGet", "saavuuPermissionDel"}
+
+type PermitType int64
+
+const (
+	Post PermitType = 0
+	Put  PermitType = 1
+	Get  PermitType = 2
+	Del  PermitType = 3
+)
 
 func LoadPermissionFromRedis() {
-	var err error
+	var (
+		err  error
+		_map map[string]*Permission
+	)
 	//wait while config.Rds is nil
 	for config.Rds == nil {
 		time.Sleep(time.Millisecond * 10)
 	}
-	// read RedisPutPermission usiing Rds
-	// RedisPutPermission is a hash
-	// split each value of RedisPutPermission into string[] and store in PermittedPutOp
 
-	//a slice name key holding  "RedisPutPermission","RedisPostPermission","RedisGetPermission","RedisDeletePermission"
-	var keys []string = []string{permitKeyPut, permitKeyPost, permitKeyGet, permitKeyDel}
-	//a slice name desMap holding  &PermittedPutOp,&PermittedPostOp,&PermittedGetOp,&PermittedDelOp
-	var desMap []cmap.ConcurrentMap[string, *Permission] = []cmap.ConcurrentMap[string, *Permission]{PermittedPutOp, PermittedPostOp, PermittedGetOp, PermittedDelOp}
-	for i, key := range keys {
-		var _map map[string]*Permission
+	for i, key := range PermitKeys {
 		var paramRds = data.Ctx[string, *Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
 		if _map, err = paramRds.HGetAll(); err != nil {
-			log.Warn().AnErr("loading "+key+" failed", err)
+			log.Warn().Str("key", key).Any("num", len(_map)).Err(err).Msg("Load permission Failed")
 			continue
 		}
-		var mapDes cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
-		mapDes.MSet(_map)
-		lastInfo, ok := lastLoadPermissionInfo[key]
-		if info := fmt.Sprint("loading "+key+" success. num keys:", mapDes.Count()); !ok || info != lastInfo {
-			log.Info().Msg(info)
-			lastLoadPermissionInfo[key] = info
+		if mapChanged := permitMapUpdate(_map, PermitMaps[i]); mapChanged {
+			log.Info().Str("key", key).Any("num", len(_map)).Msg("Load permission success")
 		}
-		desMap[i] = mapDes
 	}
 	if !ConfigurationLoaded {
 		ConfigurationLoaded = true
