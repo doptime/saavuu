@@ -12,11 +12,9 @@ import (
 var apiCounter tools.Counter = tools.Counter{}
 
 func reportStates() {
+	time.Sleep(time.Second * 5)
 	// all keys of ServiceMap to []string serviceNames
-	var serviceNames []string = make([]string, 0, len(ApiServices))
-	for serviceName := range ApiServices {
-		serviceNames = append(serviceNames, serviceName)
-	}
+	var serviceNames []string = apiServiceNames()
 	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames).Send()
 	for {
 		time.Sleep(time.Second * 60)

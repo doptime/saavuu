@@ -26,6 +26,8 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
 		err                                        error
 		cmd                                        []redis.Cmder
+		service                                    *ApiInfo
+		ok                                         bool
 	)
 	nowUnixMilliSecond = time.Now().UnixMilli()
 	if dueTimeUnixMilliSecond, err = strconv.ParseInt(dueTimeStr, 10, 64); err != nil {
@@ -41,7 +43,11 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err == nil {
-		if ret, err = ApiServices[serviceName].ApiFuncWithMsgpackedParam(bytes); err != nil {
+		if service, ok = ApiServices.Get(serviceName); !ok {
+			log.Info().Err(err).Send()
+			return
+		}
+		if ret, err = service.ApiFuncWithMsgpackedParam(bytes); err != nil {
 			log.Info().Err(err).Send()
 			return
 		}

@@ -2,8 +2,10 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
@@ -17,10 +19,10 @@ type ApiInfo struct {
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
 
-var ApiServices map[string]*ApiInfo = map[string]*ApiInfo{}
+var ApiServices cmap.ConcurrentMap[string, *ApiInfo] = cmap.New[*ApiInfo]()
 
 func apiServiceNames() (serviceNames []string) {
-	for _, serviceInfo := range ApiServices {
+	for _, serviceInfo := range ApiServices.Items() {
 		serviceNames = append(serviceNames, serviceInfo.ApiName)
 	}
 	return serviceNames
@@ -96,8 +98,13 @@ func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 	var (
 		msgPackResult []byte
 		ret           interface{}
+		service       *ApiInfo
+		ok            bool
 	)
-	if ret, err = ApiServices[apiName].ApiFuncWithMsgpackedParam(s); err != nil {
+	if service, ok = ApiServices.Get(apiName); !ok {
+		return fmt.Errorf("service %s not found", apiName)
+	}
+	if ret, err = service.ApiFuncWithMsgpackedParam(s); err != nil {
 		return err
 	}
 	if msgPackResult, err = msgpack.Marshal(ret); err != nil {
