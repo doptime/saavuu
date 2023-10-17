@@ -22,6 +22,10 @@ const (
 	Del  PermitType = 3
 )
 
+func dataCtx(permitType PermitType) *data.Ctx[string, *Permission] {
+	return data.New[string, *Permission](PermitKeys[int(permitType)])
+}
+
 func LoadPermissionFromRedis() {
 	var (
 		err  error
@@ -33,8 +37,8 @@ func LoadPermissionFromRedis() {
 	}
 
 	for i, key := range PermitKeys {
-		var paramRds = data.New[string, *Permission](key)
-		if _map, err = paramRds.HGetAll(); err != nil {
+		var dataCtx = dataCtx(PermitType(i))
+		if _map, err = dataCtx.HGetAll(); err != nil {
 			log.Warn().Str("key", key).Any("num", len(_map)).Err(err).Msg("Load permission Failed")
 			continue
 		}

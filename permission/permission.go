@@ -6,7 +6,6 @@ import (
 
 	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/data"
 )
 
 type Permission struct {
@@ -47,9 +46,8 @@ func IsPermitted(permitType PermitType, dataKey string, operation string) (ok bo
 	if config.Cfg.AutoPermission {
 		permission.WhiteList = append(permission.WhiteList, operation)
 		//save to redis
-		var PermissionKey string = PermitKeys[permitIndex]
-		var paramRds = data.New[string, *Permission](PermissionKey)
-		paramRds.HSet(dataKey, permission)
+		var dataCtx = dataCtx(PermitType(permitType))
+		dataCtx.HSet(dataKey, permission)
 	} else {
 		permission.BlackList = append(permission.BlackList, operation)
 		//no changed to redis
