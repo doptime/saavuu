@@ -32,6 +32,6 @@ func reportStates() {
 }
 func RunningAllApis() {
 	delayTasksLoad()
-	receiveJobs()
 	go reportStates()
+	receiveJobs()
 }
