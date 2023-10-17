@@ -92,10 +92,10 @@ func RedisHttpStart(path string, port int64) {
 	server.ListenAndServe()
 }
 func init() {
+	log.Info().Any("http service enabled", config.Cfg.HTTPEnabled).Send()
 	if !config.Cfg.HTTPEnabled {
 		return
 	}
-	log.Info().Msg("http service enabled!")
 	for !permission.ConfigurationLoaded {
 		time.Sleep(time.Millisecond * 10)
 	}
