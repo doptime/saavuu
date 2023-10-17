@@ -16,12 +16,13 @@ var permitKeyPut string = "saavuuPermissionPut"
 var permitKeyPost string = "saavuuPermissionPost"
 var permitKeyGet string = "saavuuPermissionGet"
 var permitKeyDel string = "saavuuPermissionDel"
+var ConfigurationLoaded bool = false
 
 func LoadPPermissionFromRedis() {
 	var err error
 	//wait while config.Rds is nil
 	for config.Rds == nil {
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 10)
 	}
 	// read RedisPutPermission usiing Rds
 	// RedisPutPermission is a hash
@@ -35,21 +36,22 @@ func LoadPPermissionFromRedis() {
 		var _map map[string]*Permission
 		var paramRds = data.Ctx[string, *Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
 		if _map, err = paramRds.HGetAll(); err != nil {
-			log.Info().Msg("loading " + key + "  error: " + err.Error())
-		} else {
-			var mapDes cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
-			mapDes.MSet(_map)
-			lastInfo, ok := lastLoadPermissionInfo[key]
-			if info := fmt.Sprint("loading "+key+" success. num keys:", mapDes.Count()); !ok || info != lastInfo {
-				log.Info().Msg(info)
-				lastLoadPermissionInfo[key] = info
-			}
-			desMap[i] = mapDes
+			log.Warn().AnErr("loading "+key+" failed", err)
+			continue
 		}
+		var mapDes cmap.ConcurrentMap[string, *Permission] = cmap.New[*Permission]()
+		mapDes.MSet(_map)
+		lastInfo, ok := lastLoadPermissionInfo[key]
+		if info := fmt.Sprint("loading "+key+" success. num keys:", mapDes.Count()); !ok || info != lastInfo {
+			log.Info().Msg(info)
+			lastLoadPermissionInfo[key] = info
+		}
+		desMap[i] = mapDes
 	}
-	go ContinuousReloadPermission()
-}
-func ContinuousReloadPermission() {
+	ConfigurationLoaded = true
 	time.Sleep(time.Second * 10)
-	LoadPPermissionFromRedis()
+	go LoadPPermissionFromRedis()
+}
+func init() {
+	go LoadPPermissionFromRedis()
 }

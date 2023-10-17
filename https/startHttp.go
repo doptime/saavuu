@@ -92,6 +92,8 @@ func RedisHttpStart(path string, port int64) {
 	server.ListenAndServe()
 }
 func StartHttp() {
-	permission.LoadPPermissionFromRedis()
+	for !permission.ConfigurationLoaded {
+		time.Sleep(time.Millisecond * 10)
+	}
 	RedisHttpStart("/", config.Cfg.ServerPort)
 }
