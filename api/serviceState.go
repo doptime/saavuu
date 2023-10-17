@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -11,14 +10,15 @@ import (
 var apiCounter tools.Counter = tools.Counter{}
 
 func reportStates() {
-	for i := 0; ApiServices.Count() == 0 && i < 100; i++ {
+	//wait till all apis are loaded
+	for i, lastCnt := 0, 0; (ApiServices.Count() == 0 || lastCnt != ApiServices.Count()) && i < 100; i++ {
+		lastCnt = ApiServices.Count()
 		time.Sleep(time.Millisecond * 100)
 	}
-	time.Sleep(time.Second)
 
 	// all keys of ServiceMap to []string serviceNames
 	var serviceNames []string = apiServiceNames()
-	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames).Send()
+	log.Info().Any("cnt", len(serviceNames)).Strs("apis are load:", serviceNames).Send()
 	for {
 		time.Sleep(time.Second * 60)
 		serviceNames = apiServiceNames()
