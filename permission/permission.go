@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"context"
 	"strings"
 	"time"
 
@@ -20,7 +19,6 @@ type Permission struct {
 func IsPermitted(permitType PermitType, dataKey string, operation string) (ok bool) {
 	permitIndex := int(permitType)
 	var PermissionMap cmap.ConcurrentMap[string, *Permission] = PermitMaps[permitIndex]
-	var PermissionKey string = PermitKeys[permitIndex]
 	//for example, if dataKey is "user:1x3", then dataKey will be "user"
 	if dataKey = strings.Split(dataKey, ":")[0]; len(dataKey) == 0 {
 		return false
@@ -48,13 +46,15 @@ func IsPermitted(permitType PermitType, dataKey string, operation string) (ok bo
 	// if using develop mode, then add operation to white list; else add operation to black list
 	if config.Cfg.AutoPermission {
 		permission.WhiteList = append(permission.WhiteList, operation)
+		//save to redis
+		var PermissionKey string = PermitKeys[permitIndex]
+		var paramRds = data.New[string, *Permission](PermissionKey)
+		paramRds.HSet(dataKey, permission)
 	} else {
 		permission.BlackList = append(permission.BlackList, operation)
+		//no changed to redis
 	}
 	PermissionMap.Set(dataKey, permission)
-	//save to redis
-	var paramRds = data.Ctx[string, Permission]{Rds: config.Rds, Ctx: context.Background(), Key: PermissionKey}
-	paramRds.HSet(dataKey, permission)
 	return config.Cfg.AutoPermission
 }
 

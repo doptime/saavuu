@@ -1,7 +1,6 @@
 package permission
 
 import (
-	"context"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -34,7 +33,7 @@ func LoadPermissionFromRedis() {
 	}
 
 	for i, key := range PermitKeys {
-		var paramRds = data.Ctx[string, *Permission]{Rds: config.Rds, Ctx: context.Background(), Key: key}
+		var paramRds = data.New[string, *Permission](key)
 		if _map, err = paramRds.HGetAll(); err != nil {
 			log.Warn().Str("key", key).Any("num", len(_map)).Err(err).Msg("Load permission Failed")
 			continue
