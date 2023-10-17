@@ -16,9 +16,11 @@ import (
 
 var ErrBadCommand = errors.New("error bad command")
 
-func printSertviceCount() {
+func printSertviceCount(service string) {
 	fmt.Println("https.ApiServices.Count()", api.ApiServices.Count())
 	fmt.Println("https.ApiServices.len", len(api.ApiServices.Items()))
+	apiinfo, ok := api.ApiServices.Get(service)
+	fmt.Println("https.ApiServices.Get(service)", apiinfo, ok)
 	time.Sleep(time.Second)
 
 }
@@ -69,12 +71,12 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
 	case "API":
-		printSertviceCount()
 		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
 			paramIn["MsgPack"] = MsgPack
 		}
 		svcCtx.MergeJwtField(paramIn)
 		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
+		printSertviceCount(_api.ServiceName)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
 		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.RPCFirst || !ok {
 			return _api.Do(paramIn)
