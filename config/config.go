@@ -29,7 +29,7 @@ type Configuration struct {
 
 	HTTPPort    int64  `env:"HTTPPort,default=80"`
 	HTTPPath    string `env:"HTTPPath,default=/"`
-	HTTPEnabled bool   `env:"HTTPPath,default=false"`
+	HTTPEnabled bool   `env:"HTTPEnabled,default=false"`
 
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	ServiceBatchSize int64 `env:"ServiceBatchSize"`
