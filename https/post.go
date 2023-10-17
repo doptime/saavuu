@@ -2,7 +2,9 @@ package https
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
@@ -13,6 +15,13 @@ import (
 )
 
 var ErrBadCommand = errors.New("error bad command")
+
+func printSertviceCount() {
+	fmt.Println("https.ApiServices.Count()", api.ApiServices.Count())
+	fmt.Println("https.ApiServices.len", len(api.ApiServices.Items()))
+	time.Sleep(time.Second)
+
+}
 
 func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//use remote service map to handle request
@@ -60,6 +69,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
 	case "API":
+		printSertviceCount()
 		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
 			paramIn["MsgPack"] = MsgPack
 		}
