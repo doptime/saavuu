@@ -31,9 +31,11 @@ func LoadPermissionFromRedis() {
 		err  error
 		_map map[string]*Permission
 	)
-	//wait while config.Rds is nil
 	for config.Rds == nil {
 		time.Sleep(time.Millisecond * 10)
+	}
+	if !ConfigurationLoaded {
+		log.Info().Msg("start load permission from redis")
 	}
 
 	for i, key := range PermitKeys {
@@ -46,8 +48,7 @@ func LoadPermissionFromRedis() {
 			log.Info().Str("key", key).Any("num", len(_map)).Msg("Load permission success")
 		}
 	}
-	if !ConfigurationLoaded {
-		ConfigurationLoaded = true
+	for ; !ConfigurationLoaded; ConfigurationLoaded = true {
 		log.Info().Msg("Load Configuration Permission From Redis success!")
 	}
 	time.Sleep(time.Second * 10)
