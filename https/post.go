@@ -2,9 +2,7 @@ package https
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/vmihailenco/msgpack/v5"
@@ -15,15 +13,6 @@ import (
 )
 
 var ErrBadCommand = errors.New("error bad command")
-
-func printSertviceCount(service string) {
-	fmt.Println("https.ApiServices.Count()", api.ApiServices.Count())
-	fmt.Println("https.ApiServices.len", len(api.ApiServices.Items()))
-	apiinfo, ok := api.ApiServices.Get(service)
-	fmt.Println("https.ApiServices.Get(service)", apiinfo, ok)
-	time.Sleep(time.Second)
-
-}
 
 func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//use remote service map to handle request
@@ -76,7 +65,6 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		}
 		svcCtx.MergeJwtField(paramIn)
 		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
-		printSertviceCount(_api.ServiceName)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
 		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.RPCFirst || !ok {
 			return _api.Do(paramIn)

@@ -80,7 +80,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		return f(in)
 	}
 	//register Api
-	ApiServices.Set(ServiceName, &ApiInfo{
+	ApiServices.Set(ctx.ServiceName, &ApiInfo{
 		ApiName:                   ctx.ServiceName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
