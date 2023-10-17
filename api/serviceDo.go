@@ -65,6 +65,7 @@ func receiveJobs() {
 	//create group if none exists
 	for err := XGroupCreate(c); err != nil; err = XGroupCreate(c) {
 		log.Info().Str("receiveApiJobs error:", err.Error()).Send()
+		log.Info().AnErr("XGroupCreate", cmd.Err()).Send()
 		time.Sleep(time.Second)
 	}
 
@@ -74,7 +75,7 @@ func receiveJobs() {
 		if cmd = config.Rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
-			log.Info().Str("receiveApiJobs error:", cmd.Err().Error()).Send()
+			log.Info().AnErr("receiveApiJobs", cmd.Err()).Send()
 			time.Sleep(time.Second)
 			continue
 		}

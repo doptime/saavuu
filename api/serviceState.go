@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -12,17 +11,20 @@ import (
 var apiCounter tools.Counter = tools.Counter{}
 
 func reportStates() {
-	time.Sleep(time.Second * 5)
+	for i := 0; ApiServices.Count() == 0 && i < 100; i++ {
+		time.Sleep(time.Millisecond * 100)
+	}
+	time.Sleep(time.Second)
+
 	// all keys of ServiceMap to []string serviceNames
 	var serviceNames []string = apiServiceNames()
 	log.Info().Strs(fmt.Sprintf("there are %v apis:", len(serviceNames)), serviceNames).Send()
 	for {
 		time.Sleep(time.Second * 60)
-		now := time.Now().String()[11:19]
 		serviceNames = apiServiceNames()
 		for _, serviceName := range serviceNames {
 			if num, _ := apiCounter.Get(serviceName); num > 0 {
-				log.Info().Msg(now + "" + serviceName + " proccessed " + strconv.Itoa(int(num)) + " tasks")
+				log.Info().Any("serviceName", serviceName).Any("proccessed", num).Msg("Tasks processed.")
 			}
 			apiCounter.DeleteAndGetLastValue(serviceName)
 		}
@@ -30,6 +32,6 @@ func reportStates() {
 }
 func RunningAllApis() {
 	delayTasksLoad()
-	go reportStates()
 	receiveJobs()
+	go reportStates()
 }
