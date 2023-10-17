@@ -27,8 +27,9 @@ type Configuration struct {
 	MaxBufferSize  int64  `env:"MaxBufferSize,default=10*1024*1024"`
 	CORS           string `env:"CORS,default=*"`
 
-	ServerPort int64  `env:"ServerPort,default=8000"`
-	ServerPath string `env:"ServerPath,default=/"`
+	HTTPPort    int64  `env:"HTTPPort,default=80"`
+	HTTPPath    string `env:"HTTPPath,default=/"`
+	HTTPEnabled bool   `env:"HTTPPath,default=false"`
 
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	ServiceBatchSize int64 `env:"ServiceBatchSize"`

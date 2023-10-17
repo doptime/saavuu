@@ -91,9 +91,14 @@ func RedisHttpStart(path string, port int64) {
 	}
 	server.ListenAndServe()
 }
-func StartHttp() {
+func init() {
+	if !config.Cfg.HTTPEnabled {
+		return
+	}
+	log.Info().Msg("http service enabled!")
 	for !permission.ConfigurationLoaded {
 		time.Sleep(time.Millisecond * 10)
 	}
-	RedisHttpStart("/", config.Cfg.ServerPort)
+	log.Info().Any("port ", config.Cfg.HTTPPort).Any("path is ", config.Cfg.HTTPPath).Msg("http server is starting")
+	RedisHttpStart(config.Cfg.HTTPPath, config.Cfg.HTTPPort)
 }

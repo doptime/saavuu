@@ -18,7 +18,7 @@ var permitKeyGet string = "saavuuPermissionGet"
 var permitKeyDel string = "saavuuPermissionDel"
 var ConfigurationLoaded bool = false
 
-func LoadPPermissionFromRedis() {
+func LoadPermissionFromRedis() {
 	var err error
 	//wait while config.Rds is nil
 	for config.Rds == nil {
@@ -48,10 +48,13 @@ func LoadPPermissionFromRedis() {
 		}
 		desMap[i] = mapDes
 	}
-	ConfigurationLoaded = true
+	if !ConfigurationLoaded {
+		ConfigurationLoaded = true
+		log.Info().Msg("Load Configuration Permission From Redis success!")
+	}
 	time.Sleep(time.Second * 10)
-	go LoadPPermissionFromRedis()
+	go LoadPermissionFromRedis()
 }
 func init() {
-	go LoadPPermissionFromRedis()
+	go LoadPermissionFromRedis()
 }
