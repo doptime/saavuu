@@ -12,6 +12,7 @@ import (
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
 func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
+	log.Debug().Str("ServiceName", ServiceName).Msg("ApiNamed service create start")
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
@@ -72,9 +73,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		}
 		if err != nil {
 			//print the unmarshal error
-			if ctx.Debug {
-				log.Info().AnErr("ProcessOneJob unmarshal", err).Send()
-			}
+			log.Debug().AnErr("ProcessOneJob unmarshal", err).Send()
 			return nil, err
 		}
 		return f(in)
@@ -84,6 +83,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		ApiName:                   ctx.ServiceName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
+	log.Debug().Str("ServiceName", ServiceName).Msg("ApiNamed service created completed!")
 	//return Api context
 	return f, ctx
 }
@@ -95,10 +95,15 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
 func Api[i any, o any](f func(InParam i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
+	log.Debug().Msg("Api service create start")
 	//get default ServiceName
 	var _type reflect.Type
 	//take name of type v as key
 	for _type = reflect.TypeOf((*i)(nil)); _type.Kind() == reflect.Ptr; _type = _type.Elem() {
 	}
-	return ApiNamed[i, o](_type.Name(), f)
+	typeName := _type.Name()
+	log.Debug().Str("Api service create start. name", typeName).Send()
+	retf, ctx = ApiNamed[i, o](typeName, f)
+	log.Debug().Str("Api service create end. name", typeName).Send()
+	return retf, ctx
 }

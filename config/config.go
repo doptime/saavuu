@@ -20,10 +20,8 @@ type Configuration struct {
 	RedisPassword string `env:"RedisPassword"`
 	RedisDb       int    `env:"RedisDb,required=true"`
 
-	//AutoPermission should never be true in production
-	AutoPermission bool   `env:"AutoPermission"`
-	JWTSecret      string `env:"JWTSecret"`
-	JwtFieldsKept  string `env:"JwtFieldsKept"`
+	JWTSecret     string `env:"JWTSecret"`
+	JwtFieldsKept string `env:"JwtFieldsKept"`
 	//MaxBufferSize is the max size of a task in bytes, default 10M
 	MaxBufferSize int64  `env:"MaxBufferSize,default=10485760"`
 	CORS          string `env:"CORS,default=*"`
@@ -32,6 +30,11 @@ type Configuration struct {
 	HTTPPath    string `env:"HTTPPath,default=/"`
 	HTTPEnabled bool   `env:"HTTPEnabled,default=false"`
 
+	//AutoPermission should never be true in production
+	AutoPermission bool `env:"AutoPermission"`
+
+	//{"DebugLevel": 0,"InfoLevel": 1,"WarnLevel": 2,"ErrorLevel": 3,"FatalLevel": 4,"PanicLevel": 5,"NoLevel": 6,"Disabled": 7	  }
+	LogLevel int8 `env:"LogLevel,default=1"`
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	ServiceBatchSize int64 `env:"ServiceBatchSize,default=64"`
 }
@@ -42,11 +45,11 @@ var Rds *redis.Client = nil
 
 func init() {
 	log.Info().Msg("Step1.0: App Start! load config from OS env")
-	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	if _, err := env.UnmarshalFromEnviron(&Cfg); err != nil {
 		log.Fatal().Err(err).Msg("Load config from env failed")
 	}
+	zerolog.SetGlobalLevel(zerolog.Level(Cfg.LogLevel))
 
 	if Cfg.JwtFieldsKept != "" {
 		Cfg.JwtFieldsKept = strings.ToLower(Cfg.JwtFieldsKept)

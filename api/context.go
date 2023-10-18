@@ -13,7 +13,6 @@ type Ctx[i any, o any] struct {
 	Ctx context.Context
 	Rds *redis.Client
 
-	Debug       bool
 	ServiceName string
 	Func        func(InServiceName i) (ret o, err error)
 }
@@ -49,12 +48,11 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 	//ensure ServiceKey start with "api:"
 	ServiceName = "api:" + ServiceName
 
-	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds, Debug: false, ServiceName: ServiceName}
+	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds, ServiceName: ServiceName}
 }
 
 // allow setting breakpoint for input decoding
 func (ctx *Ctx[i, o]) UseDebug() *Ctx[i, o] {
-	ctx.Debug = true
 	return ctx
 }
 
