@@ -52,10 +52,10 @@ func receiveJobs() {
 			//2023-10-18T05:39:41Z INF receiveApiJobs=NOGROUP No such key 'api:skillSearch' or consumer group 'group0' in XREADGROUP with GROUP option
 			matchServiceName := regexp.MustCompile(`No such key '(api:.*)' or consumer `)
 			if matchServiceName.MatchString(cmd.Err().Error()) {
-				Name := matchServiceName.FindStringSubmatch(cmd.Err().Error())[1]
-				cmd := config.Rds.Del(c, Name)
-				if cmd.Err() == nil {
-					XGroupCreateOne(c, Name)
+				GroupName := matchServiceName.FindStringSubmatch(cmd.Err().Error())[1]
+				log.Info().Str("Try recreate group", GroupName).Send()
+				if cmd := config.Rds.Del(c, GroupName); cmd.Err() == nil {
+					XGroupCreateOne(c, GroupName)
 				}
 			}
 			time.Sleep(time.Second)
