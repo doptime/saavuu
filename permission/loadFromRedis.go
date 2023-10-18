@@ -35,21 +35,21 @@ func LoadPermissionFromRedis() {
 		time.Sleep(time.Millisecond * 10)
 	}
 	if !ConfigurationLoaded {
-		log.Info().Msg("Step2: start load permission from redis")
+		log.Info().Msg("Step2.1: start load permission from redis")
 	}
 
 	for i, key := range PermitKeys {
 		var dataCtx = dataCtx(PermitType(i))
 		if _map, err = dataCtx.HGetAll(); err != nil {
-			log.Warn().Str("key", key).Any("num", len(_map)).Err(err).Msg("Load permission Failed")
+			log.Warn().Str("key", key).Any("num", len(_map)).Err(err).Msg("Step2.2: Load permission Failed")
 			continue
 		}
 		if mapChanged := permitMapUpdate(_map, PermitMaps[i]); mapChanged {
-			log.Info().Str("key", key).Any("num", len(_map)).Msg("Load permission success")
+			log.Info().Str("key", key).Any("num", len(_map)).Msg("Step2.2: Load permission success")
 		}
 	}
 	for ; !ConfigurationLoaded; ConfigurationLoaded = true {
-		log.Info().Msg("Step2: Load Configuration Permission From Redis completed!")
+		log.Info().Msg("Step2.E: Load Configuration Permission From Redis completed!")
 	}
 	time.Sleep(time.Second * 10)
 	go LoadPermissionFromRedis()

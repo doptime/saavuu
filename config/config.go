@@ -40,7 +40,7 @@ var Cfg Configuration = Configuration{}
 var Rds *redis.Client = nil
 
 func init() {
-	log.Info().Msg("Step1: App Start! load config from OS env")
+	log.Info().Msg("Step1.0: App Start! load config from OS env")
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	if _, err := env.UnmarshalFromEnviron(&Cfg); err != nil {
@@ -54,11 +54,9 @@ func init() {
 	if !strings.Contains(Cfg.RedisAddress, ":") {
 		Cfg.RedisAddress = Cfg.RedisAddress + ":6379"
 	}
-	log.Info().Any("Current Envs:", Cfg).Msg("Load config from env success")
+	log.Info().Any("Step1.1 Current Envs:", Cfg).Msg("Load config from env success")
 
-	log.Info().Str("Redis connection Start checking ", Cfg.RedisAddress).Send()
-	//ping the address of redisAddress, if failed, print to log
-	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
+	log.Info().Str("Step1.2 Redis connection Start checking ", Cfg.RedisAddress).Send()
 	//apply configuration
 	redisOption := &redis.Options{
 		Addr:         Cfg.RedisAddress,
@@ -74,36 +72,40 @@ func init() {
 	if _, err := rds.Ping(context.Background()).Result(); err != nil {
 		log.Fatal().Err(err).Msg("Redis connection failed: " + Cfg.RedisAddress)
 	}
-	log.Info().Str("Redis connection Success", Cfg.RedisAddress)
+	log.Info().Str("Step1.3 Redis connection Success", Cfg.RedisAddress).Send()
 	timeCmd := rds.Time(context.Background())
-	log.Info().Any("Redis server time: ", timeCmd.Val().String()).Send()
+	log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
 	Rds = rds
-	log.Info().Msg("Step1: App loaded configuration completed!")
+	//ping the address of redisAddress, if failed, print to log
+	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
+	log.Info().Msg("Step1.E: App loaded configuration completed!")
 
 }
 func pingServer(domain string) {
 	pinger, err := ping.NewPinger(domain)
 	if err != nil {
-		log.Info().AnErr("ERROR Ping", err).Send()
+		log.Info().AnErr("Step1.5 ERROR NewPinger", err).Send()
 	}
 	pinger.Count = 4
 	pinger.Timeout = time.Second * 10
 
 	pinger.OnRecv = func(pkt *ping.Packet) {
-		fmt.Printf("Ping Received packet from %s: icmp_seq=%d time=%v\n",
-			pkt.IPAddr, pkt.Seq, pkt.Rtt)
+		//fmt.Printf("Ping Received packet from %s: icmp_seq=%d time=%v\n",pkt.IPAddr, pkt.Seq, pkt.Rtt)
 	}
 
 	pinger.OnFinish = func(stats *ping.Statistics) {
-		fmt.Printf("\n--- %s ping statistics ---\n", stats.Addr)
-		fmt.Printf("%d Ping packets transmitted, %d packets received, %v%% packet loss\n",
-			stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)
-		fmt.Printf("Ping round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
-			stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
+		// fmt.Printf("\n--- %s ping statistics ---\n", stats.Addr)
+		log.Info().Str("Step1.5 Ping ", fmt.Sprintf("--- %s ping statistics ---", stats.Addr)).Send()
+		// fmt.Printf("%d Ping packets transmitted, %d packets received, %v%% packet loss\n",
+		// 	stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)
+		log.Info().Str("Step1.5 Ping", fmt.Sprintf("%d/%d/%v%%", stats.PacketsSent, stats.PacketsRecv, stats.PacketLoss)).Send()
+
+		// fmt.Printf("Ping round-trip min/avg/max/stddev = %v/%v/%v/%v\n",
+		// 	stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
+		log.Info().Str("Step1.5 Ping", fmt.Sprintf("%v/%v/%v/%v", stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)).Send()
 	}
 
-	fmt.Printf("start pinging %s", domain)
 	if err := pinger.Run(); err != nil {
-		log.Info().AnErr("ERROR Ping", err).Send()
+		log.Info().AnErr("Step1.5 ERROR Ping", err).Send()
 	}
 }

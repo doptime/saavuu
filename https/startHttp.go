@@ -79,7 +79,7 @@ func RedisHttpStart(path string, port int64) {
 		w.WriteHeader(httpStatus)
 		w.Write(b)
 	})
-	log.Info().Any("port", port).Any("path", path).Msg("Step3: http server start completed!")
+	log.Info().Any("port", port).Any("path", path).Msg("Step3.E: http server start completed!")
 
 	server := &http.Server{
 		Addr:              ":" + strconv.FormatInt(port, 10),
@@ -92,13 +92,13 @@ func RedisHttpStart(path string, port int64) {
 	server.ListenAndServe()
 }
 func init() {
-	log.Info().Any("http service enabled", config.Cfg.HTTPEnabled).Send()
+	log.Info().Any("Step3.1: http service enabled", config.Cfg.HTTPEnabled).Send()
 	if !config.Cfg.HTTPEnabled {
 		return
 	}
 	for !permission.ConfigurationLoaded {
 		time.Sleep(time.Millisecond * 10)
 	}
-	log.Info().Any("port", config.Cfg.HTTPPort).Any("path", config.Cfg.HTTPPath).Msg("Step3: http server is starting")
+	log.Info().Any("port", config.Cfg.HTTPPort).Any("path", config.Cfg.HTTPPath).Msg("Step3.2: http server is starting")
 	go RedisHttpStart(config.Cfg.HTTPPath, config.Cfg.HTTPPort)
 }
