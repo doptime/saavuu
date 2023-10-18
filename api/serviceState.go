@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -9,10 +10,14 @@ import (
 
 var apiCounter tools.Counter = tools.Counter{}
 
-func reportStates() {
+func reportApiStates() {
 	//wait till all apis are loaded
+	if ApiServices.Count() == 0 {
+		log.Info().Msg("waiting for apis to load")
+	}
 	for i, lastCnt := 0, 0; (ApiServices.Count() == 0 || lastCnt != ApiServices.Count()) && i < 100; i++ {
 		lastCnt = ApiServices.Count()
+		fmt.Print(".")
 		time.Sleep(time.Millisecond * 100)
 	}
 
@@ -32,6 +37,6 @@ func reportStates() {
 }
 func RunningAllApis() {
 	delayTasksLoad()
-	go reportStates()
+	go reportApiStates()
 	receiveJobs()
 }
