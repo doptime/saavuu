@@ -12,7 +12,7 @@ import (
 
 // Key purpose of ApiNamed is to allow different API to have the same input type
 func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
-	log.Debug().Str("ServiceName", ServiceName).Msg("ApiNamed service create start")
+	log.Debug().Str("ApiNamed service created start!", ServiceName).Send()
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
@@ -83,7 +83,7 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 		ApiName:                   ctx.ServiceName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
-	log.Debug().Str("ServiceName", ServiceName).Msg("ApiNamed service created completed!")
+	log.Debug().Str("ApiNamed service created completed!", ServiceName).Send()
 	//return Api context
 	return f, ctx
 }
