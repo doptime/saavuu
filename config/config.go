@@ -40,7 +40,7 @@ var Cfg Configuration = Configuration{}
 var Rds *redis.Client = nil
 
 func init() {
-	log.Info().Msg("App Start! load config from OS env")
+	log.Info().Msg("Step1: App Start! load config from OS env")
 	zerolog.SetGlobalLevel(zerolog.InfoLevel)
 
 	if _, err := env.UnmarshalFromEnviron(&Cfg); err != nil {
@@ -74,10 +74,11 @@ func init() {
 	if _, err := rds.Ping(context.Background()).Result(); err != nil {
 		log.Fatal().Err(err).Msg("Redis connection failed: " + Cfg.RedisAddress)
 	}
-	log.Info().Msg("Redis connection Success: " + Cfg.RedisAddress)
+	log.Info().Str("Redis connection Success", Cfg.RedisAddress)
 	timeCmd := rds.Time(context.Background())
 	log.Info().Any("Redis server time: ", timeCmd.Val().String()).Send()
 	Rds = rds
+	log.Info().Msg("Step1: App loaded configuration completed!")
 
 }
 func pingServer(domain string) {

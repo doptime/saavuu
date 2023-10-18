@@ -35,7 +35,7 @@ func LoadPermissionFromRedis() {
 		time.Sleep(time.Millisecond * 10)
 	}
 	if !ConfigurationLoaded {
-		log.Info().Msg("start load permission from redis")
+		log.Info().Msg("Step2: start load permission from redis")
 	}
 
 	for i, key := range PermitKeys {
@@ -49,7 +49,7 @@ func LoadPermissionFromRedis() {
 		}
 	}
 	for ; !ConfigurationLoaded; ConfigurationLoaded = true {
-		log.Info().Msg("Load Configuration Permission From Redis success!")
+		log.Info().Msg("Step2: Load Configuration Permission From Redis completed!")
 	}
 	time.Sleep(time.Second * 10)
 	go LoadPermissionFromRedis()
