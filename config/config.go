@@ -24,15 +24,16 @@ type Configuration struct {
 	AutoPermission bool   `env:"AutoPermission"`
 	JWTSecret      string `env:"JWTSecret"`
 	JwtFieldsKept  string `env:"JwtFieldsKept"`
-	MaxBufferSize  int64  `env:"MaxBufferSize,default=10*1024*1024"`
-	CORS           string `env:"CORS,default=*"`
+	//MaxBufferSize is the max size of a task in bytes, default 10M
+	MaxBufferSize int64  `env:"MaxBufferSize,default=10485760"`
+	CORS          string `env:"CORS,default=*"`
 
 	HTTPPort    int64  `env:"HTTPPort,default=80"`
 	HTTPPath    string `env:"HTTPPath,default=/"`
 	HTTPEnabled bool   `env:"HTTPEnabled,default=false"`
 
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
-	ServiceBatchSize int64 `env:"ServiceBatchSize"`
+	ServiceBatchSize int64 `env:"ServiceBatchSize,default=64"`
 }
 
 var Cfg Configuration = Configuration{}

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -27,46 +28,18 @@ func apiServiceNames() (serviceNames []string) {
 	}
 	return serviceNames
 }
-func defaultXReadGroupArgs() *redis.XReadGroupArgs {
-	var streams []string
-	services := apiServiceNames()
-	streams = append(streams, services...)
-	//from services to ServiceInfos
-	for i := 0; i < len(services); i++ {
-		//append default stream id
-		streams = append(streams, ">")
-	}
-
-	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
-	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
-	return args
-}
-func XGroupCreate(c context.Context) (err error) {
-	//if there is no group, create a group, and create a consumer
-	for _, serviceName := range apiServiceNames() {
-		//continue if the group already exists
-		if cmd := config.Rds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
-			continue
-		}
-		//create a group if none exists
-		if cmd := config.Rds.XGroupCreateMkStream(c, serviceName, "group0", "$"); cmd.Err() != nil {
-			return cmd.Err()
-		}
-	}
-	return nil
-}
-
 func receiveJobs() {
 	var (
 		cmd     *redis.XStreamSliceCmd
 		apiName string
+		err     error
 	)
 	c := context.Background()
-	//create group if none exists
-	for err := XGroupCreate(c); err != nil; err = XGroupCreate(c) {
-		log.Info().Str("receiveApiJobs error:", err.Error()).Send()
-		log.Info().AnErr("XGroupCreate", cmd.Err()).Send()
-		time.Sleep(time.Second)
+	//create group if none exists, with consumer saavuu
+	for _, serviceName := range apiServiceNames() {
+		if err = XGroupCreateOne(c, serviceName); err != nil {
+			time.Sleep(time.Second)
+		}
 	}
 
 	//deprecate using list command LRange, to avoid continually query consumption
@@ -76,6 +49,15 @@ func receiveJobs() {
 			continue
 		} else if cmd.Err() != nil {
 			log.Info().AnErr("receiveApiJobs", cmd.Err()).Send()
+			//2023-10-18T05:39:41Z INF receiveApiJobs=NOGROUP No such key 'api:skillSearch' or consumer group 'group0' in XREADGROUP with GROUP option
+			matchServiceName := regexp.MustCompile(`No such key '(api:.*)' or consumer `)
+			if matchServiceName.MatchString(cmd.Err().Error()) {
+				Name := matchServiceName.FindStringSubmatch(cmd.Err().Error())[1]
+				cmd := config.Rds.Del(c, Name)
+				if cmd.Err() == nil {
+					XGroupCreateOne(c, Name)
+				}
+			}
 			time.Sleep(time.Second)
 			continue
 		}
