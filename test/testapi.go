@@ -24,5 +24,5 @@ func TestApi() {
 	now := time.Now()
 	apiTest(&InTest{"messageok"})
 	go apiTestCtx.DoAt(&InTest{"messageok"}, &now)
-	api.RunningAllApis()
+	api.StarApis()
 }

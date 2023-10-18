@@ -35,7 +35,8 @@ func reportApiStates() {
 		}
 	}
 }
-func RunningAllApis() {
+func StarApis() {
+	log.Info().Msg("Step Last: API is starting")
 	delayTasksLoad()
 	go reportApiStates()
 	receiveJobs()

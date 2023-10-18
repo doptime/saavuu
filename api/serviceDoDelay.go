@@ -72,6 +72,7 @@ func delayTasksLoad() {
 		cmd         []redis.Cmder
 		err         error
 	)
+	log.Info().Msg("delayTasksLoading started")
 	pipeline := config.Rds.Pipeline()
 	for _, service := range services {
 		pipeline.HKeys(context.Background(), service+":delay")
@@ -86,4 +87,5 @@ func delayTasksLoad() {
 			go delayTaskDoOne(service, dueTimeStr)
 		}
 	}
+	log.Info().Msg("delayTasksLoading completed")
 }
