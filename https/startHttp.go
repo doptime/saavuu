@@ -92,8 +92,8 @@ func RedisHttpStart(path string, port int64) {
 	server.ListenAndServe()
 }
 func init() {
-	log.Info().Any("Step3.1: http service enabled", config.Cfg.HTTPEnabled).Send()
-	if !config.Cfg.HTTPEnabled {
+	log.Info().Any("Step3.1: http service enabled", config.Cfg.HTTPEnabled()).Send()
+	if !config.Cfg.HTTPEnabled() {
 		return
 	}
 	for !permission.ConfigurationLoaded {
