@@ -137,7 +137,7 @@ func init() {
 	}
 	log.Info().Any("Step1.1 Current Envs:", Cfg).Msg("Load config from env success")
 
-	log.Info().Msg("Step1.2 Start checking Redis ")
+	log.Info().Str("Step1.2 Checking Redis", "Start").Send()
 	if Rds, err = Cfg.LoadReidsSetting(); err != nil {
 		log.Fatal().Err(err).Any("Step1.2.1 Redis Enviroment not valid format of [username:password@address:port/db]", Cfg.Redis).Send()
 	}
@@ -153,8 +153,8 @@ func init() {
 	go pingServer(Cfg.RedisHost)
 
 	if Cfg.HTTPEnabled() {
-		ind := strings.LastIndex(Cfg.HTTP, "/")
 		leftInfo := Cfg.HTTP
+		ind := strings.LastIndex(leftInfo, "/")
 		if ind >= 0 {
 			Cfg.HTTPPath = "/" + leftInfo[ind+1:]
 			leftInfo = leftInfo[:ind]
@@ -162,7 +162,10 @@ func init() {
 			Cfg.HTTPPath = "/"
 		}
 		if ind := strings.Index(leftInfo, ":"); ind >= 0 {
-			Cfg.HTTPPort, _ = strconv.ParseInt(leftInfo, 10, 64)
+			PortStr := leftInfo[ind+1:]
+			if Cfg.HTTPPort, err = strconv.ParseInt(PortStr, 10, 64); err != nil {
+				log.Fatal().Err(err).Any("Step1.6 Http Port is not a number", PortStr).Send()
+			}
 			leftInfo = leftInfo[:ind]
 		} else {
 			Cfg.HTTPPort = 80
@@ -170,7 +173,7 @@ func init() {
 		Cfg.HTTHost = leftInfo
 	}
 	log.Info().Any("Step1.6 Redis HTTP Load Completed! Http Enabled", Cfg.HTTPEnabled()).Any("Http Host", Cfg.HTTHost).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath)
-	log.Info().Msg("Step1.E: App loaded configuration completed!")
+	log.Info().Any("Step1.E: App loaded done", Cfg).Send()
 
 }
 func pingServer(domain string) {
