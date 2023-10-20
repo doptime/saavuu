@@ -145,7 +145,7 @@ func init() {
 		log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", Cfg.Redis).Send()
 		return //if redis server is not valid, exit
 	}
-	log.Info().Str("Step1.3 Redis connection Success", Cfg.RedisHost+":"+Cfg.RedisPort).Send()
+	log.Info().Str("Step1.3 Redis Load ", "Success").Any("RedisUsername", Cfg.RedisUsername).Any("RedisPassword", Cfg.RedisPassword).Any("RedisHost", Cfg.RedisHost).Any("RedisPort", Cfg.RedisPort).Send()
 	timeCmd := Rds.Time(context.Background())
 	log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
 	//ping the address of redisAddress, if failed, print to log
@@ -166,7 +166,7 @@ func init() {
 			Cfg.HTTPPort = 80
 		}
 	}
-	log.Info().Any("Http Enabled", Cfg.HTTPEnabled()).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath).Msg("Step1.6 Redis HTTP Load Completed! ")
+	log.Info().Any("Step1.6 Redis HTTP Load Completed! Http Enabled", Cfg.HTTPEnabled()).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath)
 	log.Info().Msg("Step1.E: App loaded configuration completed!")
 
 }
