@@ -14,7 +14,7 @@ import (
 )
 
 // listten to a port and start http server
-func RedisHttpStart(path string, port int64) {
+func RedisHttpStart(host string, path string, port int64) {
 	//get item
 	router := http.NewServeMux()
 	router.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
@@ -82,14 +82,16 @@ func RedisHttpStart(path string, port int64) {
 	log.Info().Any("port", port).Any("path", path).Msg("Step3.E: http server start completed!")
 
 	server := &http.Server{
-		Addr:              ":" + strconv.FormatInt(port, 10),
+		Addr:              host + ":" + strconv.FormatInt(port, 10),
 		Handler:           router,
 		ReadTimeout:       50 * time.Second,
 		ReadHeaderTimeout: 50 * time.Second,
 		WriteTimeout:      50 * time.Second, //10ms Redundant time
 		IdleTimeout:       15 * time.Second,
 	}
-	server.ListenAndServe()
+	if err := server.ListenAndServe(); err != nil {
+		log.Error().Err(err).Msg("http server ListenAndServe error")
+	}
 }
 func init() {
 	log.Info().Any("Step3.1: http service enabled", config.Cfg.HTTPEnabled()).Send()
@@ -100,5 +102,5 @@ func init() {
 		time.Sleep(time.Millisecond * 10)
 	}
 	log.Info().Any("port", config.Cfg.HTTPPort).Any("path", config.Cfg.HTTPPath).Msg("Step3.2: http server is starting")
-	go RedisHttpStart(config.Cfg.HTTPPath, config.Cfg.HTTPPort)
+	go RedisHttpStart(config.Cfg.HTTHost, config.Cfg.HTTPPath, config.Cfg.HTTPPort)
 }

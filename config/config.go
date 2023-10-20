@@ -34,6 +34,7 @@ type Configuration struct {
 	//http server, format: address:port/path.
 	//if HTTP is empty, http service will not be started
 	HTTP     string `env:"HTTP,default=0.0.0.0:80/"`
+	HTTHost  string
 	HTTPPort int64
 	HTTPPath string
 
@@ -152,19 +153,21 @@ func init() {
 	go pingServer(Cfg.RedisHost)
 
 	if Cfg.HTTPEnabled() {
-		ind := strings.Index(Cfg.HTTP, "/")
-		HTTPPort := Cfg.HTTP
+		ind := strings.LastIndex(Cfg.HTTP, "/")
+		leftInfo := Cfg.HTTP
 		if ind >= 0 {
-			Cfg.HTTPPath = "/" + strings.Split(Cfg.HTTP, "/")[1]
-			HTTPPort = strings.Split(Cfg.HTTP, "/")[0]
+			Cfg.HTTPPath = "/" + leftInfo[ind+1:]
+			leftInfo = leftInfo[:ind]
+		} else {
+			Cfg.HTTPPath = "/"
 		}
-		Cfg.HTTPPath = "/" + Cfg.HTTPPath
-		if ind := strings.Index(HTTPPort, ":"); ind >= 0 {
-			HTTPPort = HTTPPort[ind+1:]
-			Cfg.HTTPPort, _ = strconv.ParseInt(HTTPPort, 10, 64)
+		if ind := strings.Index(leftInfo, ":"); ind >= 0 {
+			Cfg.HTTPPort, _ = strconv.ParseInt(leftInfo, 10, 64)
+			leftInfo = leftInfo[:ind]
 		} else {
 			Cfg.HTTPPort = 80
 		}
+		Cfg.HTTHost = leftInfo
 	}
 	log.Info().Any("Step1.6 Redis HTTP Load Completed! Http Enabled", Cfg.HTTPEnabled()).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath)
 	log.Info().Msg("Step1.E: App loaded configuration completed!")
