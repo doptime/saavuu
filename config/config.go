@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -20,8 +21,9 @@ type Configuration struct {
 	RedisUsername string
 	RedisPassword string
 	//RedisAddress is the address of redis server, format: address:port
-	RedisAddress string
-	RedisDB      int64
+	RedisHost string
+	RedisPort string
+	RedisDB   int64
 
 	JWTSecret     string `env:"JWTSecret"`
 	JwtFieldsKept string `env:"JwtFieldsKept"`
@@ -45,7 +47,7 @@ type Configuration struct {
 	ServiceBatchSize int64 `env:"ServiceBatchSize,default=64"`
 }
 
-func (c *Configuration) GetReidsClient() (Rds *redis.Client, err error) {
+func (c *Configuration) LoadReidsSetting() (Rds *redis.Client, err error) {
 	var addressInfo string = c.Redis
 	//step1 parse username and password, and address and port from c.Redis
 	// username and password is optional, default empty
@@ -53,38 +55,51 @@ func (c *Configuration) GetReidsClient() (Rds *redis.Client, err error) {
 	// port is optional, default 6379
 	// db is optional, default 0
 	// format: username:password@address:port/db
-	if atIndex := strings.LastIndex(c.Redis, "@"); atIndex >= 0 {
-		//parse username and password
-		addressInfo = c.Redis[atIndex+1:]
-		c.RedisUsername = ""
-		c.RedisPassword = ""
-		if strings.Contains(c.Redis[:atIndex], ":") {
-			c.RedisUsername = strings.Split(c.Redis[:atIndex], ":")[0]
-			c.RedisPassword = strings.Split(c.Redis[:atIndex], ":")[1]
+
+	//read db number
+	matchDB := regexp.MustCompile(`\/?\d+$`)
+	if RedisDB := matchDB.FindString(addressInfo); RedisDB != "" {
+		addressInfo = addressInfo[:len(addressInfo)-len(RedisDB)]
+		if RedisDB[0] == '/' {
+			RedisDB = RedisDB[1:]
 		}
-	}
-	//read db
-	if strings.Contains(addressInfo, "/") {
-		//parse address and port
-		addressInfo = strings.Split(addressInfo, "/")[0]
-		if RedisDB := strings.Split(addressInfo, "/")[1]; RedisDB == "" {
-			c.RedisDB = 0
-		} else if c.RedisDB, err = strconv.ParseInt(RedisDB, 10, 64); err != nil {
+		if c.RedisDB, err = strconv.ParseInt(RedisDB, 10, 64); err != nil {
 			log.Error().Err(err).Msg("Redis db is not a number")
 			return nil, err
 		}
-	}
-	// read port and address
-	if c.RedisAddress = addressInfo; c.RedisAddress == "" {
-		log.Fatal().Msg("Redis address is empty")
-	}
-	if !strings.Contains(c.RedisAddress, ":") {
-		c.RedisAddress += ":6379"
+	} else {
+		c.RedisDB = 0
 	}
 
+	//read db port
+	matchPort := regexp.MustCompile(`:\d+$`)
+	if RedisPort := matchPort.FindString(addressInfo); RedisPort != "" {
+		addressInfo = addressInfo[:len(addressInfo)-len(RedisPort)]
+		if c.RedisPort = RedisPort[1:]; c.RedisPort[0] == ':' {
+			c.RedisPort = c.RedisPort[1:]
+		}
+	} else {
+		c.RedisPort = "6379"
+	}
+	//read db host
+	if atIndex := strings.LastIndex(addressInfo, "@"); atIndex >= 0 {
+		c.RedisHost = addressInfo[atIndex+1:]
+		addressInfo = addressInfo[:atIndex]
+	} else {
+		c.RedisHost = addressInfo
+	}
+
+	//read username and password
+	if atIndex := strings.LastIndex(addressInfo, ":"); atIndex >= 0 {
+		c.RedisPassword = addressInfo[atIndex+1:]
+		c.RedisUsername = addressInfo[:atIndex]
+	} else {
+		c.RedisUsername = ""
+		c.RedisPassword = addressInfo
+	}
 	//apply configuration
 	redisOption := &redis.Options{
-		Addr:         Cfg.RedisAddress,
+		Addr:         Cfg.RedisHost + ":" + Cfg.RedisPort,
 		Username:     Cfg.RedisUsername,
 		Password:     Cfg.RedisPassword, // no password set
 		DB:           int(Cfg.RedisDB),  // use default DB
@@ -122,7 +137,7 @@ func init() {
 	log.Info().Any("Step1.1 Current Envs:", Cfg).Msg("Load config from env success")
 
 	log.Info().Msg("Step1.2 Start checking Redis ")
-	if Rds, err = Cfg.GetReidsClient(); err != nil {
+	if Rds, err = Cfg.LoadReidsSetting(); err != nil {
 		log.Fatal().Err(err).Any("Step1.2.1 Redis Enviroment not valid format of [username:password@address:port/db]", Cfg.Redis).Send()
 	}
 	//test connection
@@ -130,11 +145,11 @@ func init() {
 		log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", Cfg.Redis).Send()
 		return //if redis server is not valid, exit
 	}
-	log.Info().Str("Step1.3 Redis connection Success", Cfg.RedisAddress).Send()
+	log.Info().Str("Step1.3 Redis connection Success", Cfg.RedisHost+":"+Cfg.RedisPort).Send()
 	timeCmd := Rds.Time(context.Background())
 	log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
 	//ping the address of redisAddress, if failed, print to log
-	go pingServer(strings.Split(Cfg.RedisAddress, ":")[0])
+	go pingServer(Cfg.RedisHost)
 
 	if Cfg.HTTPEnabled() {
 		ind := strings.Index(Cfg.HTTP, "/")
