@@ -169,7 +169,7 @@ func init() {
 		}
 		Cfg.HTTHost = leftInfo
 	}
-	log.Info().Any("Step1.6 Redis HTTP Load Completed! Http Enabled", Cfg.HTTPEnabled()).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath)
+	log.Info().Any("Step1.6 Redis HTTP Load Completed! Http Enabled", Cfg.HTTPEnabled()).Any("Http Host", Cfg.HTTHost).Any("Http Port", Cfg.HTTPPort).Any("Http Path", Cfg.HTTPPath)
 	log.Info().Msg("Step1.E: App loaded configuration completed!")
 
 }
