@@ -54,29 +54,10 @@ type Configuration struct {
 
 // set default values
 var Cfg Configuration = Configuration{
-	Redis: ConfigRedis{
-		Username: "",
-		Password: "",
-		Host:     "",
-		Port:     "6379",
-		DB:       0,
-	},
-	Jwt: ConfigJWT{
-		Secret: "",
-		Fields: "",
-	},
-	Http: ConfigHttp{
-		CORES:         "*",
-		Port:          80,
-		Path:          "/",
-		Enable:        false,
-		MaxBufferSize: 10485760,
-	},
-	Api: ConfigAPI{
-		RPCFirst:         false,
-		AutoPermission:   false,
-		ServiceBatchSize: 64,
-	},
+	Redis:    ConfigRedis{Username: "", Password: "", Host: "", Port: "6379", DB: 0},
+	Jwt:      ConfigJWT{Secret: "", Fields: ""},
+	Http:     ConfigHttp{CORES: "*", Port: 80, Path: "/", Enable: false, MaxBufferSize: 10485760},
+	Api:      ConfigAPI{RPCFirst: false, AutoPermission: false, ServiceBatchSize: 64},
 	LogLevel: 1,
 }
 

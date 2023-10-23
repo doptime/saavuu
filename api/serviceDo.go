@@ -57,7 +57,7 @@ func receiveJobs() {
 			}
 			if apiName = strings.Split(strs[1], "'")[0]; len(apiName) > 0 {
 				if cmd := config.Rds.Del(c, apiName); cmd.Err() == nil {
-					log.Info().Str("Recreate group completedß", apiName).Send()
+					log.Info().Str("Recreate group completed", apiName).Send()
 					XGroupCreateOne(c, apiName)
 				} else {
 					log.Info().AnErr("Recreate group err", cmd.Err()).Send()
