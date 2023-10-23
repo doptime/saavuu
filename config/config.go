@@ -52,7 +52,33 @@ type Configuration struct {
 	LogLevel int8 `env:"LogLevel,default=1"`
 }
 
-var Cfg Configuration = Configuration{}
+// set default values
+var Cfg Configuration = Configuration{
+	Redis: ConfigRedis{
+		Username: "",
+		Password: "",
+		Host:     "",
+		Port:     "6379",
+		DB:       0,
+	},
+	Jwt: ConfigJWT{
+		Secret: "",
+		Fields: "",
+	},
+	Http: ConfigHttp{
+		CORES:         "*",
+		Port:          80,
+		Path:          "/",
+		Enable:        false,
+		MaxBufferSize: 10485760,
+	},
+	Api: ConfigAPI{
+		RPCFirst:         false,
+		AutoPermission:   false,
+		ServiceBatchSize: 64,
+	},
+	LogLevel: 1,
+}
 
 var Rds *redis.Client = nil
 
@@ -70,9 +96,11 @@ func LoadConfig() {
 	}
 
 	// Load and parse HTTP config
-	httpEnv := os.Getenv("Http")
-	if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
-		log.Fatal().Err(err).Msg("Step1.0 Load config from HTTP env failed")
+	Cfg.Http.Enable, Cfg.Http.Path, Cfg.Http.CORES = true, "/", "*"
+	if httpEnv := os.Getenv("Http"); len(httpEnv) > 0 {
+		if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
+			log.Fatal().Err(err).Msg("Step1.0 Load config from HTTP env failed")
+		}
 	}
 
 	// Load and parse API config
@@ -81,7 +109,6 @@ func LoadConfig() {
 		log.Fatal().Err(err).Msg("Step1.0 Load config from API env failed")
 	}
 
-	Cfg.LogLevel = 1 // Default value
 	// Load LogLevel
 	if logLevelEnv := os.Getenv("LogLevel"); len(logLevelEnv) > 0 {
 		if logLevel, err := strconv.ParseInt(logLevelEnv, 10, 8); err == nil {
@@ -100,6 +127,19 @@ func init() {
 	log.Info().Any("Step1.1 Current Envs:", Cfg).Msg("Load config from env success")
 
 	log.Info().Str("Step1.2 Checking Redis", "Start").Send()
+
+	//apply configuration
+	redisOption := &redis.Options{
+		Addr:         Cfg.Redis.Host + ":" + Cfg.Redis.Port,
+		Username:     Cfg.Redis.Username,
+		Password:     Cfg.Redis.Password, // no password set
+		DB:           int(Cfg.Redis.DB),  // use default DB
+		PoolSize:     200,
+		DialTimeout:  time.Second * 10,
+		ReadTimeout:  time.Second * 30,
+		WriteTimeout: time.Second * 30,
+	}
+	Rds = redis.NewClient(redisOption)
 	//test connection
 	if _, err := Rds.Ping(context.Background()).Result(); err != nil {
 		log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", Cfg.Redis).Send()
