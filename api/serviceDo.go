@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
-	"regexp"
+	"strings"
 	"time"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -33,6 +33,7 @@ func receiveJobs() {
 		cmd     *redis.XStreamSliceCmd
 		apiName string
 		err     error
+		strs    []string
 	)
 	c := context.Background()
 	//create group if none exists, with consumer saavuu
@@ -48,18 +49,20 @@ func receiveJobs() {
 		if cmd = config.Rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
+			time.Sleep(time.Second)
 			log.Info().AnErr("receiveApiJobs", cmd.Err()).Send()
 			//2023-10-18T05:39:41Z INF receiveApiJobs=NOGROUP No such key 'api:skillSearch' or consumer group 'group0' in XREADGROUP with GROUP option
-			matchServiceName := regexp.MustCompile(`No such key '(api:.*)' or consumer `)
-			if matchServiceName.MatchString(cmd.Err().Error()) {
-				GroupName := matchServiceName.FindStringSubmatch(cmd.Err().Error())[1]
-				log.Info().Str("Try recreate group", GroupName).Send()
-				if cmd := config.Rds.Del(c, GroupName); cmd.Err() == nil {
-					XGroupCreateOne(c, GroupName)
+			if strs = strings.Split(cmd.Err().Error(), "NOGROUP No such key '"); len(strs) < 2 {
+				continue
+			}
+			if apiName = strings.Split(strs[1], "'")[0]; len(apiName) > 0 {
+				if cmd := config.Rds.Del(c, apiName); cmd.Err() == nil {
+					log.Info().Str("Recreate group completedß", apiName).Send()
+					XGroupCreateOne(c, apiName)
+				} else {
+					log.Info().AnErr("Recreate group err", cmd.Err()).Send()
 				}
 			}
-			time.Sleep(time.Second)
-			continue
 		}
 
 		for _, stream := range cmd.Val() {
