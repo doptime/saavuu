@@ -14,7 +14,7 @@ import (
 )
 
 // listten to a port and start http server
-func RedisHttpStart(host string, path string, port int64) {
+func RedisHttpStart(path string, port int64) {
 	//get item
 	router := http.NewServeMux()
 	router.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
@@ -44,8 +44,8 @@ func RedisHttpStart(host string, path string, port int64) {
 			result, err = svcCtx.DelHandler()
 		}
 
-		if len(config.Cfg.CORS) > 0 {
-			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.CORS)
+		if len(config.Cfg.Http.CORES) > 0 {
+			w.Header().Set("Access-Control-Allow-Origin", config.Cfg.Http.CORES)
 		}
 
 		if err == nil {
@@ -81,7 +81,7 @@ func RedisHttpStart(host string, path string, port int64) {
 	})
 
 	server := &http.Server{
-		Addr:              host + ":" + strconv.FormatInt(port, 10),
+		Addr:              ":" + strconv.FormatInt(port, 10),
 		Handler:           router,
 		ReadTimeout:       50 * time.Second,
 		ReadHeaderTimeout: 50 * time.Second,
@@ -94,13 +94,13 @@ func RedisHttpStart(host string, path string, port int64) {
 	log.Info().Any("port", port).Any("path", path).Msg("Step3.E: http server start completed!")
 }
 func init() {
-	log.Info().Any("Step3.1: http service enabled", config.Cfg.HTTPEnabled()).Send()
-	if !config.Cfg.HTTPEnabled() {
+	log.Info().Any("Step3.1: http service enabled", config.Cfg.Http.Enable).Send()
+	if !config.Cfg.Http.Enable {
 		return
 	}
 	for !permission.ConfigurationLoaded {
 		time.Sleep(time.Millisecond * 10)
 	}
-	log.Info().Any("port", config.Cfg.HTTPPort).Any("path", config.Cfg.HTTPPath).Msg("Step3.2: http server is starting")
-	go RedisHttpStart(config.Cfg.HTTHost, config.Cfg.HTTPPath, config.Cfg.HTTPPort)
+	log.Info().Any("port", config.Cfg.Http.Port).Any("path", config.Cfg.Http.Path).Msg("Step3.2: http server is starting")
+	go RedisHttpStart(config.Cfg.Http.Path, config.Cfg.Http.Port)
 }

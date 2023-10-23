@@ -50,7 +50,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		}
 		var _api = api.New[interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.RPCFirst || !ok {
+		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.Api.RPCFirst || !ok {
 			return _api.Do(paramIn)
 		}
 
@@ -66,7 +66,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		svcCtx.MergeJwtField(paramIn)
 		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.RPCFirst || !ok {
+		if fuc, ok = api.ApiServices.Get(_api.ServiceName); config.Cfg.Api.RPCFirst || !ok {
 			return _api.Do(paramIn)
 		}
 		//if function is stored locally, call it directly. This is alias monolithic mode

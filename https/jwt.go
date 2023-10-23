@@ -26,7 +26,7 @@ func (svc *HttpContext) ParseJwtToken() (err error) {
 		if !ok {
 			return nil, errors.New("invalid signing method")
 		}
-		return []byte(config.Cfg.JWTSecret), nil
+		return []byte(config.Cfg.Jwt.Secret), nil
 	}
 	if svc.jwtToken, err = jwt.ParseWithClaims(jwtStr, jwt.MapClaims{}, keyFunction); err != nil {
 		return fmt.Errorf("invalid JWT token: %v", err)
@@ -59,7 +59,7 @@ func (svc *HttpContext) MergeJwtField(paramIn map[string]interface{}) {
 		return
 	}
 	for k, v := range mpclaims {
-		if strings.Contains(config.Cfg.JwtFieldsKept, strings.ToLower(k)) {
+		if strings.Contains(config.Cfg.Jwt.Fields, strings.ToLower(k)) {
 			paramIn["JWT_"+k] = v
 		}
 	}
@@ -74,6 +74,6 @@ func ConvertMapToJwtString(param map[string]interface{}) (jwtString string, err 
 	//create jwt token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	//sign jwt token
-	jwtString, err = token.SignedString([]byte(config.Cfg.JWTSecret))
+	jwtString, err = token.SignedString([]byte(config.Cfg.Jwt.Secret))
 	return jwtString, err
 }

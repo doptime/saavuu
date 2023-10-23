@@ -20,7 +20,7 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 	}
 
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
-	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
+	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.Api.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
 	return args
 }
 func XGroupCreateOne(c context.Context, serviceName string) (err error) {
