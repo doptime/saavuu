@@ -2,7 +2,10 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -10,7 +13,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 type ConfigHttp struct {
@@ -54,12 +56,42 @@ var Cfg Configuration = Configuration{}
 
 var Rds *redis.Client = nil
 
+func LoadConfig() {
+	// Load and parse Redis config
+	redisEnv := os.Getenv("Redis")
+	if err := json.Unmarshal([]byte(redisEnv), &Cfg.Redis); err != nil {
+		log.Fatal().Err(err).Msg("Step1.0 Load config from Redis env failed")
+	}
+
+	// Load and parse JWT config
+	jwtEnv := os.Getenv("Jwt")
+	if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
+		log.Fatal().Err(err).Msg("Step1.0 Load config from JWT env failed")
+	}
+
+	// Load and parse HTTP config
+	httpEnv := os.Getenv("Http")
+	if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
+		log.Fatal().Err(err).Msg("Step1.0 Load config from HTTP env failed")
+	}
+
+	// Load and parse API config
+	apiEnv := os.Getenv("Api")
+	if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
+		log.Fatal().Err(err).Msg("Step1.0 Load config from API env failed")
+	}
+
+	Cfg.LogLevel = 1 // Default value
+	// Load LogLevel
+	if logLevelEnv := os.Getenv("LogLevel"); len(logLevelEnv) > 0 {
+		if logLevel, err := strconv.ParseInt(logLevelEnv, 10, 8); err == nil {
+			Cfg.LogLevel = int8(logLevel)
+		}
+	}
+}
 func init() {
 	log.Info().Msg("Step1.0: App Start! load config from OS env")
-
-	if err := viper.Unmarshal(&Cfg); err != nil {
-		log.Fatal().Err(err).Msg("Load config from env failed")
-	}
+	LoadConfig()
 	zerolog.SetGlobalLevel(zerolog.Level(Cfg.LogLevel))
 
 	if Cfg.Jwt.Fields != "" {
