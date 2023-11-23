@@ -117,8 +117,8 @@ func init() {
 		DB:           int(Cfg.Redis.DB),  // use default DB
 		PoolSize:     200,
 		DialTimeout:  time.Second * 10,
-		ReadTimeout:  time.Second * 30,
-		WriteTimeout: time.Second * 30,
+		ReadTimeout:  time.Second * 120,
+		WriteTimeout: time.Second * 120,
 	}
 	Rds = redis.NewClient(redisOption)
 	//test connection
