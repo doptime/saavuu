@@ -5,15 +5,17 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/bits-and-blooms/bloom/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
 )
 
 type Ctx[k comparable, v any] struct {
-	Ctx context.Context
-	Rds *redis.Client
-	Key string
+	Ctx       context.Context
+	Rds       *redis.Client
+	Key       string
+	KeysBloom *bloom.BloomFilter
 }
 
 func NewStruct[k comparable, v any]() *Ctx[k, v] {
