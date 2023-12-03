@@ -53,5 +53,5 @@ func (db *Ctx[k, v]) Concat(fields ...interface{}) *Ctx[k, v] {
 	for _, field := range fields {
 		results = append(results, fmt.Sprintf("%v", field))
 	}
-	return &Ctx[k, v]{db.Ctx, db.Rds, strings.Join(results, ":")}
+	return &Ctx[k, v]{db.Ctx, db.Rds, strings.Join(results, ":"), db.BloomKeys}
 }
