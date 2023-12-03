@@ -13,13 +13,13 @@ func (db *Ctx[k, v]) BuildKeysBloomFilter(capacity int, falsePosition float64) (
 		return err
 	}
 	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
-		db.BloomKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
+		db.BloomFilterKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
 	} else {
-		db.BloomKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
+		db.BloomFilterKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
 	}
 	//if type of k is string, then AddString is faster than Add
 	for _, it := range keys {
-		db.BloomKeys.AddString(it)
+		db.BloomFilterKeys.AddString(it)
 	}
 	return nil
 }
@@ -28,24 +28,24 @@ func (db *Ctx[k, v]) TestBloomKey(key k) (exist bool) {
 		keyStr string
 		err    error
 	)
-	if db.BloomKeys == nil {
+	if db.BloomFilterKeys == nil {
 		log.Fatal("BloomKeys is nil, please BuildKeysBloomFilter first")
 	}
 	if keyStr, err = db.toKeyStr(key); err != nil {
 		log.Fatalf("TestKey -> toKeyStr error: %v", err.Error())
 	}
-	return db.BloomKeys.TestString(keyStr)
+	return db.BloomFilterKeys.TestString(keyStr)
 }
 func (db *Ctx[k, v]) AddBloomKey(key k) (err error) {
 	var (
 		keyStr string
 	)
-	if db.BloomKeys == nil {
+	if db.BloomFilterKeys == nil {
 		log.Fatal("BloomKeys is nil, please BuildKeysBloomFilter first")
 	}
 	if keyStr, err = db.toKeyStr(key); err != nil {
 		return err
 	}
-	db.BloomKeys.AddString(keyStr)
+	db.BloomFilterKeys.AddString(keyStr)
 	return nil
 }

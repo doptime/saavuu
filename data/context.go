@@ -12,10 +12,10 @@ import (
 )
 
 type Ctx[k comparable, v any] struct {
-	Ctx       context.Context
-	Rds       *redis.Client
-	Key       string
-	BloomKeys *bloom.BloomFilter
+	Ctx             context.Context
+	Rds             *redis.Client
+	Key             string
+	BloomFilterKeys *bloom.BloomFilter
 }
 
 func NewStruct[k comparable, v any]() *Ctx[k, v] {
