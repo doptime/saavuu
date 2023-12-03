@@ -8,8 +8,9 @@ import (
 )
 
 func (db *Ctx[k, v]) BuildKeysBloomFilter(capacity int, falsePosition float64) (err error) {
+	//get type of key, if not hash, then return error
 	var keys []string
-	if keys, err = db.Rds.Keys(db.Ctx, db.Key).Result(); err != nil {
+	if keys, err = db.Rds.HKeys(db.Ctx, db.Key).Result(); err != nil {
 		return err
 	}
 	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
