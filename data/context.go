@@ -15,7 +15,7 @@ type Ctx[k comparable, v any] struct {
 	Ctx       context.Context
 	Rds       *redis.Client
 	Key       string
-	KeysBloom *bloom.BloomFilter
+	BloomKeys *bloom.BloomFilter
 }
 
 func NewStruct[k comparable, v any]() *Ctx[k, v] {

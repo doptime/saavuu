@@ -1,6 +1,7 @@
 package data
 
 import (
+	"log"
 	"math/rand"
 
 	"github.com/bits-and-blooms/bloom/v3"
@@ -12,40 +13,39 @@ func (db *Ctx[k, v]) BuildKeysBloomFilter(capacity int, falsePosition float64) (
 		return err
 	}
 	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
-		db.KeysBloom = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
+		db.BloomKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
 	} else {
-		db.KeysBloom = bloom.NewWithEstimates(uint(capacity), falsePosition)
+		db.BloomKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
 	}
 	//if type of k is string, then AddString is faster than Add
 	for _, it := range keys {
-		db.KeysBloom.AddString(it)
+		db.BloomKeys.AddString(it)
 	}
 	return nil
 }
-func (db *Ctx[k, v]) TestBloomKey(key k) (exist bool, err error) {
-	var keyStr string
-	if err = nil; db.KeysBloom == nil {
-		err = db.BuildKeysBloomFilter(-1, -1.0)
-	}
-	if err != nil {
-		return false, err
+func (db *Ctx[k, v]) TestBloomKey(key k) (exist bool) {
+	var (
+		keyStr string
+		err    error
+	)
+	if db.BloomKeys == nil {
+		log.Fatal("BloomKeys is nil, please BuildKeysBloomFilter first")
 	}
 	if keyStr, err = db.toKeyStr(key); err != nil {
-		return false, err
+		log.Fatalf("TestKey -> toKeyStr error: %v", err.Error())
 	}
-	return db.KeysBloom.TestString(keyStr), nil
+	return db.BloomKeys.TestString(keyStr)
 }
 func (db *Ctx[k, v]) AddBloomKey(key k) (err error) {
-	var keyStr string
-	if err = nil; db.KeysBloom == nil {
-		err = db.BuildKeysBloomFilter(-1, -1.0)
-	}
-	if err != nil {
-		return err
+	var (
+		keyStr string
+	)
+	if db.BloomKeys == nil {
+		log.Fatal("BloomKeys is nil, please BuildKeysBloomFilter first")
 	}
 	if keyStr, err = db.toKeyStr(key); err != nil {
 		return err
 	}
-	db.KeysBloom.AddString(keyStr)
+	db.BloomKeys.AddString(keyStr)
 	return nil
 }
