@@ -32,7 +32,7 @@ func (db *Ctx[k, v]) toKeys(valStr []string) (keys []k, err error) {
 			}
 		}
 		if err != nil {
-			log.Info().AnErr("HKeys: field unmarshal error:", err).Send()
+			log.Info().AnErr("HKeys: field unmarshal error:", err).Msgf("Key: %s", db.Key)
 			continue
 		}
 	}
@@ -56,7 +56,7 @@ func (db *Ctx[k, v]) toValues(valStr ...string) (values []v, err error) {
 			err = msgpack.Unmarshal([]byte(val), &values[i])
 		}
 		if err != nil {
-			log.Info().AnErr("HVals: value unmarshal error:", err).Send()
+			log.Info().AnErr("HVals: value unmarshal error:", err).Msgf("Key: %s", db.Key)
 			continue
 		}
 	}
