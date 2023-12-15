@@ -71,26 +71,26 @@ func LoadConfig() (err error) {
 	}
 
 	if err := json.Unmarshal([]byte(redisEnv), &Cfg.Redis); err != nil {
-		log.Fatal().Err(err).Msg("Step1.0 Load config from Redis env failed")
+		log.Fatal().Err(err).Str("redisEnv", redisEnv).Msg("Step1.0 Load config from Redis env failed")
 	}
 
 	// Load and parse JWT config
 	if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
-		log.Fatal().Err(err).Msg("Step1.0 Load config from JWT env failed")
+		log.Fatal().Err(err).Str("jwtEnv", jwtEnv).Msg("Step1.0 Load config from JWT env failed")
 	}
 
 	// Load and parse HTTP config
 	Cfg.Http.Enable, Cfg.Http.Path, Cfg.Http.CORES = true, "/", "*"
 	if len(httpEnv) > 0 {
 		if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
-			log.Fatal().Err(err).Msg("Step1.0 Load config from HTTP env failed")
+			log.Fatal().Err(err).Str("httpEnv", httpEnv).Msg("Step1.0 Load config from HTTP env failed")
 		}
 	}
 
 	// Load and parse API config
 
 	if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
-		log.Fatal().Err(err).Msg("Step1.0 Load config from API env failed")
+		log.Fatal().Err(err).Str("apiEnv", apiEnv).Msg("Step1.0 Load config from API env failed")
 	}
 
 	// Load LogLevel
