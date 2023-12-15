@@ -63,43 +63,51 @@ var Cfg Configuration = Configuration{
 
 var Rds *redis.Client = nil
 
-func LoadConfig() {
+func LoadConfig() (err error) {
 	// Load and parse Redis config
-	redisEnv := os.Getenv("Redis")
+	redisEnv, jwtEnv, httpEnv, apiEnv, logLevelEnv := os.Getenv("Redis"), os.Getenv("Jwt"), os.Getenv("Http"), os.Getenv("Api"), os.Getenv("LogLevel")
+	if redisEnv == "" || jwtEnv == "" || apiEnv == "" {
+		return fmt.Errorf("Step1.0 Load config from env failed")
+	}
+
 	if err := json.Unmarshal([]byte(redisEnv), &Cfg.Redis); err != nil {
 		log.Fatal().Err(err).Msg("Step1.0 Load config from Redis env failed")
 	}
 
 	// Load and parse JWT config
-	jwtEnv := os.Getenv("Jwt")
 	if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
 		log.Fatal().Err(err).Msg("Step1.0 Load config from JWT env failed")
 	}
 
 	// Load and parse HTTP config
 	Cfg.Http.Enable, Cfg.Http.Path, Cfg.Http.CORES = true, "/", "*"
-	if httpEnv := os.Getenv("Http"); len(httpEnv) > 0 {
+	if len(httpEnv) > 0 {
 		if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
 			log.Fatal().Err(err).Msg("Step1.0 Load config from HTTP env failed")
 		}
 	}
 
 	// Load and parse API config
-	apiEnv := os.Getenv("Api")
+
 	if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
 		log.Fatal().Err(err).Msg("Step1.0 Load config from API env failed")
 	}
 
 	// Load LogLevel
-	if logLevelEnv := os.Getenv("LogLevel"); len(logLevelEnv) > 0 {
+	if len(logLevelEnv) > 0 {
 		if logLevel, err := strconv.ParseInt(logLevelEnv, 10, 8); err == nil {
 			Cfg.LogLevel = int8(logLevel)
 		}
 	}
+	return nil
 }
 func init() {
 	log.Info().Msg("Step1.0: App Start! load config from OS env")
-	LoadConfig()
+	if err := LoadConfig(); err != nil {
+		log.Info().AnErr("Step1.0 ERROR LoadConfig", err).Send()
+		log.Info().Msg("saavuu data & api will no be able to be used. please check your env and restart the app if you want to use itß")
+		return
+	}
 	zerolog.SetGlobalLevel(zerolog.Level(Cfg.LogLevel))
 
 	if Cfg.Jwt.Fields != "" {
