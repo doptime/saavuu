@@ -48,7 +48,7 @@ func New[i any, o any](ServiceName string) *Ctx[i, o] {
 	//ensure ServiceKey start with "api:"
 	ServiceName = "api:" + ServiceName
 
-	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds, ServiceName: ServiceName}
+	return &Ctx[i, o]{Ctx: context.Background(), Rds: config.Rds[""], ServiceName: ServiceName}
 }
 
 // allow setting breakpoint for input decoding

@@ -21,9 +21,9 @@ var ApiLockKey, ApiLockKeyCtx = Api(func(req *InLockKey) (ok bool, err error) {
 		now     int64 = time.Now().UnixMilli()
 		dueTime int64 = now + req.DurationMs
 		score   float64
+		rds     *redis.Client = config.RdsClientDefault()
 	)
-	ok = false
-	if score, err = config.Rds.ZScore(context.Background(), "KeyLocker", req.Key).Result(); err != nil {
+	if score, err = rds.ZScore(context.Background(), "KeyLocker", req.Key).Result(); err != nil {
 		if err != redis.Nil {
 			return false, err
 		} else {
@@ -34,13 +34,13 @@ var ApiLockKey, ApiLockKeyCtx = Api(func(req *InLockKey) (ok bool, err error) {
 	}
 	//update only when key not exists, or expired
 	if ok {
-		config.Rds.ZAdd(context.Background(), "KeyLocker", redis.Z{Score: float64(dueTime), Member: req.Key})
+		rds.ZAdd(context.Background(), "KeyLocker", redis.Z{Score: float64(dueTime), Member: req.Key})
 	}
 
 	//auto remove expired keys
 	if removeCounter++; removeCounter > 100 {
 		removeCounter = 0
-		go config.Rds.ZRemRangeByScore(context.Background(), "KeyLocker", "0", strconv.FormatInt(now, 10))
+		go rds.ZRemRangeByScore(context.Background(), "KeyLocker", "0", strconv.FormatInt(now, 10))
 	}
 	return ok, nil
 })

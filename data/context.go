@@ -19,7 +19,10 @@ type Ctx[k comparable, v any] struct {
 }
 
 func NewStruct[k comparable, v any]() *Ctx[k, v] {
-	var Key string
+	var (
+		rds *redis.Client = config.RdsClientDefault()
+		Key string
+	)
 	_type := reflect.TypeOf((*v)(nil))
 	//take name of type v as key
 	for _type.Kind() == reflect.Ptr || _type.Kind() == reflect.Slice {
@@ -33,7 +36,7 @@ func NewStruct[k comparable, v any]() *Ctx[k, v] {
 	if Key == "" {
 		panic("Key is empty, please give a key for this data")
 	}
-	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: config.Rds, Key: Key}
+	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: Key}
 
 	log.Debug().Str("data NewStruct create end!", Key).Send()
 
@@ -41,12 +44,13 @@ func NewStruct[k comparable, v any]() *Ctx[k, v] {
 }
 
 func New[k comparable, v any](Key string) *Ctx[k, v] {
+	var rds *redis.Client = config.RdsClientDefault()
 	log.Debug().Str("data New create start!", Key).Send()
 	//panic if Key is empty
 	if Key == "" {
 		panic("Key is empty, please give a key for this data")
 	}
-	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: config.Rds, Key: Key}
+	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: Key}
 	log.Debug().Str("data New create end!", Key).Send()
 	return ctx
 }

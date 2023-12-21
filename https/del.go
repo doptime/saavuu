@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/permission"
 )
@@ -12,7 +13,11 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 	var (
 		jwts      map[string]interface{} = map[string]interface{}{}
 		operation string
+		rds       *redis.Client
 	)
+	if rds, err = config.RdsClientByName(svcCtx.RedisName); err != nil {
+		return nil, err
+	}
 	svcCtx.MergeJwtField(jwts)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
@@ -29,13 +34,13 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		if svcCtx.Field == "" {
 			return "false", ErrEmptyKeyOrField
 		}
-		cmd := config.Rds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
+		cmd := rds.HDel(svcCtx.Ctx, svcCtx.Key, svcCtx.Field)
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err
 	case "DEL":
-		cmd := config.Rds.HDel(svcCtx.Ctx, svcCtx.Key, "del")
+		cmd := rds.HDel(svcCtx.Ctx, svcCtx.Key, "del")
 		if err = cmd.Err(); err == nil {
 			return "true", nil
 		}
@@ -47,14 +52,14 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		for i, v := range MemberStr {
 			Member[i] = v
 		}
-		if err = config.Rds.ZRem(svcCtx.Ctx, svcCtx.Key, Member...).Err(); err == nil {
+		if err = rds.ZRem(svcCtx.Ctx, svcCtx.Key, Member...).Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err
 	case "ZREMRANGEBYSCORE":
 		var Min = svcCtx.Req.FormValue("Min")
 		var Max = svcCtx.Req.FormValue("Max")
-		if err = config.Rds.ZRemRangeByScore(svcCtx.Ctx, svcCtx.Key, Min, Max).Err(); err == nil {
+		if err = rds.ZRemRangeByScore(svcCtx.Ctx, svcCtx.Key, Min, Max).Err(); err == nil {
 			return "true", nil
 		}
 		return "false", err

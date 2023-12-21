@@ -13,7 +13,10 @@ import (
 
 // put parameter to redis ,make it persistent
 func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
-	if cmd := config.Rds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
+	var (
+		rds *redis.Client = config.RdsClientDefault()
+	)
+	if cmd := rds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
 		log.Info().Err(cmd.Err()).Send()
 		return
 	}
@@ -28,6 +31,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		cmd                                        []redis.Cmder
 		service                                    *ApiInfo
 		ok                                         bool
+		rds                                        *redis.Client = config.RdsClientDefault()
 	)
 	nowUnixMilliSecond = time.Now().UnixMilli()
 	if dueTimeUnixMilliSecond, err = strconv.ParseInt(dueTimeStr, 10, 64); err != nil {
@@ -35,7 +39,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 		return
 	}
 	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
-	pipeline := config.Rds.Pipeline()
+	pipeline := rds.Pipeline()
 	pipeline.HGet(context.Background(), serviceName+":delay", dueTimeStr)
 	pipeline.HDel(context.Background(), serviceName+":delay", dueTimeStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
@@ -57,7 +61,7 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 
 		//Post Back
 		ctx := context.Background()
-		pipline := config.Rds.Pipeline()
+		pipline := rds.Pipeline()
 		var BackToID = serviceName
 		pipline.RPush(ctx, BackToID, msgPackResult)
 		pipline.Expire(ctx, BackToID, time.Second*20)
@@ -71,9 +75,10 @@ func delayTasksLoad() {
 		dueTimeStrs []string
 		cmd         []redis.Cmder
 		err         error
+		rds         *redis.Client = config.RdsClientDefault()
 	)
 	log.Info().Msg("delayTasksLoading started")
-	pipeline := config.Rds.Pipeline()
+	pipeline := rds.Pipeline()
 	for _, service := range services {
 		pipeline.HKeys(context.Background(), service+":delay")
 	}

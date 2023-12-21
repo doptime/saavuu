@@ -3,6 +3,7 @@ package https
 import (
 	"errors"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/permission"
 )
@@ -15,7 +16,11 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	var (
 		bytes     []byte
 		operation string
+		rds       *redis.Client
 	)
+	if rds, err = config.RdsClientByName(svcCtx.RedisName); err != nil {
+		return nil, err
+	}
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
@@ -33,7 +38,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
 			return "false", err
 		}
-		cmd := config.Rds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
+		cmd := rds.HSet(svcCtx.Ctx, svcCtx.Key, svcCtx.Field, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
 		}
@@ -46,7 +51,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		if bytes, err = svcCtx.MsgpackBody(); err != nil {
 			return "false", err
 		}
-		cmd := config.Rds.RPush(svcCtx.Ctx, svcCtx.Key, bytes)
+		cmd := rds.RPush(svcCtx.Ctx, svcCtx.Key, bytes)
 		if err = cmd.Err(); err != nil {
 			return "false", err
 		}

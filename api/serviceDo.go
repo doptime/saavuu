@@ -34,6 +34,7 @@ func receiveJobs() {
 		apiName string
 		err     error
 		strs    []string
+		rds     *redis.Client = config.RdsClientDefault()
 	)
 	c := context.Background()
 	//create group if none exists, with consumer saavuu
@@ -46,7 +47,7 @@ func receiveJobs() {
 	//deprecate using list command LRange, to avoid continually query consumption
 	//use xreadgroup to receive data ,2023-01-31
 	for args := defaultXReadGroupArgs(); ; {
-		if cmd = config.Rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
+		if cmd = rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
 			time.Sleep(time.Second)
@@ -56,7 +57,7 @@ func receiveJobs() {
 				continue
 			}
 			if apiName = strings.Split(strs[1], "'")[0]; len(apiName) > 0 {
-				if cmd := config.Rds.Del(c, apiName); cmd.Err() == nil {
+				if cmd := rds.Del(c, apiName); cmd.Err() == nil {
 					log.Info().Str("Recreate group completed", apiName).Send()
 					XGroupCreateOne(c, apiName)
 				} else {
@@ -86,6 +87,7 @@ func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 		ret           interface{}
 		service       *ApiInfo
 		ok            bool
+		rds           *redis.Client = config.RdsClientDefault()
 	)
 	if service, ok = ApiServices.Get(apiName); !ok {
 		return fmt.Errorf("service %s not found", apiName)
@@ -97,7 +99,7 @@ func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 		return
 	}
 	ctx := context.Background()
-	pipline := config.Rds.Pipeline()
+	pipline := rds.Pipeline()
 	pipline.RPush(ctx, BackToID, msgPackResult)
 	pipline.Expire(ctx, BackToID, time.Second*20)
 	_, err = pipline.Exec(ctx)

@@ -12,10 +12,11 @@ import (
 )
 
 type HttpContext struct {
-	Req      *http.Request
-	Rsb      http.ResponseWriter
-	jwtToken *jwt.Token
-	Ctx      context.Context
+	Req       *http.Request
+	Rsb       http.ResponseWriter
+	jwtToken  *jwt.Token
+	Ctx       context.Context
+	RedisName string
 	// case get
 	Cmd   string
 	Key   string
@@ -67,6 +68,9 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 			svcContext.ResponseContentType = "text/plain"
 		case "!STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
+		}
+		if strings.HasPrefix(param, "!R=") {
+			svcContext.RedisName = param[3:]
 		}
 	}
 	return svcContext, nil

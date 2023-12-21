@@ -23,7 +23,11 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		operation string
 		members   []interface{} = []interface{}{}
 		buf       []byte
+		rds       *redis.Client
 	)
+	if rds, err = config.RdsClientByName(svcCtx.RedisName); err != nil {
+		return nil, err
+	}
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
@@ -33,7 +37,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}
 
-	db := data.Ctx[string, interface{}]{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
+	db := data.Ctx[string, interface{}]{Ctx: svcCtx.Ctx, Rds: rds, Key: svcCtx.Key}
 	//case Is a member of a set
 	switch svcCtx.Cmd {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]

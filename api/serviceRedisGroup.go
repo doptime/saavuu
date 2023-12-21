@@ -10,7 +10,9 @@ import (
 )
 
 func defaultXReadGroupArgs() *redis.XReadGroupArgs {
-	var streams []string
+	var (
+		streams []string
+	)
 	services := apiServiceNames()
 	streams = append(streams, services...)
 	//from services to ServiceInfos
@@ -24,13 +26,16 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 	return args
 }
 func XGroupCreateOne(c context.Context, serviceName string) (err error) {
+	var (
+		rds *redis.Client = config.RdsClientDefault()
+	)
 
 	//continue if the group already exists
-	if cmd := config.Rds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
+	if cmd := rds.XInfoGroups(c, serviceName); cmd.Err() == nil || len(cmd.Val()) > 0 {
 		return nil
 	}
 	//create a group if none exists
-	if cmd := config.Rds.XGroupCreateMkStream(c, serviceName, "group0", "$"); cmd.Err() != nil {
+	if cmd := rds.XGroupCreateMkStream(c, serviceName, "group0", "$"); cmd.Err() != nil {
 		log.Info().AnErr("XGroupCreateOne", cmd.Err()).Send()
 		return cmd.Err()
 	}

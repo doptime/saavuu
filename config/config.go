@@ -24,6 +24,7 @@ type ConfigHttp struct {
 	MaxBufferSize int64 `env:"MaxBufferSize,default=10485760"`
 }
 type ConfigRedis struct {
+	Name     string
 	Username string `env:"Username"`
 	Password string `env:"Password"`
 	Host     string `env:"Host,required=true"`
@@ -44,24 +45,46 @@ type ConfigAPI struct {
 
 type Configuration struct {
 	//redis server, format: username:password@address:port/db
-	Redis ConfigRedis `env:"REDIS,required=true"`
-	Jwt   ConfigJWT   `env:"JWT"`
-	Http  ConfigHttp  `env:"HTTP"`
-	Api   ConfigAPI   `env:"API"`
+	Redis []*ConfigRedis `env:"REDIS,required=true"`
+	Jwt   ConfigJWT      `env:"JWT"`
+	Http  ConfigHttp     `env:"HTTP"`
+	Api   ConfigAPI      `env:"API"`
 	//{"DebugLevel": 0,"InfoLevel": 1,"WarnLevel": 2,"ErrorLevel": 3,"FatalLevel": 4,"PanicLevel": 5,"NoLevel": 6,"Disabled": 7	  }
 	LogLevel int8 `env:"LogLevel,default=1"`
 }
 
 // set default values
 var Cfg Configuration = Configuration{
-	Redis:    ConfigRedis{Username: "", Password: "", Host: "", Port: "6379", DB: 0},
+	Redis:    []*ConfigRedis{},
 	Jwt:      ConfigJWT{Secret: "", Fields: ""},
 	Http:     ConfigHttp{CORES: "*", Port: 80, Path: "/", Enable: false, MaxBufferSize: 10485760},
 	Api:      ConfigAPI{RPCFirst: false, AutoPermission: false, ServiceBatchSize: 64},
 	LogLevel: 1,
 }
 
-var Rds *redis.Client = nil
+var Rds map[string]*redis.Client = map[string]*redis.Client{}
+
+func RdsClientDefault() *redis.Client {
+	var (
+		ok  bool
+		rds *redis.Client
+	)
+	if rds, ok = Rds[""]; !ok {
+		log.Panic().Msg("default redis client not found")
+	}
+	return rds
+}
+func RdsClientByName(name string) (rds *redis.Client, err error) {
+	var (
+		ok bool
+	)
+	if rds, ok = Rds[name]; !ok {
+		err = fmt.Errorf("redis client not found")
+		return nil, err
+	}
+
+	return rds, nil
+}
 
 func LoadConfig() (err error) {
 	// Load and parse Redis config
@@ -70,8 +93,27 @@ func LoadConfig() (err error) {
 		return fmt.Errorf("Step1.0 Load config from env failed")
 	}
 
-	if err := json.Unmarshal([]byte(redisEnv), &Cfg.Redis); err != nil {
-		log.Fatal().Err(err).Str("redisEnv", redisEnv).Msg("Step1.0 Load config from Redis env failed")
+	if len(redisEnv) > 0 {
+		//regex trim space in "} , {"
+		for len(strings.Replace(redisEnv, " {", "{", -1)) != len(redisEnv) {
+			redisEnv = strings.Replace(redisEnv, " {", "{", -1)
+		}
+		for len(strings.Replace(redisEnv, "} ", "}", -1)) != len(redisEnv) {
+			redisEnv = strings.Replace(redisEnv, "} ", "}", -1)
+		}
+		redisEnv = strings.Replace(redisEnv, "},{", "}},{{", -1)
+		rdsStrs := strings.Split(redisEnv, "},{")
+		for _, rdsStr := range rdsStrs {
+			rdsCfg := &ConfigRedis{}
+			if err := json.Unmarshal([]byte(rdsStr), &rdsCfg); err != nil {
+				correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
+				log.Fatal().Err(err).Str("redisEnv", rdsStr).Msg("Step1.0 Load config from Redis env failed, correct format: " + correctFormat)
+			}
+			if rdsCfg.Name == "default" || rdsCfg.Name == "_" {
+				rdsCfg.Name = ""
+			}
+			Cfg.Redis = append(Cfg.Redis, rdsCfg)
+		}
 	}
 
 	// Load and parse JWT config
@@ -117,28 +159,34 @@ func init() {
 
 	log.Info().Str("Step1.2 Checking Redis", "Start").Send()
 
-	//apply configuration
-	redisOption := &redis.Options{
-		Addr:         Cfg.Redis.Host + ":" + Cfg.Redis.Port,
-		Username:     Cfg.Redis.Username,
-		Password:     Cfg.Redis.Password, // no password set
-		DB:           int(Cfg.Redis.DB),  // use default DB
-		PoolSize:     200,
-		DialTimeout:  time.Second * 10,
-		ReadTimeout:  time.Second * 300,
-		WriteTimeout: time.Second * 300,
+	for _, rdsCfg := range Cfg.Redis {
+		//apply configuration
+		redisOption := &redis.Options{
+			Addr:         rdsCfg.Host + ":" + rdsCfg.Port,
+			Username:     rdsCfg.Username,
+			Password:     rdsCfg.Password, // no password set
+			DB:           int(rdsCfg.DB),  // use default DB
+			PoolSize:     200,
+			DialTimeout:  time.Second * 10,
+			ReadTimeout:  -1,
+			WriteTimeout: time.Second * 300,
+		}
+		rdsClient := redis.NewClient(redisOption)
+		//test connection
+		if _, err := rdsClient.Ping(context.Background()).Result(); err != nil {
+			log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", rdsCfg.Host).Send()
+			return //if redis server is not valid, exit
+		}
+		go pingServer(rdsCfg.Host)
+		//save to the list
+		log.Info().Str("Step1.3 Redis Load ", "Success").Any("RedisUsername", rdsCfg.Username).Any("RedisPassword", rdsCfg.Password).Any("RedisHost", rdsCfg.Host).Any("RedisPort", rdsCfg.Port).Send()
+		Rds[rdsCfg.Name] = rdsClient
+		timeCmd := rdsClient.Time(context.Background())
+		log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
+		//ping the address of redisAddress, if failed, print to log
+		go pingServer(rdsCfg.Host)
+
 	}
-	Rds = redis.NewClient(redisOption)
-	//test connection
-	if _, err := Rds.Ping(context.Background()).Result(); err != nil {
-		log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", Cfg.Redis).Send()
-		return //if redis server is not valid, exit
-	}
-	log.Info().Str("Step1.3 Redis Load ", "Success").Any("RedisUsername", Cfg.Redis.Username).Any("RedisPassword", Cfg.Redis.Password).Any("RedisHost", Cfg.Redis.Host).Any("RedisPort", Cfg.Redis.Port).Send()
-	timeCmd := Rds.Time(context.Background())
-	log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
-	//ping the address of redisAddress, if failed, print to log
-	go pingServer(Cfg.Redis.Host)
 
 	log.Info().Msg("Step1.E: App loaded done")
 
