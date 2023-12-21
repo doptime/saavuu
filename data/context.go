@@ -57,7 +57,15 @@ func New[k comparable, v any](Key string) *Ctx[k, v] {
 func (ctx *Ctx[k, v]) WithContext(c context.Context) *Ctx[k, v] {
 	return &Ctx[k, v]{Ctx: c, Rds: ctx.Rds, Key: ctx.Key}
 }
-func (ctx *Ctx[k, v]) WithRedis(rds *redis.Client) *Ctx[k, v] {
+func (ctx *Ctx[k, v]) WithRedis(RedisServerName string) *Ctx[k, v] {
+	var (
+		rds *redis.Client
+		err error
+	)
+	if rds, err = config.RdsClientByName(RedisServerName); err != nil {
+		log.Panic().AnErr("WithRedis error", err).Send()
+		panic(err)
+	}
 	return &Ctx[k, v]{Ctx: ctx.Ctx, Rds: rds, Key: ctx.Key}
 }
 

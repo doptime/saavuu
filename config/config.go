@@ -79,7 +79,7 @@ func RdsClientByName(name string) (rds *redis.Client, err error) {
 		ok bool
 	)
 	if rds, ok = Rds[name]; !ok {
-		err = fmt.Errorf("redis client not found")
+		err = fmt.Errorf("redis client with name %s not found", name)
 		return nil, err
 	}
 
