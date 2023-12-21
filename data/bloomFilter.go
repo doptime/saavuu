@@ -7,12 +7,15 @@ import (
 	"github.com/bits-and-blooms/bloom/v3"
 )
 
-func (db *Ctx[k, v]) BuildKeysBloomFilter(capacity int, falsePosition float64) (err error) {
+func (db *Ctx[k, v]) BuildBloomFilterHKeys(capacity int, falsePosition float64) (err error) {
 	//get type of key, if not hash, then return error
 	var keys []string
 	if keys, err = db.Rds.HKeys(db.Ctx, db.Key).Result(); err != nil {
 		return err
 	}
+	return db.BuildBloomFilterByKeys(keys, capacity, falsePosition)
+}
+func (db *Ctx[k, v]) BuildBloomFilterByKeys(keys []string, capacity int, falsePosition float64) (err error) {
 	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
 		db.BloomFilterKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
 	} else {
