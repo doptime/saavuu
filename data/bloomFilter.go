@@ -27,7 +27,7 @@ func (db *Ctx[k, v]) BuildBloomFilterByKeys(keys []string, capacity int, falsePo
 	}
 	return nil
 }
-func (db *Ctx[k, v]) TestBloomKey(key k) (exist bool) {
+func (db *Ctx[k, v]) TestHKey(key k) (exist bool) {
 	var (
 		keyStr string
 		err    error
@@ -39,6 +39,19 @@ func (db *Ctx[k, v]) TestBloomKey(key k) (exist bool) {
 		log.Fatalf("TestKey -> toKeyStr error: %v", err.Error())
 	}
 	return db.BloomFilterKeys.TestString(keyStr)
+}
+func (db *Ctx[k, v]) TestKey(key k) (exist bool) {
+	var (
+		keyStr string
+		err    error
+	)
+	if db.BloomFilterKeys == nil {
+		log.Fatal("BloomKeys is nil, please BuildKeysBloomFilter first")
+	}
+	if keyStr, err = db.toKeyStr(key); err != nil {
+		log.Fatalf("TestKey -> toKeyStr error: %v", err.Error())
+	}
+	return db.BloomFilterKeys.TestString(db.Key + ":" + keyStr)
 }
 func (db *Ctx[k, v]) AddBloomKey(key k) (err error) {
 	var (
