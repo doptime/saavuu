@@ -30,6 +30,19 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	}
 
 	switch svcCtx.Cmd {
+	case "SET":
+		if svcCtx.Key == "" || svcCtx.Field == "" {
+			return "false", ErrEmptyKeyOrField
+		}
+		if bytes, err = svcCtx.MsgpackBody(); err != nil {
+			return "false", err
+		}
+		cmd := rds.Set(svcCtx.Ctx, svcCtx.Key+":"+svcCtx.Field, bytes, 0)
+		if err = cmd.Err(); err != nil {
+			return "false", err
+		}
+		return "true", nil
+
 	case "HSET":
 		//error if empty Key or Field
 		if svcCtx.Key == "" || svcCtx.Field == "" {

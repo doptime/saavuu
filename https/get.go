@@ -66,6 +66,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
 
+	case "GET":
+		return db.Get(svcCtx.Field)
 	case "HGET":
 		return db.HGet(svcCtx.Field)
 	case "HGETALL":

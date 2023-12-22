@@ -36,6 +36,7 @@ func (db *Ctx[k, v]) Keys() (out []k, err error) {
 	return db.toKeys(keys)
 }
 
+// for the reason of protection, both db.Key & Key are required. the avoid set Hash table to the wrong type , and thus leading to data loss.
 func (db *Ctx[k, v]) Set(key k, param v, expiration time.Duration) (err error) {
 	var (
 		keyStr string
