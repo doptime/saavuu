@@ -16,11 +16,13 @@ func (db *Ctx[k, v]) BuildBloomFilterHKeys(capacity int, falsePosition float64) 
 	return db.BuildBloomFilterByKeys(keys, capacity, falsePosition)
 }
 func (db *Ctx[k, v]) BuildBloomFilterByKeys(keys []string, capacity int, falsePosition float64) (err error) {
-	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
-		db.BloomFilterKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%10000+100000), 0.0000001+rand.Float64()/10000000)
-	} else {
-		db.BloomFilterKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
+	if capacity < 0 {
+		capacity = int(float64(len(keys))*1.2) + 1024*1024 + int(rand.Uint32()%10000)
 	}
+	if falsePosition <= 0 || falsePosition >= 1 {
+		falsePosition = 0.0000001 + rand.Float64()/10000000
+	}
+	db.BloomFilterKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
 	//if type of k is string, then AddString is faster than Add
 	for _, it := range keys {
 		db.BloomFilterKeys.AddString(it)
