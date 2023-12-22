@@ -15,7 +15,7 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 		operation string
 		rds       *redis.Client
 	)
-	if rds, err = config.RdsClientByName(svcCtx.RedisName); err != nil {
+	if rds, err = config.RdsClientByName(svcCtx.RedisDBName); err != nil {
 		return nil, err
 	}
 	svcCtx.MergeJwtField(jwts)

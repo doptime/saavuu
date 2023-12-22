@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -12,11 +13,11 @@ import (
 )
 
 type HttpContext struct {
-	Req       *http.Request
-	Rsb       http.ResponseWriter
-	jwtToken  *jwt.Token
-	Ctx       context.Context
-	RedisName string
+	Req         *http.Request
+	Rsb         http.ResponseWriter
+	jwtToken    *jwt.Token
+	Ctx         context.Context
+	RedisDBName string
 	// case get
 	Cmd   string
 	Key   string
@@ -69,8 +70,13 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 		case "!STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
 		}
-		if strings.HasPrefix(param, "!R=") {
-			svcContext.RedisName = param[3:]
+		if strings.HasPrefix(param, "!RDB=") {
+			if svcContext.RedisDBName = param[5:]; len(svcContext.RedisDBName) > 0 {
+				//decode uricomponent
+				if svcContext.RedisDBName, err = url.QueryUnescape(svcContext.RedisDBName); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	return svcContext, nil

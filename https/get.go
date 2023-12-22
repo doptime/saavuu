@@ -25,7 +25,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		buf       []byte
 		rds       *redis.Client
 	)
-	if rds, err = config.RdsClientByName(svcCtx.RedisName); err != nil {
+	if rds, err = config.RdsClientByName(svcCtx.RedisDBName); err != nil {
 		return nil, err
 	}
 
