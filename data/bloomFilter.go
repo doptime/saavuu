@@ -17,7 +17,7 @@ func (db *Ctx[k, v]) BuildBloomFilterHKeys(capacity int, falsePosition float64) 
 }
 func (db *Ctx[k, v]) BuildBloomFilterByKeys(keys []string, capacity int, falsePosition float64) (err error) {
 	if capacity <= 0 || falsePosition <= 0 || falsePosition >= 1 {
-		db.BloomFilterKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%1000+1000), 0.0000001+rand.Float64()/10000000)
+		db.BloomFilterKeys = bloom.NewWithEstimates(uint(len(keys))+uint(rand.Uint32()%10000+100000), 0.0000001+rand.Float64()/10000000)
 	} else {
 		db.BloomFilterKeys = bloom.NewWithEstimates(uint(capacity), falsePosition)
 	}
