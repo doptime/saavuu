@@ -72,8 +72,8 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 			svcContext.ResponseContentType = "text/plain"
 		case "STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
-		case "RDB=": //redis db name RDB=redisDBName
-			if svcContext.RedisDBName, err = url.QueryUnescape(CmdKeyFields[i][4:]); err != nil {
+		case "DS=": //redis db name RDB=redisDBName
+			if svcContext.RedisDBName, err = url.QueryUnescape(CmdKeyFields[i][3:]); err != nil {
 				return nil, err
 			}
 		}
