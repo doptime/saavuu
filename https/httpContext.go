@@ -37,7 +37,7 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	if CmdKeyFields = strings.Split(r.URL.Path, "/"); len(CmdKeyFields) < 1 {
 		return nil, ErrIncompleteRequest
 	}
-	if CmdKeyFields = strings.Split(CmdKeyFields[len(CmdKeyFields)-1], "--"); len(CmdKeyFields) < 2 {
+	if CmdKeyFields = strings.Split(CmdKeyFields[len(CmdKeyFields)-1], "-!"); len(CmdKeyFields) < 2 {
 		return nil, ErrIncompleteRequest
 	}
 	// cmd and key and field, i.g. /HGET/UserAvatar?F=fa4Y3oyQk2swURaJ
@@ -49,29 +49,29 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	svcContext.ResponseContentType = "application/json"
 	for i, l := 2, len(CmdKeyFields); i < l; i++ {
 		//export enum RspType { json = "&RspType=application/json", jpeg = "&RspType=image/jpeg", ogg = "&RspType=audio/ogg", mpeg = "&RspType=video/mpeg", mp4 = "&RspType=video/mp4", none = "", text = "&RspType=text/plain", stream = "&RspType=application/octet-stream" }
-		//export enum RspType { json = "--!JSON", jpeg = "--!JPG", ogg = "--!OGG", mpeg = "--!MPEG", mp4 = "--!MP4", none = "", text = "--!TEXT", stream = "--!STREAM" }
+		//export enum RspType { json = "-!JSON", jpeg = "-!JPG", ogg = "-!OGG", mpeg = "-!MPEG", mp4 = "-!MP4", none = "", text = "-!TEXT", stream = "-!STREAM" }
 		var param string = CmdKeyFields[i]
 		if param == "" || param[0] != '!' {
 			continue
 		}
 		switch param {
-		case "!JSON":
+		case "JSON":
 			svcContext.ResponseContentType = "application/json"
-		case "!JPG":
+		case "JPG":
 			svcContext.ResponseContentType = "image/jpeg"
-		case "!OGG":
+		case "OGG":
 			svcContext.ResponseContentType = "audio/ogg"
-		case "!MPEG":
+		case "MPEG":
 			svcContext.ResponseContentType = "video/mpeg"
-		case "!MP4":
+		case "MP4":
 			svcContext.ResponseContentType = "video/mp4"
-		case "!TEXT":
+		case "TEXT":
 			svcContext.ResponseContentType = "text/plain"
-		case "!STREAM":
+		case "STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
 		}
-		if strings.HasPrefix(param, "!RDB=") {
-			if svcContext.RedisDBName = param[5:]; len(svcContext.RedisDBName) > 0 {
+		if strings.HasPrefix(param, "RDB=") {
+			if svcContext.RedisDBName = param[4:]; len(svcContext.RedisDBName) > 0 {
 				//decode uricomponent
 				if svcContext.RedisDBName, err = url.QueryUnescape(svcContext.RedisDBName); err != nil {
 					return nil, err
