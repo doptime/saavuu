@@ -31,6 +31,7 @@ var ErrIncompleteRequest = errors.New("incomplete request")
 func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter) (httpCtx *HttpContext, err error) {
 	var (
 		CmdKeyFields []string
+		param        string
 	)
 	svcContext := &HttpContext{Req: r, Rsb: w, Ctx: ctx}
 	//i.g. https://url.com/rSvc/HGET=UserAvatar=fa4Y3oyQk2swURaJ?Queries=*&RspType=image/jpeg
@@ -50,9 +51,11 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	for i, l := 2, len(CmdKeyFields); i < l; i++ {
 		//export enum RspType { json = "&RspType=application/json", jpeg = "&RspType=image/jpeg", ogg = "&RspType=audio/ogg", mpeg = "&RspType=video/mpeg", mp4 = "&RspType=video/mp4", none = "", text = "&RspType=text/plain", stream = "&RspType=application/octet-stream" }
 		//export enum RspType { json = "-!JSON", jpeg = "-!JPG", ogg = "-!OGG", mpeg = "-!MPEG", mp4 = "-!MP4", none = "", text = "-!TEXT", stream = "-!STREAM" }
-		var param string = CmdKeyFields[i]
-		if param == "" || param[0] != '!' {
+
+		if param = CmdKeyFields[i]; param == "" {
 			continue
+		} else if ind := strings.Index(param, "="); ind > 0 {
+			param = param[:ind+1]
 		}
 		switch param {
 		case "JSON":
@@ -69,13 +72,9 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 			svcContext.ResponseContentType = "text/plain"
 		case "STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
-		}
-		if strings.HasPrefix(param, "RDB=") {
-			if svcContext.RedisDBName = param[4:]; len(svcContext.RedisDBName) > 0 {
-				//decode uricomponent
-				if svcContext.RedisDBName, err = url.QueryUnescape(svcContext.RedisDBName); err != nil {
-					return nil, err
-				}
+		case "RDB=": //redis db name RDB=redisDBName
+			if svcContext.RedisDBName, err = url.QueryUnescape(CmdKeyFields[i][4:]); err != nil {
+				return nil, err
 			}
 		}
 	}
