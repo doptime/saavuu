@@ -22,6 +22,12 @@ func (db *Ctx[k, v]) GetAll(match string) (mapOut map[k]v, err error) {
 			err = result
 			continue
 		}
+		//use default prefix to avoid confict of hash key
+		//k is start with db.Key, remove it
+		if len(db.Key) > 0 && (len(key) >= len(db.Key)) && key[:len(db.Key)] == db.Key {
+			key = key[len(db.Key)+1:]
+		}
+
 		k, err := db.toKey([]byte(key))
 		if err != nil {
 			log.Info().AnErr("GetAll: key unmarshal error:", err).Msgf("Key: %s", db.Key)
@@ -54,7 +60,7 @@ func (db *Ctx[k, v]) SetAll(_map map[k]v) (err error) {
 			return err
 		}
 
-		pipe.Set(db.Ctx, keyStr, bytes, -1)
+		pipe.Set(db.Ctx, db.Key+":"+keyStr, bytes, -1)
 	}
 	pipe.Exec(db.Ctx)
 	return result
