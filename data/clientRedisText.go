@@ -52,6 +52,8 @@ func (db *Ctx[k, v]) Set(key k, param v, expiration time.Duration) (err error) {
 		return status.Err()
 	}
 }
+
+// for the reason of protection, both db.Key & Key are required. the avoid set Hash table to the wrong type , and thus leading to data loss.
 func (db *Ctx[k, v]) Del(key k) (err error) {
 	var (
 		keyStr string
@@ -59,6 +61,6 @@ func (db *Ctx[k, v]) Del(key k) (err error) {
 	if keyStr, err = db.toKeyStr(key); err != nil {
 		return err
 	}
-	status := db.Rds.Del(db.Ctx, keyStr)
+	status := db.Rds.Del(db.Ctx, db.Key+":"+keyStr)
 	return status.Err()
 }
