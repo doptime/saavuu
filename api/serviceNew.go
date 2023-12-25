@@ -45,9 +45,8 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 				}
 				//step 4, unmarshal JsonPack
 				if err == nil && len(datapack.JsonPack) > 0 {
-					var form url.Values = make(map[string][]string)
-					err = msgpack.Unmarshal(datapack.JsonPack, form)
-					if err == nil {
+					var form url.Values = map[string][]string{}
+					if err = msgpack.Unmarshal(datapack.JsonPack, &form); err == nil {
 						err = schema.NewDecoder().Decode(in, form)
 					}
 				}
@@ -62,9 +61,8 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 				}
 				//step 4, unmarshal JsonPack
 				if err == nil && len(datapack.JsonPack) > 0 {
-					var form url.Values = make(map[string][]string)
-					err = msgpack.Unmarshal(datapack.JsonPack, &form)
-					if err == nil {
+					var form url.Values = map[string][]string{}
+					if err = msgpack.Unmarshal(datapack.JsonPack, &form); err == nil {
 						err = schema.NewDecoder().Decode(pIn, form)
 					}
 				}

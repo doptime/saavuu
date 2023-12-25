@@ -46,7 +46,9 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		//convert query fields to JsonPack. but ignore K field(api name )
 		svcCtx.Req.ParseForm()
 		if len(svcCtx.Req.Form) > 0 {
-			paramIn["JsonPack"], _ = msgpack.Marshal(svcCtx.Req.Form)
+			if paramIn["JsonPack"], err = msgpack.Marshal(svcCtx.Req.Form); err != nil {
+				return nil, err
+			}
 		}
 		var _api = api.New[interface{}, interface{}](svcCtx.Key)
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
