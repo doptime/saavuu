@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -177,31 +178,38 @@ func init() {
 			log.Fatal().Err(err).Any("Step1.3 Redis server not rechable", rdsCfg.Host).Send()
 			return //if redis server is not valid, exit
 		}
-		go pingServer(rdsCfg.Host)
 		//save to the list
 		log.Info().Str("Step1.3 Redis Load ", "Success").Any("RedisUsername", rdsCfg.Username).Any("RedisPassword", rdsCfg.Password).Any("RedisHost", rdsCfg.Host).Any("RedisPort", rdsCfg.Port).Send()
 		Rds[rdsCfg.Name] = rdsClient
 		timeCmd := rdsClient.Time(context.Background())
 		log.Info().Any("Step1.4 Redis server time: ", timeCmd.Val().String()).Send()
 		//ping the address of redisAddress, if failed, print to log
-		go pingServer(rdsCfg.Host)
+		pingServer(rdsCfg.Host)
 
 	}
 
 	log.Info().Msg("Step1.E: App loaded done")
 
 }
+
+var pingTaskServers = []string{}
+
 func pingServer(domain string) {
-	pinger, err := ping.NewPinger(domain)
-	if err != nil {
+	var (
+		pinger *ping.Pinger
+		err    error
+	)
+	if slices.Index(pingTaskServers, domain) != -1 {
+		return
+	}
+	pingTaskServers = append(pingTaskServers, domain)
+
+	if pinger, err = ping.NewPinger(domain); err != nil {
 		log.Info().AnErr("Step1.5 ERROR NewPinger", err).Send()
 	}
 	pinger.Count = 4
 	pinger.Timeout = time.Second * 10
-
-	pinger.OnRecv = func(pkt *ping.Packet) {
-		//fmt.Printf("Ping Received packet from %s: icmp_seq=%d time=%v\n",pkt.IPAddr, pkt.Seq, pkt.Rtt)
-	}
+	pinger.OnRecv = func(pkt *ping.Packet) {}
 
 	pinger.OnFinish = func(stats *ping.Statistics) {
 		// fmt.Printf("\n--- %s ping statistics ---\n", stats.Addr)
@@ -214,8 +222,9 @@ func pingServer(domain string) {
 		// 	stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)
 		log.Info().Str("Step1.5 Ping", fmt.Sprintf("%v/%v/%v/%v", stats.MinRtt, stats.AvgRtt, stats.MaxRtt, stats.StdDevRtt)).Send()
 	}
-
-	if err := pinger.Run(); err != nil {
-		log.Info().AnErr("Step1.5 ERROR Ping", err).Send()
-	}
+	go func() {
+		if err := pinger.Run(); err != nil {
+			log.Info().AnErr("Step1.5 ERROR Ping", err).Send()
+		}
+	}()
 }
