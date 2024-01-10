@@ -88,13 +88,7 @@ func RdsClientByName(name string) (rds *redis.Client, err error) {
 }
 
 func LoadConfig() (err error) {
-	// Load and parse Redis config
-	redisEnv, jwtEnv, httpEnv, apiEnv, logLevelEnv := os.Getenv("Redis"), os.Getenv("Jwt"), os.Getenv("Http"), os.Getenv("Api"), os.Getenv("LogLevel")
-	if redisEnv == "" || jwtEnv == "" || apiEnv == "" {
-		return fmt.Errorf("Step1.0 Load config from env failed")
-	}
-
-	if len(redisEnv) > 0 {
+	if redisEnv := os.Getenv("Redis"); len(redisEnv) > 0 {
 		//regex trim space in "} , {"
 		for len(strings.Replace(redisEnv, " {", "{", -1)) != len(redisEnv) {
 			redisEnv = strings.Replace(redisEnv, " {", "{", -1)
@@ -118,26 +112,29 @@ func LoadConfig() (err error) {
 	}
 
 	// Load and parse JWT config
-	if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
-		log.Fatal().Err(err).Str("jwtEnv", jwtEnv).Msg("Step1.0 Load config from JWT env failed")
+	if jwtEnv := os.Getenv("Jwt"); jwtEnv != "" {
+		if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
+			log.Fatal().Err(err).Str("jwtEnv", jwtEnv).Msg("Step1.0 Load config from JWT env failed")
+		}
 	}
 
 	// Load and parse HTTP config
 	Cfg.Http.Enable, Cfg.Http.Path, Cfg.Http.CORES = true, "/", "*"
-	if len(httpEnv) > 0 {
+	if httpEnv := os.Getenv("Http"); len(httpEnv) > 0 {
 		if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
 			log.Fatal().Err(err).Str("httpEnv", httpEnv).Msg("Step1.0 Load config from HTTP env failed")
 		}
 	}
 
 	// Load and parse API config
-
-	if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
-		log.Fatal().Err(err).Str("apiEnv", apiEnv).Msg("Step1.0 Load config from API env failed")
+	if apiEnv := os.Getenv("Api"); apiEnv != "" {
+		if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
+			log.Fatal().Err(err).Str("apiEnv", apiEnv).Msg("Step1.0 Load config from API env failed")
+		}
 	}
 
 	// Load LogLevel
-	if len(logLevelEnv) > 0 {
+	if logLevelEnv := os.Getenv("LogLevel"); len(logLevelEnv) > 0 {
 		if logLevel, err := strconv.ParseInt(logLevelEnv, 10, 8); err == nil {
 			Cfg.LogLevel = int8(logLevel)
 		}
