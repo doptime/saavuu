@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-ping/ping"
+	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -189,17 +189,17 @@ func init() {
 
 }
 
-var pingTaskServers = []string{}
+var pingTaskServers = cmap.ConcurrentMap[string, bool]{}
 
 func pingServer(domain string) {
 	var (
 		pinger *ping.Pinger
 		err    error
 	)
-	if slices.Index(pingTaskServers, domain) != -1 {
+	for _, ok := pingTaskServers.Get(domain); ok; {
 		return
 	}
-	pingTaskServers = append(pingTaskServers, domain)
+	pingTaskServers.Set(domain, true)
 
 	if pinger, err = ping.NewPinger(domain); err != nil {
 		log.Info().AnErr("Step1.5 ERROR NewPinger", err).Send()
