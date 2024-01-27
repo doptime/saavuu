@@ -37,7 +37,6 @@ type ConfigJWT struct {
 	Fields string `env:"Fields"`
 }
 type ConfigAPI struct {
-	RPCFirst bool `env:"RPCFirst,default=false"`
 	//AutoPermission should never be true in production
 	AutoPermission bool `env:"AutoPermission,default=false"`
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
@@ -59,7 +58,7 @@ var Cfg Configuration = Configuration{
 	Redis:    []*ConfigRedis{},
 	Jwt:      ConfigJWT{Secret: "", Fields: ""},
 	Http:     ConfigHttp{CORES: "*", Port: 80, Path: "/", Enable: false, MaxBufferSize: 10485760},
-	Api:      ConfigAPI{RPCFirst: false, AutoPermission: false, ServiceBatchSize: 64},
+	Api:      ConfigAPI{AutoPermission: false, ServiceBatchSize: 64},
 	LogLevel: 1,
 }
 
