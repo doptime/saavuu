@@ -11,7 +11,7 @@ import (
 
 var ConfigurationLoaded bool = false
 var PermitMaps []cmap.ConcurrentMap[string, *Permission] = []cmap.ConcurrentMap[string, *Permission]{cmap.New[*Permission](), cmap.New[*Permission](), cmap.New[*Permission](), cmap.New[*Permission]()}
-var PermitKeys []string = []string{"PermissionPost", "PermissionPut", "PermissionGet", "PermissionDel"}
+var PermitKeys []string = []string{"_permission:Post", "_permission:Put", "_permission:Get", "_permission:Del"}
 
 type PermitType int64
 
