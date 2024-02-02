@@ -98,7 +98,7 @@ func LoadConfig() (err error) {
 			correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
 			log.Fatal().Err(err).Str("redisEnv", kvs[1]).Msg("Step1.0 Load config from Redis env failed, correct format: " + correctFormat)
 		}
-		if rdsCfg.Name = strings.ToLower(strings.Replace(kvs[1], "Redis_", "", 1)); rdsCfg.Name == "default" || rdsCfg.Name == "_" {
+		if rdsCfg.Name = strings.Replace(kvs[0], "Redis_", "", 1); rdsCfg.Name == "default" || rdsCfg.Name == "_" {
 			rdsCfg.Name = ""
 		}
 		Cfg.Redis = append(Cfg.Redis, rdsCfg)
