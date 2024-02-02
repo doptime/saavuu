@@ -87,27 +87,21 @@ func RdsClientByName(name string) (rds *redis.Client, err error) {
 }
 
 func LoadConfig() (err error) {
-	if redisEnv := os.Getenv("Redis"); len(redisEnv) > 0 {
-		//regex trim space in "} , {"
-		for len(strings.Replace(redisEnv, " {", "{", -1)) != len(redisEnv) {
-			redisEnv = strings.Replace(redisEnv, " {", "{", -1)
+	//load redis items
+	for _, env := range os.Environ() {
+		kvs := strings.SplitN(env, "=", 2)
+		if len(kvs) != 2 || strings.Index(kvs[0], "Redis_") != 0 || len(kvs[1]) <= 6 {
+			continue
 		}
-		for len(strings.Replace(redisEnv, "} ", "}", -1)) != len(redisEnv) {
-			redisEnv = strings.Replace(redisEnv, "} ", "}", -1)
+		rdsCfg := &ConfigRedis{}
+		if err := json.Unmarshal([]byte(kvs[1]), &rdsCfg); err != nil {
+			correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
+			log.Fatal().Err(err).Str("redisEnv", kvs[1]).Msg("Step1.0 Load config from Redis env failed, correct format: " + correctFormat)
 		}
-		redisEnv = strings.Replace(redisEnv, "},{", "}},{{", -1)
-		rdsStrs := strings.Split(redisEnv, "},{")
-		for _, rdsStr := range rdsStrs {
-			rdsCfg := &ConfigRedis{}
-			if err := json.Unmarshal([]byte(rdsStr), &rdsCfg); err != nil {
-				correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
-				log.Fatal().Err(err).Str("redisEnv", rdsStr).Msg("Step1.0 Load config from Redis env failed, correct format: " + correctFormat)
-			}
-			if rdsCfg.Name == "default" || rdsCfg.Name == "_" {
-				rdsCfg.Name = ""
-			}
-			Cfg.Redis = append(Cfg.Redis, rdsCfg)
+		if rdsCfg.Name = strings.ToLower(strings.Replace(kvs[1], "Redis_", "", 1)); rdsCfg.Name == "default" || rdsCfg.Name == "_" {
+			rdsCfg.Name = ""
 		}
+		Cfg.Redis = append(Cfg.Redis, rdsCfg)
 	}
 
 	// Load and parse JWT config
