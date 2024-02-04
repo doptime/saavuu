@@ -43,7 +43,7 @@ func IsPermitted(permitType PermitType, dataKey string, operation string) (ok bo
 	}
 
 	// if using develop mode, then add operation to white list; else add operation to black list
-	if config.Cfg.Api.AutoPermission {
+	if config.Cfg.Api.AutoAuth {
 		permission.WhiteList = append(permission.WhiteList, operation)
 		//save to redis
 		var dataCtx = dataCtx(PermitType(permitType))
@@ -53,7 +53,7 @@ func IsPermitted(permitType PermitType, dataKey string, operation string) (ok bo
 		//no changed to redis
 	}
 	PermissionMap.Set(dataKey, permission)
-	return config.Cfg.Api.AutoPermission
+	return config.Cfg.Api.AutoAuth
 }
 
 func permitMapUpdate(newMap map[string]*Permission, oldMap cmap.ConcurrentMap[string, *Permission]) (modified bool) {

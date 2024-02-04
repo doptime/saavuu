@@ -75,5 +75,5 @@ HGET("UserInfo", id).then((data) => {
     "JWT_IGNORE_FIELDS": "iat,exp,nbf,iss,aud,sub,typ,azp,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at,nonce,auth_time,acr,amr,at_hash,c_hash,updated_at",
     "CORS": "*",
     "MaxBufferSize": "3145728",
-    "AutoPermission": "true",
+    "AutoAuth": "true",
 ```
