@@ -37,18 +37,21 @@ type ConfigJWT struct {
 	Fields string `env:"Fields"`
 }
 type ConfigAPI struct {
-	//AutoAuth should never be true in production
-	AutoAuth bool `env:"AutoAuth,default=false"`
 	//ServiceBatchSize is the number of tasks that a service can read from redis at the same time
 	ServiceBatchSize int64 `env:"ServiceBatchSize,default=64"`
+}
+type ConfigData struct {
+	//AutoAuth should never be true in production
+	AutoAuth bool `env:"AutoAuth,default=false"`
 }
 
 type Configuration struct {
 	//redis server, format: username:password@address:port/db
-	Redis []*ConfigRedis `env:"REDIS,required=true"`
-	Jwt   ConfigJWT      `env:"JWT"`
-	Http  ConfigHttp     `env:"HTTP"`
-	Api   ConfigAPI      `env:"API"`
+	Redis []*ConfigRedis
+	Jwt   ConfigJWT
+	Http  ConfigHttp
+	Api   ConfigAPI
+	Data  ConfigData
 	//{"DebugLevel": 0,"InfoLevel": 1,"WarnLevel": 2,"ErrorLevel": 3,"FatalLevel": 4,"PanicLevel": 5,"NoLevel": 6,"Disabled": 7	  }
 	LogLevel int8 `env:"LogLevel,default=1"`
 }
@@ -58,7 +61,8 @@ var Cfg Configuration = Configuration{
 	Redis:    []*ConfigRedis{},
 	Jwt:      ConfigJWT{Secret: "", Fields: ""},
 	Http:     ConfigHttp{CORES: "*", Port: 80, Path: "/", Enable: false, MaxBufferSize: 10485760},
-	Api:      ConfigAPI{AutoAuth: false, ServiceBatchSize: 64},
+	Api:      ConfigAPI{ServiceBatchSize: 64},
+	Data:     ConfigData{AutoAuth: false},
 	LogLevel: 1,
 }
 
@@ -87,18 +91,25 @@ func RdsClientByName(name string) (rds *redis.Client, err error) {
 }
 
 func LoadConfig() (err error) {
-	//load redis items
+	var envMap = map[string]string{}
+
 	for _, env := range os.Environ() {
 		kvs := strings.SplitN(env, "=", 2)
-		if len(kvs) != 2 || strings.Index(kvs[0], "Redis") != 0 || len(kvs[1]) <= 6 {
+		if len(kvs) == 2 && len(kvs[0]) > 0 && len(kvs[1]) > 0 {
+			envMap[kvs[0]] = kvs[1]
+		}
+	}
+	//load redis items
+	for key, val := range envMap {
+		if strings.Index(key, "Redis") != 0 || len(val) <= 6 {
 			continue
 		}
 		rdsCfg := &ConfigRedis{}
-		if err := json.Unmarshal([]byte(kvs[1]), &rdsCfg); err != nil {
+		if err := json.Unmarshal([]byte(val), &rdsCfg); err != nil {
 			correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
-			log.Fatal().Err(err).Str("redisEnv", kvs[1]).Msg("Step1.0 Load config from Redis env failed, correct format: " + correctFormat)
+			log.Fatal().Err(err).Str("redisEnv", val).Msg("Step1.0 Load Env/Redis failed, correct format: " + correctFormat)
 		}
-		if rdsCfg.Name = strings.Replace(kvs[0], "Redis", "", 1); len(rdsCfg.Name) > 0 && (rdsCfg.Name[0] == '_' || rdsCfg.Name[0] == ':') {
+		if rdsCfg.Name = strings.Replace(key, "Redis", "", 1); len(rdsCfg.Name) > 0 && (rdsCfg.Name[0] == '_' || rdsCfg.Name[0] == ':') {
 			rdsCfg.Name = rdsCfg.Name[1:]
 		}
 		if rdsCfg.Name == "default" || rdsCfg.Name == "_" {
@@ -108,29 +119,34 @@ func LoadConfig() (err error) {
 	}
 
 	// Load and parse JWT config
-	if jwtEnv := os.Getenv("Jwt"); jwtEnv != "" {
+	if jwtEnv, ok := envMap["Jwt"]; ok && jwtEnv != "" {
 		if err := json.Unmarshal([]byte(jwtEnv), &Cfg.Jwt); err != nil {
-			log.Fatal().Err(err).Str("jwtEnv", jwtEnv).Msg("Step1.0 Load config from JWT env failed")
+			log.Fatal().Err(err).Str("jwtEnv", jwtEnv).Msg("Step1.0 Load Env/Jwt failed")
 		}
 	}
 
 	// Load and parse HTTP config
 	Cfg.Http.Enable, Cfg.Http.Path, Cfg.Http.CORES = true, "/", "*"
-	if httpEnv := os.Getenv("Http"); len(httpEnv) > 0 {
+	if httpEnv, ok := envMap["Http"]; ok && len(httpEnv) > 0 {
 		if err := json.Unmarshal([]byte(httpEnv), &Cfg.Http); err != nil {
-			log.Fatal().Err(err).Str("httpEnv", httpEnv).Msg("Step1.0 Load config from HTTP env failed")
+			log.Fatal().Err(err).Str("httpEnv", httpEnv).Msg("Step1.0 Load Env/Http failed")
 		}
 	}
 
 	// Load and parse API config
-	if apiEnv := os.Getenv("Api"); apiEnv != "" {
+	if apiEnv, ok := envMap["Api"]; ok && apiEnv != "" {
 		if err := json.Unmarshal([]byte(apiEnv), &Cfg.Api); err != nil {
-			log.Fatal().Err(err).Str("apiEnv", apiEnv).Msg("Step1.0 Load config from API env failed")
+			log.Fatal().Err(err).Str("apiEnv", apiEnv).Msg("Step1.0 Load Env/Api failed")
+		}
+	}
+	if dataEnv, ok := envMap["Data"]; ok && dataEnv != "" {
+		if err := json.Unmarshal([]byte(dataEnv), &Cfg.Data); err != nil {
+			log.Fatal().Err(err).Str("dataEnv", dataEnv).Msg("Step1.0 Load Env/data env failed")
 		}
 	}
 
 	// Load LogLevel
-	if logLevelEnv := os.Getenv("LogLevel"); len(logLevelEnv) > 0 {
+	if logLevelEnv, ok := envMap["LogLevel"]; ok && len(logLevelEnv) > 0 {
 		if logLevel, err := strconv.ParseInt(logLevelEnv, 10, 8); err == nil {
 			Cfg.LogLevel = int8(logLevel)
 		}
