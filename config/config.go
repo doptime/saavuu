@@ -59,7 +59,7 @@ type Configuration struct {
 // set default values
 var Cfg Configuration = Configuration{
 	Redis:    []*ConfigRedis{},
-	Jwt:      ConfigJWT{Secret: "", Fields: ""},
+	Jwt:      ConfigJWT{Secret: "", Fields: "*"},
 	Http:     ConfigHttp{CORES: "*", Port: 80, Path: "/", Enable: false, MaxBufferSize: 10485760},
 	Api:      ConfigAPI{ServiceBatchSize: 64},
 	Data:     ConfigData{AutoAuth: false},
