@@ -16,19 +16,22 @@ import (
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
-func Rpc[i any, o any](f func(InParam i) (ret o, err error), options ...string) (retf func(InParam i) (ret o, err error)) {
+func Rpc[i any, o any](options ...Options) (retf func(InParam i) (ret o, err error)) {
 	var (
-		ServiceName string
-		DBName      string
-		db          *redis.Client
-		ok          bool
-		ctx         = context.Background()
+		db     *redis.Client
+		ok     bool
+		ctx            = context.Background()
+		option Options = optionsMerge(options...)
 	)
-	if ServiceName, DBName = optionsDecode(options...); len(ServiceName) == 0 {
-		ServiceName = specification.TypeName((*i)(nil))
+	if len(option.ServiceName) == 0 {
+		option.ServiceName = specification.TypeName((*i)(nil))
 	}
-	if db, ok = config.Rds[DBName]; !ok {
-		log.Info().Str("DBName not defined in enviroment", DBName).Send()
+	if _, ok := specification.DisAllowedServiceNames[option.ServiceName]; ok {
+		log.Error().Str("service misnamed", option.ServiceName).Send()
+	}
+
+	if db, ok = config.Rds[option.DBName]; !ok {
+		log.Info().Str("DBName not defined in enviroment", option.DBName).Send()
 		return nil
 	}
 
@@ -44,7 +47,7 @@ func Rpc[i any, o any](f func(InParam i) (ret o, err error), options ...string) 
 		}
 
 		Values = []string{"data", string(b)}
-		args := &redis.XAddArgs{Stream: ServiceName, Values: Values, MaxLen: 4096}
+		args := &redis.XAddArgs{Stream: option.ServiceName, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return out, cmd.Err()

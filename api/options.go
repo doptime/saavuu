@@ -1,20 +1,28 @@
 package api
 
+// Options is parameter to create an API, RPC, or CallAt
+type Options struct {
+	ServiceName string
+	DBName      string
+}
+
 // Key purpose of ApiNamed is to allow different API to have the same input type
-func Name(name string) string {
-	return "nm:" + name
+func OpName(name string) (o Options) {
+	o.ServiceName = name
+	return
 }
-func DB(name string) string {
-	return "db:" + name
+func OpDB(DBName string) (o Options) {
+	o.DBName = DBName
+	return
 }
-func optionsDecode(options ...string) (ServiceName, DBName string) {
+func optionsMerge(options ...Options) (o Options) {
 	for _, value := range options {
-		if len(ServiceName) == 0 && len(value) > 3 || value[:3] == "nm:" {
-			ServiceName = value[3:]
+		if value.ServiceName != "" {
+			o.ServiceName = value.ServiceName
 		}
-		if len(DBName) == 0 && len(value) > 3 || value[:3] == "db:" {
-			DBName = value[3:]
+		if value.DBName != "" {
+			o.DBName = value.DBName
 		}
 	}
-	return
+	return o
 }

@@ -20,22 +20,19 @@ import (
 //
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...string) (retf func(InParam i) (ret o, err error)) {
+func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Options) (retf func(InParam i) (ret o, err error)) {
 	var (
-		ServiceName string
-		DBName      string
-		ctx         *Ctx[i, o]
+		option Options = optionsMerge(options...)
 	)
 
-	if ServiceName, DBName = optionsDecode(options...); len(ServiceName) == 0 {
-		ServiceName = specification.TypeName((*i)(nil))
+	if len(option.ServiceName) == 0 {
+		option.ServiceName = specification.TypeName((*i)(nil))
+	}
+	if _, ok := specification.DisAllowedServiceNames[option.ServiceName]; ok {
+		log.Error().Str("service misnamed", option.ServiceName).Send()
 	}
 
-	log.Debug().Str("Api service create start. name", ServiceName).Send()
-	//create Api context
-	//Serivce name should Start with "api:"
-	ctx = New[i, o](ServiceName)
-	ctx.Func = f
+	log.Debug().Str("Api service create start. name", option.ServiceName).Send()
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		type DataPacked struct {
@@ -96,12 +93,12 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...stri
 		return f(in)
 	}
 	//register Api
-	ApiServices.Set(ctx.ServiceName, &ApiInfo{
-		ApiName:                   ctx.ServiceName,
-		DBName:                    DBName,
+	ApiServices.Set(option.ServiceName, &ApiInfo{
+		ApiName:                   option.ServiceName,
+		DBName:                    option.DBName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
-	log.Debug().Str("ApiNamed service created completed!", ServiceName).Send()
+	log.Debug().Str("ApiNamed service created completed!", option.ServiceName).Send()
 	//return Api context
 	return f
 }

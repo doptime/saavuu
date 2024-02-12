@@ -14,7 +14,6 @@ import (
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
-	"github.com/yangkequn/saavuu/specification"
 )
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
@@ -23,7 +22,6 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		tm        time.Time
 		operation string
 		members   []interface{} = []interface{}{}
-		buf       []byte
 		rds       *redis.Client
 	)
 	if rds, err = config.RdsClientByName(svcCtx.RedisDBName); err != nil {
@@ -45,9 +43,8 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	// this is used to support 3rd party api
 	case "JSAPI":
 		var (
-			fuc     *api.ApiInfo
-			ok      bool
-			paramIn map[string]interface{} = map[string]interface{}{}
+			paramIn     map[string]interface{} = map[string]interface{}{}
+			ServiceName string                 = svcCtx.Key
 		)
 		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
@@ -57,17 +54,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 				return nil, err
 			}
 		}
-		var _api = api.New[interface{}, interface{}](svcCtx.Key)
-		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices.Get(_api.ServiceName); !ok {
-			return _api.Do(paramIn)
-		}
-
-		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
-			return nil, err
-		}
-		return fuc.ApiFuncWithMsgpackedParam(buf)
+		return api.CallByHTTP(ServiceName, paramIn)
 
 	case "GET":
 		return db.Get(svcCtx.Field)

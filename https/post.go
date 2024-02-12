@@ -9,7 +9,6 @@ import (
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
-	"github.com/yangkequn/saavuu/specification"
 )
 
 var ErrBadCommand = errors.New("error bad command")
@@ -19,9 +18,6 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	var (
 		paramIn   map[string]interface{} = map[string]interface{}{}
 		operation string
-		fuc       *api.ApiInfo
-		ok        bool
-		buf       []byte
 	)
 
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
@@ -39,10 +35,6 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
 	// this is used to support 3rd party api
 	case "JSAPI":
-		var (
-			fuc *api.ApiInfo
-			ok  bool
-		)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		svcCtx.Req.ParseForm()
 		if len(svcCtx.Req.Form) > 0 {
@@ -50,32 +42,13 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 				return nil, err
 			}
 		}
-		var _api = api.New[interface{}, interface{}](svcCtx.Key)
-		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices.Get(_api.ServiceName); !ok {
-			return _api.Do(paramIn)
-		}
-
-		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
-			return nil, err
-		}
-		return fuc.ApiFuncWithMsgpackedParam(buf)
+		return api.CallByHTTP(svcCtx.Key, paramIn)
 	case "API":
 		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
 			paramIn["MsgPack"] = MsgPack
 		}
 		svcCtx.MergeJwtField(paramIn)
-		var _api = api.New[map[string]interface{}, interface{}](svcCtx.Key)
-		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		if fuc, ok = api.ApiServices.Get(_api.ServiceName); !ok {
-			return _api.Do(paramIn)
-		}
-		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
-			return nil, err
-		}
-		return fuc.ApiFuncWithMsgpackedParam(buf)
+		return api.CallByHTTP(svcCtx.Key, paramIn)
 	case "ZADD":
 		var Score float64
 		var obj interface{}
