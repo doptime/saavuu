@@ -8,11 +8,30 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/specification"
 )
 
-// Key purpose of ApiNamed is to allow different API to have the same input type
-func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
-	log.Debug().Str("ApiNamed service created start!", ServiceName).Send()
+// crate ApiFun. the created Api can be used as normal function:
+//
+//	f := func(InParam *InDemo) (ret string, err error) , this is logic function
+//	options. there are 2 poosible options:
+//		1. api.Name("ServiceName")  //set the ServiceName of the Api. which is string. default is the name of the InParameter type but with "In" removed
+//		2. api.DB("RedisDatabaseName")  //set the DB name of the job. default is the name of the function
+//
+// ServiceName is defined as "In" + ServiceName in the InParameter
+// ServiceName is automatically converted to lower case
+func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...string) (retf func(InParam i) (ret o, err error)) {
+	var (
+		ServiceName string
+		DBName      string
+		ctx         *Ctx[i, o]
+	)
+
+	if ServiceName, DBName = optionsDecode(options...); len(ServiceName) == 0 {
+		ServiceName = specification.TypeName((*i)(nil))
+	}
+
+	log.Debug().Str("Api service create start. name", ServiceName).Send()
 	//create Api context
 	//Serivce name should Start with "api:"
 	ctx = New[i, o](ServiceName)
@@ -79,29 +98,10 @@ func ApiNamed[i any, o any](ServiceName string, f func(InParameter i) (ret o, er
 	//register Api
 	ApiServices.Set(ctx.ServiceName, &ApiInfo{
 		ApiName:                   ctx.ServiceName,
+		DBName:                    DBName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
 	log.Debug().Str("ApiNamed service created completed!", ServiceName).Send()
 	//return Api context
-	return f, ctx
-}
-
-// crate ApiFun, ApiContext. the created Api is used :
-//  1. to call api service,using ApiFun() or ApiContext.DoAt()
-//  2. Api can be called by web client or another language client
-//
-// ServiceName is defined as "In" + ServiceName in the InParameter
-// ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InParam i) (ret o, err error)) (retf func(InParam i) (ret o, err error), ctx *Ctx[i, o]) {
-	log.Debug().Msg("Api service create start")
-	//get default ServiceName
-	var _type reflect.Type
-	//take name of type v as key
-	for _type = reflect.TypeOf((*i)(nil)); _type.Kind() == reflect.Ptr; _type = _type.Elem() {
-	}
-	typeName := _type.Name()
-	log.Debug().Str("Api service create start. name", typeName).Send()
-	retf, ctx = ApiNamed[i, o](typeName, f)
-	log.Debug().Str("Api service create end. name", typeName).Send()
-	return retf, ctx
+	return f
 }

@@ -16,6 +16,7 @@ import (
 type ApiInfo struct {
 	// ApiName is the name of the service
 	ApiName string
+	DBName  string
 	// ApiFuncWithMsgpackedParam is the function of the service
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
@@ -71,8 +72,8 @@ func receiveJobs() {
 			for _, message := range stream.Messages {
 				bytesValue := message.Values["data"].(string)
 				//the delay calling will lost if the app is down
-				if dueTimeStr, ok := message.Values["dueTime"]; ok {
-					go delayTaskAddOne(apiName, dueTimeStr.(string), bytesValue)
+				if timeAtStr, ok := message.Values["timeAt"]; ok {
+					go delayTaskAddOne(apiName, timeAtStr.(string), bytesValue)
 				} else {
 					go DoOneJob(apiName, apiName, []byte(bytesValue))
 				}

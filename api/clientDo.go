@@ -9,40 +9,24 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/specification"
 )
-
-func EncodeApiInput(paramIn interface{}) (out []byte, err error) {
-	//ensure the paramIn is a map or struct
-	paramType := reflect.TypeOf(paramIn)
-	if paramType.Kind() == reflect.Struct {
-	} else if paramType.Kind() == reflect.Map {
-	} else if paramType.Kind() == reflect.Ptr && (paramType.Elem().Kind() == reflect.Struct || paramType.Elem().Kind() == reflect.Map) {
-	} else {
-		log.Info().Msg("RdsApiBasic param should be a map or struct")
-		return nil, err
-	}
-
-	if out, err = msgpack.Marshal(paramIn); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
 
 // RedisCall: 1.use RPush to push data to redis. 2.use BLPop to pop data from selected channel
 // return: error
-func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
+func (ac *Ctx[i, o]) do(paramIn i, timeAt *time.Time) (out o, err error) {
 	var (
 		b       []byte
 		results []string
 		cmd     *redis.StringCmd
 		Values  []string
 	)
-	if b, err = EncodeApiInput(paramIn); err != nil {
+	if b, err = specification.MarshalApiInput(paramIn); err != nil {
 		return out, err
 	}
 
-	if dueTime != nil {
-		Values = []string{"dueTime", strconv.FormatInt(dueTime.UnixMilli(), 10), "data", string(b)}
+	if timeAt != nil {
+		Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixMilli(), 10), "data", string(b)}
 	} else {
 		Values = []string{"data", string(b)}
 	}
@@ -51,7 +35,7 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 		log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 		return out, cmd.Err()
 	}
-	if dueTime != nil {
+	if timeAt != nil {
 		return out, nil
 	}
 
@@ -75,8 +59,8 @@ func (ac *Ctx[i, o]) do(paramIn i, dueTime *time.Time) (out o, err error) {
 	oValueWithPointer := reflect.New(oType).Interface().(*o)
 	return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 }
-func (ac *Ctx[i, o]) DoAt(paramIn i, dueTime *time.Time) (err error) {
-	_, err = ac.do(paramIn, dueTime)
+func (ac *Ctx[i, o]) DoAt(paramIn i, timeAt *time.Time) (err error) {
+	_, err = ac.do(paramIn, timeAt)
 	return err
 }
 

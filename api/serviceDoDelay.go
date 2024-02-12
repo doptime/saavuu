@@ -12,36 +12,36 @@ import (
 )
 
 // put parameter to redis ,make it persistent
-func delayTaskAddOne(serviceName string, dueTimeStr string, bytesValue string) {
+func delayTaskAddOne(serviceName string, timeAtStr string, bytesValue string) {
 	var (
 		rds *redis.Client = config.RdsClientDefault()
 	)
-	if cmd := rds.HSet(context.Background(), serviceName+":delay", dueTimeStr, bytesValue); cmd.Err() != nil {
+	if cmd := rds.HSet(context.Background(), serviceName+":delay", timeAtStr, bytesValue); cmd.Err() != nil {
 		log.Info().Err(cmd.Err()).Send()
 		return
 	}
-	go delayTaskDoOne(serviceName, dueTimeStr)
+	go delayTaskDoOne(serviceName, timeAtStr)
 }
-func delayTaskDoOne(serviceName, dueTimeStr string) {
+func delayTaskDoOne(serviceName, timeAtStr string) {
 	var (
-		ret                                        interface{}
-		bytes, msgPackResult                       []byte
-		dueTimeUnixMilliSecond, nowUnixMilliSecond int64
-		err                                        error
-		cmd                                        []redis.Cmder
-		service                                    *ApiInfo
-		ok                                         bool
-		rds                                        *redis.Client = config.RdsClientDefault()
+		ret                                       interface{}
+		bytes, msgPackResult                      []byte
+		timeAtUnixMilliSecond, nowUnixMilliSecond int64
+		err                                       error
+		cmd                                       []redis.Cmder
+		service                                   *ApiInfo
+		ok                                        bool
+		rds                                       *redis.Client = config.RdsClientDefault()
 	)
 	nowUnixMilliSecond = time.Now().UnixMilli()
-	if dueTimeUnixMilliSecond, err = strconv.ParseInt(dueTimeStr, 10, 64); err != nil {
+	if timeAtUnixMilliSecond, err = strconv.ParseInt(timeAtStr, 10, 64); err != nil {
 		log.Info().Err(err).Send()
 		return
 	}
-	time.Sleep(time.Duration(dueTimeUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
+	time.Sleep(time.Duration(timeAtUnixMilliSecond-nowUnixMilliSecond) * time.Millisecond)
 	pipeline := rds.Pipeline()
-	pipeline.HGet(context.Background(), serviceName+":delay", dueTimeStr)
-	pipeline.HDel(context.Background(), serviceName+":delay", dueTimeStr)
+	pipeline.HGet(context.Background(), serviceName+":delay", timeAtStr)
+	pipeline.HDel(context.Background(), serviceName+":delay", timeAtStr)
 	if cmd, err = pipeline.Exec(context.Background()); err != nil {
 		log.Info().Err(err).Send()
 		return
@@ -71,11 +71,11 @@ func delayTaskDoOne(serviceName, dueTimeStr string) {
 
 func delayTasksLoad() {
 	var (
-		services    = apiServiceNames()
-		dueTimeStrs []string
-		cmd         []redis.Cmder
-		err         error
-		rds         *redis.Client = config.RdsClientDefault()
+		services   = apiServiceNames()
+		timeAtStrs []string
+		cmd        []redis.Cmder
+		err        error
+		rds        *redis.Client = config.RdsClientDefault()
 	)
 	log.Info().Msg("delayTasksLoading started")
 	pipeline := rds.Pipeline()
@@ -87,9 +87,9 @@ func delayTasksLoad() {
 		return
 	}
 	for i, service := range services {
-		dueTimeStrs = cmd[i].(*redis.StringSliceCmd).Val()
-		for _, dueTimeStr := range dueTimeStrs {
-			go delayTaskDoOne(service, dueTimeStr)
+		timeAtStrs = cmd[i].(*redis.StringSliceCmd).Val()
+		for _, timeAtStr := range timeAtStrs {
+			go delayTaskDoOne(service, timeAtStr)
 		}
 	}
 	log.Info().Msg("delayTasksLoading completed")

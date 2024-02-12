@@ -12,7 +12,7 @@ func TestApiDemo(t *testing.T) {
 		Text string
 	}
 
-	var ApiDemo, _ = api.Api(func(InParam *InDemo) (ret string, err error) {
+	var ApiDemo = api.Api(func(InParam *InDemo) (ret string, err error) {
 		return "hello world", nil
 	})
 

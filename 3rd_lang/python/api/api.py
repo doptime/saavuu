@@ -70,10 +70,10 @@ class api():
                         id = message[0]
                         _messege = message[1]
                         param = msgpack.unpackb(_messege[b'data'])
-                        if b"dueTime" in _messege:
-                            dueTimeStr = _messege[b"dueTime"]
+                        if b"timeAt" in _messege:
+                            timeAtStr = _messege[b"timeAt"]
                             api.delayTaskAddOne(
-                                apiName, dueTimeStr, param)
+                                apiName, timeAtStr, param)
                         else:
                             api.ApiFunc[apiName](id, param, api.send_back)
                         api.task_num_in_60s[apiName]+=1
@@ -92,24 +92,24 @@ class api():
         pipe.expire(id, 6)
         pipe.execute()
 
-    def delayTaskAddOne(serviceName, dueTimeStr, bytesValue):
+    def delayTaskAddOne(serviceName, timeAtStr, bytesValue):
         global rds
-        rds.hset(serviceName+":delay", dueTimeStr, bytesValue)
-        api.delayTaskDoOne(serviceName, dueTimeStr)
+        rds.hset(serviceName+":delay", timeAtStr, bytesValue)
+        api.delayTaskDoOne(serviceName, timeAtStr)
 
-    def delay_task_do_one(serviceName, dueTimeStr):
+    def delay_task_do_one(serviceName, timeAtStr):
         global rds
         nowUnixMilliSecond = time.time() * 1000
-        dueTimeUnixMilliSecond = int(dueTimeStr)
-        time.sleep((dueTimeUnixMilliSecond-nowUnixMilliSecond) / 1000)
-        rds.hget(serviceName+":delay", dueTimeStr)
-        api.rds.hdel(serviceName+":delay", dueTimeStr)
+        timeAtUnixMilliSecond = int(timeAtStr)
+        time.sleep((timeAtUnixMilliSecond-nowUnixMilliSecond) / 1000)
+        rds.hget(serviceName+":delay", timeAtStr)
+        api.rds.hdel(serviceName+":delay", timeAtStr)
         if bytes != None:
             api.ApiFun[serviceName](None, bytes, api.send_back)
 
     def delay_tasks_load():
         services = api.ApiFun.keys()
         for service in services:
-            dueTimeStrs = api.rds.hkeys(service+":delay")
-            for dueTimeStr in dueTimeStrs:
-                api.delay_task_do_one(service, dueTimeStr)
+            timeAtStrs = api.rds.hkeys(service+":delay")
+            for timeAtStr in timeAtStrs:
+                api.delay_task_do_one(service, timeAtStr)

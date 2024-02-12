@@ -9,6 +9,7 @@ import (
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
+	"github.com/yangkequn/saavuu/specification"
 )
 
 var ErrBadCommand = errors.New("error bad command")
@@ -56,7 +57,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 		}
 
 		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = api.EncodeApiInput(paramIn); err != nil {
+		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
 			return nil, err
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
@@ -71,7 +72,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 			return _api.Do(paramIn)
 		}
 		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = api.EncodeApiInput(paramIn); err != nil {
+		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
 			return nil, err
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)

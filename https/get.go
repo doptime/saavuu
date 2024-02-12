@@ -14,6 +14,7 @@ import (
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
 	"github.com/yangkequn/saavuu/permission"
+	"github.com/yangkequn/saavuu/specification"
 )
 
 func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
@@ -63,7 +64,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		}
 
 		//if function is stored locally, call it directly. This is alias monolithic mode
-		if buf, err = api.EncodeApiInput(paramIn); err != nil {
+		if buf, err = specification.MarshalApiInput(paramIn); err != nil {
 			return nil, err
 		}
 		return fuc.ApiFuncWithMsgpackedParam(buf)
