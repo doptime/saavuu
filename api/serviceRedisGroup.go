@@ -27,7 +27,7 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 }
 func XGroupCreateOne(c context.Context, serviceName string) (err error) {
 	var (
-		rds *redis.Client = config.RdsClientDefault()
+		rds *redis.Client = config.RdsDefaultClient()
 	)
 
 	//continue if the group already exists

@@ -20,14 +20,20 @@ import (
 //
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Options) (retf func(InParam i) (ret o, err error)) {
+func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Option) (retf func(InParam i) (ret o, err error)) {
 	var (
-		option Options = optionsMerge(options...)
+		option *Options = optionsMerge(options...)
 	)
-
-	if len(option.ServiceName) == 0 {
-		option.ServiceName = specification.TypeName((*i)(nil))
+	if len(option.ServiceName) > 0 {
+		option.ServiceName = specification.ApiName(option.ServiceName)
 	}
+	if len(option.ServiceName) == 0 {
+		option.ServiceName = specification.ApiNameByType((*i)(nil))
+	}
+	if len(option.ServiceName) == 0 {
+		log.Error().Str("service misnamed", option.ServiceName).Send()
+	}
+
 	if _, ok := specification.DisAllowedServiceNames[option.ServiceName]; ok {
 		log.Error().Str("service misnamed", option.ServiceName).Send()
 	}
@@ -95,7 +101,7 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 	//register Api
 	ApiServices.Set(option.ServiceName, &ApiInfo{
 		ApiName:                   option.ServiceName,
-		DBName:                    option.DBName,
+		DBName:                    option.DbName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	})
 	log.Debug().Str("ApiNamed service created completed!", option.ServiceName).Send()

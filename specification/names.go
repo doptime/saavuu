@@ -1,12 +1,14 @@
 package specification
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 var DisAllowedServiceNames = map[string]bool{
+	"":           true,
 	"string":     true,
 	"int32":      true,
 	"int64":      true,
@@ -22,36 +24,40 @@ var DisAllowedServiceNames = map[string]bool{
 	"complex128": true,
 }
 
-// 不能Panic,因为可能被web客户端调用。否则服务端可以被客户端恶意关闭
-func ApiName(ServiceName string) (string, error) {
-	//remove "api:" prefix
-	if len(ServiceName) >= 4 && ServiceName[:4] == "api:" {
-		ServiceName = ServiceName[4:]
-	}
-	//remove prefix "In" from the name
-	if len(ServiceName) > 2 && strings.ToLower(ServiceName[:2]) == "in" {
-		ServiceName = ServiceName[2:]
+// return the api name of the service
+// name with format "api:serviceName". first letter of serviceName should be lower case, and start with "api:"
+// two possible source of the service name:
+// 1. the type name of the first parameter of the function
+// 2. the name give by the user
+// do not panic, because it may be called by web client. otherwise the server can be maliciously closed by the client
+func ApiName(ServiceName string) string {
+	//remove  prefix. "api:" is the case of encoded service name. other wise for the case of parameter type name
+	var prefixes = []string{"api:", "input", "in", "req", "arg", "param", "src", "data"}
+	if ServiceNameLowercase := strings.ToLower(ServiceName); len(ServiceNameLowercase) > 0 {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(ServiceNameLowercase, prefix) {
+				ServiceName = ServiceName[len(prefix):]
+			}
+		}
 	}
 	if _, ok := DisAllowedServiceNames[ServiceName]; ok {
-		return "", fmt.Errorf("service misnamed. %s", ServiceName)
-	}
-	if len(ServiceName) == 0 {
-		return "", fmt.Errorf("service misnamed. %s", ServiceName)
+		log.Error().Str("service misnamed", ServiceName).Send()
+		return ""
 	}
 	//first byte of ServiceName should be lower case
 	if ServiceName[0] >= 'A' && ServiceName[0] <= 'Z' {
 		ServiceName = string(ServiceName[0]+32) + ServiceName[1:]
 	}
 	//ensure ServiceKey start with "api:"
-	return "api:" + ServiceName, nil
+	return "api:" + ServiceName
 }
 
-func TypeName(i interface{}) (name string) {
+func ApiNameByType(i interface{}) (name string) {
 	//get default ServiceName
 	var _type reflect.Type
 	//take name of type v as key
 	for _type = reflect.TypeOf(i); _type.Kind() == reflect.Ptr; _type = _type.Elem() {
 	}
-	return name
+	return ApiName(_type.Name())
 
 }

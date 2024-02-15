@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	cmap "github.com/orcaman/concurrent-map/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
@@ -14,29 +13,13 @@ import (
 	"github.com/yangkequn/saavuu/specification"
 )
 
-type ApiInfo struct {
-	// ApiName is the name of the service
-	ApiName string
-	DBName  string
-	// ApiFuncWithMsgpackedParam is the function of the service
-	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
-}
-
-var ApiServices cmap.ConcurrentMap[string, *ApiInfo] = cmap.New[*ApiInfo]()
-
-func apiServiceNames() (serviceNames []string) {
-	for _, serviceInfo := range ApiServices.Items() {
-		serviceNames = append(serviceNames, serviceInfo.ApiName)
-	}
-	return serviceNames
-}
 func receiveJobs() {
 	var (
 		cmd     *redis.XStreamSliceCmd
 		apiName string
 		err     error
 		strs    []string
-		rds     *redis.Client = config.RdsClientDefault()
+		rds     *redis.Client = config.RdsDefaultClient()
 	)
 	c := context.Background()
 	//create group if none exists, with consumer saavuu
@@ -89,7 +72,7 @@ func DoOneJob(apiName, BackToID string, s []byte) (err error) {
 		ret           interface{}
 		service       *ApiInfo
 		ok            bool
-		rds           *redis.Client = config.RdsClientDefault()
+		rds           *redis.Client = config.RdsDefaultClient()
 	)
 	if service, ok = ApiServices.Get(apiName); !ok {
 		return fmt.Errorf("service %s not found", apiName)
@@ -114,8 +97,8 @@ func CallByHTTP(ServiceName string, paramIn map[string]interface{}) (ret interfa
 		ok  bool
 		buf []byte
 	)
-	if ServiceName, err = specification.ApiName(ServiceName); err != nil {
-		return nil, err
+	if ServiceName = specification.ApiName(ServiceName); len(ServiceName) == 0 {
+		return nil, fmt.Errorf("service misnamed %s", ServiceName)
 	}
 	var rpc = Rpc[interface{}, interface{}](OpName(ServiceName))
 	//if function is stored locally, call it directly. This is alias monolithic mode

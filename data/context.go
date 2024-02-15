@@ -20,7 +20,7 @@ type Ctx[k comparable, v any] struct {
 
 func NewStruct[k comparable, v any]() *Ctx[k, v] {
 	var (
-		rds *redis.Client = config.RdsClientDefault()
+		rds *redis.Client = config.RdsDefaultClient()
 		Key string
 	)
 	_type := reflect.TypeOf((*v)(nil))
@@ -44,7 +44,7 @@ func NewStruct[k comparable, v any]() *Ctx[k, v] {
 }
 
 func New[k comparable, v any](Key string) *Ctx[k, v] {
-	var rds *redis.Client = config.RdsClientDefault()
+	var rds *redis.Client = config.RdsDefaultClient()
 	log.Debug().Str("data New create start!", Key).Send()
 	//panic if Key is empty
 	if Key == "" {

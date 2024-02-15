@@ -68,7 +68,7 @@ var Cfg Configuration = Configuration{
 
 var Rds map[string]*redis.Client = map[string]*redis.Client{}
 
-func RdsClientDefault() *redis.Client {
+func RdsDefaultClient() *redis.Client {
 	var (
 		ok  bool
 		rds *redis.Client
@@ -101,18 +101,28 @@ func LoadConfig() (err error) {
 	}
 	//load redis items
 	for key, val := range envMap {
-		if strings.Index(key, "Redis") != 0 || len(val) <= 6 {
+		var rdsCfg = &ConfigRedis{}
+		//if it is Redis, then change it to Redis_default
+		if key == "Redis" {
+			key = "Redis_default"
+		}
+		//if it is not in the format of Redis_*, then skip
+		if strings.Index(key, "Redis") != 0 || len(val) <= 6 || key[5] != '_' {
 			continue
 		}
-		rdsCfg := &ConfigRedis{}
+
+		//read in value, if it is not in the format of {Username,Password,Host,Port,DB}, then skip
+		if val = strings.TrimSpace(val); val[0] != '{' || val[len(val)-1] != '}' {
+			continue
+		}
+
 		if err := json.Unmarshal([]byte(val), &rdsCfg); err != nil {
 			correctFormat := "{Name,Username,Password,Host,Port,DB},{Name,Username,Password,Host,Port,DB}"
-			log.Fatal().Err(err).Str("redisEnv", val).Msg("Step1.0 Load Env/Redis failed, correct format: " + correctFormat)
+			log.Fatal().Err(err).Str("redis key", key).Str("redisEnv", val).Msg("Step1.0 Load Env/Redis failed, correct format: " + correctFormat)
 		}
-		if rdsCfg.Name = strings.Replace(key, "Redis", "", 1); len(rdsCfg.Name) > 0 && (rdsCfg.Name[0] == '_' || rdsCfg.Name[0] == ':') {
-			rdsCfg.Name = rdsCfg.Name[1:]
-		}
-		if rdsCfg.Name == "default" || rdsCfg.Name == "_" {
+		// read in the name of the redis server
+		//if the name is default, then set it to empty
+		if rdsCfg.Name = key[6:]; rdsCfg.Name == "default" {
 			rdsCfg.Name = ""
 		}
 		Cfg.Redis = append(Cfg.Redis, rdsCfg)
