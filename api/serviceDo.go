@@ -100,7 +100,7 @@ func CallByHTTP(ServiceName string, paramIn map[string]interface{}) (ret interfa
 	if ServiceName = specification.ApiName(ServiceName); len(ServiceName) == 0 {
 		return nil, fmt.Errorf("service misnamed %s", ServiceName)
 	}
-	var rpc = Rpc[interface{}, interface{}](OpName(ServiceName))
+	var rpc = Rpc[interface{}, interface{}](OptName(ServiceName))
 	//if function is stored locally, call it directly. This is alias monolithic mode
 	if fuc, ok = ApiServices.Get(ServiceName); ok {
 		if buf, err = specification.MarshalApiInput(paramIn); err != nil {

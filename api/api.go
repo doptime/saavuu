@@ -24,21 +24,21 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 	var (
 		option *Options = optionsMerge(options...)
 	)
-	if len(option.ServiceName) > 0 {
-		option.ServiceName = specification.ApiName(option.ServiceName)
+	if len(option.ApiName) > 0 {
+		option.ApiName = specification.ApiName(option.ApiName)
 	}
-	if len(option.ServiceName) == 0 {
-		option.ServiceName = specification.ApiNameByType((*i)(nil))
+	if len(option.ApiName) == 0 {
+		option.ApiName = specification.ApiNameByType((*i)(nil))
 	}
-	if len(option.ServiceName) == 0 {
-		log.Error().Str("service misnamed", option.ServiceName).Send()
-	}
-
-	if _, ok := specification.DisAllowedServiceNames[option.ServiceName]; ok {
-		log.Error().Str("service misnamed", option.ServiceName).Send()
+	if len(option.ApiName) == 0 {
+		log.Error().Str("service misnamed", option.ApiName).Send()
 	}
 
-	log.Debug().Str("Api service create start. name", option.ServiceName).Send()
+	if _, ok := specification.DisAllowedServiceNames[option.ApiName]; ok {
+		log.Error().Str("service misnamed", option.ApiName).Send()
+	}
+
+	log.Debug().Str("Api service create start. name", option.ApiName).Send()
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		type DataPacked struct {
@@ -99,12 +99,14 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 		return f(in)
 	}
 	//register Api
-	ApiServices.Set(option.ServiceName, &ApiInfo{
-		ApiName:                   option.ServiceName,
-		DBName:                    option.DbName,
+	apiInfo := &ApiInfo{
+		ApiName:                   option.ApiName,
+		DbName:                    option.DbName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
-	})
-	log.Debug().Str("ApiNamed service created completed!", option.ServiceName).Send()
+	}
+	ApiServices.Set(option.ApiName, apiInfo)
+	fun2ApiInfo.Store(retf, apiInfo)
+	log.Debug().Str("ApiNamed service created completed!", option.ApiName).Send()
 	//return Api context
 	return f
 }

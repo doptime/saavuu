@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -17,7 +16,7 @@ import (
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
-func Rpc[i any, o any](options ...Option) (retf func(InParam i, callAt ...time.Time) (ret o, err error)) {
+func Rpc[i any, o any](options ...Option) (retf func(InParam i) (ret o, err error)) {
 	var (
 		db     *redis.Client
 		ok     bool
@@ -25,14 +24,14 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i, callAt ...time.T
 		option *Options = optionsMerge(options...)
 	)
 
-	if len(option.ServiceName) > 0 {
-		option.ServiceName = specification.ApiName(option.ServiceName)
+	if len(option.ApiName) > 0 {
+		option.ApiName = specification.ApiName(option.ApiName)
 	}
-	if len(option.ServiceName) == 0 {
-		option.ServiceName = specification.ApiNameByType((*i)(nil))
+	if len(option.ApiName) == 0 {
+		option.ApiName = specification.ApiNameByType((*i)(nil))
 	}
-	if len(option.ServiceName) == 0 {
-		log.Error().Str("service misnamed", option.ServiceName).Send()
+	if len(option.ApiName) == 0 {
+		log.Error().Str("service misnamed", option.ApiName).Send()
 	}
 
 	if db, ok = config.Rds[option.DbName]; !ok {
@@ -40,7 +39,7 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i, callAt ...time.T
 		return nil
 	}
 
-	retf = func(InParam i, callAt ...time.Time) (out o, err error) {
+	retf = func(InParam i) (out o, err error) {
 		var (
 			b       []byte
 			results []string
@@ -50,20 +49,20 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i, callAt ...time.T
 		if b, err = specification.MarshalApiInput(InParam); err != nil {
 			return out, err
 		}
-		if len(callAt) > 0 {
-			timeAt := callAt[0]
-			Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixMilli(), 10), "data", string(b)}
-		} else {
-			Values = []string{"data", string(b)}
-		}
-		args := &redis.XAddArgs{Stream: option.ServiceName, Values: Values, MaxLen: 4096}
+		Values = []string{"data", string(b)}
+		// if hashCallAt {
+		// 	Values = []string{"timeAt", strconv.FormatInt(ops.CallAt.UnixMilli(), 10), "data", string(b)}
+		// } else {
+		// 	Values = []string{"data", string(b)}
+		// }
+		args := &redis.XAddArgs{Stream: option.ApiName, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return out, cmd.Err()
 		}
-		if len(callAt) == 0 {
-			return out, nil
-		}
+		// if hashCallAt {
+		// 	return out, nil
+		// }
 
 		//BLPop 返回结果 [key1,value1,key2,value2]
 		//cmd.Val() is the stream id, the result will be poped from the list with this id
@@ -85,5 +84,10 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i, callAt ...time.T
 		oValueWithPointer := reflect.New(oType).Interface().(*o)
 		return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 	}
+	rpcInfo := &ApiInfo{
+		DbName:  option.DbName,
+		ApiName: option.ApiName,
+	}
+	fun2ApiInfo.Store(retf, rpcInfo)
 	return retf
 }
