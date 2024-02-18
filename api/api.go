@@ -105,7 +105,7 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 	}
 	ApiServices.Set(option.ApiName, apiInfo)
-	fun2ApiInfo.Store(retf, apiInfo)
+	fun2ApiInfo.Store(&f, apiInfo)
 	log.Debug().Str("ApiNamed service created completed!", option.ApiName).Send()
 	//return Api context
 	return f

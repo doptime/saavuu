@@ -88,6 +88,6 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i) (ret o, err erro
 		DbName:  option.DbName,
 		ApiName: option.ApiName,
 	}
-	fun2ApiInfo.Store(retf, rpcInfo)
+	fun2ApiInfo.Store(&retf, rpcInfo)
 	return retf
 }

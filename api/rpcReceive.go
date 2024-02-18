@@ -1,0 +1,96 @@
+package api
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
+	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/config"
+)
+
+// ensure all apis can be called by rpc
+// because rpc receive needs to know all api names to create stream reading
+var ApiStartingWaiter func() = func() func() {
+	LastApiCnt := -1
+	//if the count of apis is not changing, then all apis are loaded
+	Checker := func() {
+		//if ApiServices.Count() no longer changed, then all apis are loaded
+		for _cnt := ApiServices.Count(); _cnt == 0 || LastApiCnt != _cnt; _cnt = ApiServices.Count() {
+			time.Sleep(time.Millisecond * 30)
+			LastApiCnt = _cnt
+		}
+	}
+	return Checker
+}()
+
+func rpcReceive() {
+	var (
+		apiName, data string
+		cmd           *redis.XStreamSliceCmd
+		rds           *redis.Client = config.RdsDefaultClient()
+	)
+
+	//wait for all rpc services ready, so that rpc results can be received
+	ApiStartingWaiter()
+
+	c := context.Background()
+	XGroupEnsureCreated(c, apiServiceNames())
+
+	//deprecate using list command LRange, to avoid continually query consumption
+	//use xreadgroup to receive data ,2023-01-31
+	for args := defaultXReadGroupArgs(); ; {
+		if cmd = rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
+			continue
+		} else if cmd.Err() != nil {
+			time.Sleep(time.Second)
+			log.Error().AnErr("rpcReceive", cmd.Err()).Send()
+		}
+
+		for _, stream := range cmd.Val() {
+			apiName = stream.Stream
+			for _, message := range stream.Messages {
+				//skip case of placeholder stream
+				if data = message.Values["data"].(string); len(data) == 0 {
+					continue
+				}
+				//the delay calling will lost if the app is down
+				if timeAtStr, ok := message.Values["timeAt"]; ok {
+					go rpcCallAtTaskAddOne(apiName, timeAtStr.(string), data)
+				} else {
+					go CallApiLocallyAndSendBackResult(apiName, message.ID, []byte(data))
+				}
+				apiCounter.Add(apiName, 1)
+			}
+		}
+	}
+}
+func CallApiLocallyAndSendBackResult(apiName, BackToID string, s []byte) (err error) {
+	var (
+		msgPackResult []byte
+		ret           interface{}
+		service       *ApiInfo
+		ok            bool
+		rds           *redis.Client
+	)
+	if service, ok = ApiServices.Get(apiName); !ok {
+		return fmt.Errorf("service %s not found", apiName)
+	}
+	if ret, err = service.ApiFuncWithMsgpackedParam(s); err != nil {
+		return err
+	}
+	if msgPackResult, err = msgpack.Marshal(ret); err != nil {
+		return
+	}
+	ctx := context.Background()
+	if rds, ok = config.Rds[service.DbName]; !ok {
+		return fmt.Errorf("DBName not defined in enviroment %s", service.DbName)
+	}
+	pipline := rds.Pipeline()
+	pipline.RPush(ctx, BackToID, msgPackResult)
+	pipline.Expire(ctx, BackToID, time.Second*20)
+	_, err = pipline.Exec(ctx)
+	return err
+}

@@ -21,7 +21,7 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		ctx             = context.Background()
 		option *Options = &Options{}
 	)
-	if apiInfo, ok := fun2ApiInfo.Load(f); !ok {
+	if apiInfo, ok := fun2ApiInfo.Load(&f); !ok {
 		log.Fatal().Str("service function should be defined By Api or Rpc before used in CallAt", specification.ApiNameByType((*i)(nil))).Send()
 	} else {
 		_apiInfo := apiInfo.(*ApiInfo)

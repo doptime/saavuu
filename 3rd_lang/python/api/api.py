@@ -72,7 +72,7 @@ class api():
                         param = msgpack.unpackb(_messege[b'data'])
                         if b"timeAt" in _messege:
                             timeAtStr = _messege[b"timeAt"]
-                            api.delayTaskAddOne(
+                            api.rpcCallAtTaskAddOne(
                                 apiName, timeAtStr, param)
                         else:
                             api.ApiFunc[apiName](id, param, api.send_back)
@@ -92,10 +92,10 @@ class api():
         pipe.expire(id, 6)
         pipe.execute()
 
-    def delayTaskAddOne(serviceName, timeAtStr, bytesValue):
+    def rpcCallAtTaskAddOne(serviceName, timeAtStr, bytesValue):
         global rds
         rds.hset(serviceName+":delay", timeAtStr, bytesValue)
-        api.delayTaskDoOne(serviceName, timeAtStr)
+        api.rpcCallAtTaskDoOne(serviceName, timeAtStr)
 
     def delay_task_do_one(serviceName, timeAtStr):
         global rds
