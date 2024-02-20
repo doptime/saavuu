@@ -1,6 +1,7 @@
 package https
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -16,7 +17,6 @@ var ErrBadCommand = errors.New("error bad command")
 func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	//use remote service map to handle request
 	var (
-		paramIn   map[string]interface{} = map[string]interface{}{}
 		operation string
 	)
 
@@ -34,7 +34,27 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	switch svcCtx.Cmd {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
 	// this is used to support 3rd party api
-	case "JSAPI":
+	case "API":
+		var (
+			paramIn           map[string]interface{} = map[string]interface{}{}
+			ServiceName       string                 = svcCtx.Key
+			msgPack, BodyPack []byte
+		)
+		if BodyPack, err = svcCtx.BodyBytes(); len(BodyPack) > 0 && err == nil {
+			if svcCtx.Req.Header.Get("Content-Type") == "application/octet-stream" {
+				paramIn["MsgPack"] = BodyPack
+			} else if svcCtx.Req.Header.Get("Content-Type") == "application/json" {
+				var parambody map[string]interface{} = map[string]interface{}{}
+				if err = json.Unmarshal(BodyPack, &parambody); err != nil {
+					return nil, err
+				}
+				if msgPack, err = msgpack.Marshal(parambody); err != nil {
+					return nil, err
+				}
+				paramIn["MsgPack"] = msgPack
+			}
+		}
+		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		svcCtx.Req.ParseForm()
 		if len(svcCtx.Req.Form) > 0 {
@@ -42,13 +62,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 				return nil, err
 			}
 		}
-		return api.CallByHTTP(svcCtx.Key, paramIn)
-	case "API":
-		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) > 0 {
-			paramIn["MsgPack"] = MsgPack
-		}
-		svcCtx.MergeJwtField(paramIn)
-		return api.CallByHTTP(svcCtx.Key, paramIn)
+		return api.CallByHTTP(ServiceName, paramIn)
 	case "ZADD":
 		var Score float64
 		var obj interface{}

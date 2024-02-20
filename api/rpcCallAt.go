@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -22,7 +24,8 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		ctx             = context.Background()
 		option *Options = &Options{}
 	)
-	if apiInfo, ok := fun2ApiInfo.Load(&f); !ok {
+	funcPtr := reflect.ValueOf(f).Pointer()
+	if apiInfo, ok := fun2ApiInfoMap.Load(funcPtr); !ok {
 		log.Fatal().Str("service function should be defined By Api or Rpc before used in CallAt", specification.ApiNameByType((*i)(nil))).Send()
 	} else {
 		_apiInfo := apiInfo.(*ApiInfo)
@@ -44,7 +47,8 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		if b, err = specification.MarshalApiInput(InParam); err != nil {
 			return err
 		}
-		Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixMilli(), 10), "data", string(b)}
+		fmt.Println("CallAt", option.ApiName, timeAt.UnixNano())
+		Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", string(b)}
 		args := &redis.XAddArgs{Stream: option.ApiName, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
@@ -54,28 +58,4 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 
 	}
 	return retf
-}
-
-func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time) (ok bool) {
-	var (
-		Rds     *redis.Client
-		apiInfo *ApiInfo
-		cmd     *redis.IntCmd
-	)
-	if _apiInfo, ok := fun2ApiInfo.Load(&f); !ok {
-		log.Fatal().Str("service function should be defined By Api or Rpc before used in CallAt", specification.ApiNameByType((*i)(nil))).Send()
-	} else {
-		apiInfo = _apiInfo.(*ApiInfo)
-	}
-
-	if Rds, ok = config.Rds[apiInfo.DbName]; !ok {
-		log.Info().Str("DBName not defined in enviroment", apiInfo.DbName).Send()
-		return false
-	}
-	timeAtStr := strconv.FormatInt(timeAt.UnixNano(), 10)
-	if cmd = Rds.HDel(context.Background(), apiInfo.ApiName+":delay", timeAtStr); cmd.Err() != nil {
-		log.Info().AnErr("Do HDel", cmd.Err()).Send()
-		return false
-	}
-	return true
 }

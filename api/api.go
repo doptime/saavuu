@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/url"
 	"reflect"
 
@@ -103,9 +104,11 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 		ApiName:                   option.ApiName,
 		DbName:                    option.DbName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
+		Ctx:                       context.Background(),
 	}
 	ApiServices.Set(option.ApiName, apiInfo)
-	fun2ApiInfo.Store(&f, apiInfo)
+	funcPtr := reflect.ValueOf(f).Pointer()
+	fun2ApiInfoMap.Store(funcPtr, apiInfo)
 	log.Debug().Str("ApiNamed service created completed!", option.ApiName).Send()
 	//return Api context
 	return f

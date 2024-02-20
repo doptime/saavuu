@@ -1,11 +1,12 @@
 package test
 
 import (
-	"net/http"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/yangkequn/saavuu/api"
+	_ "github.com/yangkequn/saavuu/https"
 )
 
 type Demo1 struct {
@@ -13,6 +14,8 @@ type Demo1 struct {
 }
 
 var ApiDemo = api.Api(func(InParam *Demo1) (ret string, err error) {
+	now := time.Now()
+	fmt.Println("Demo api is called with InParam:" + InParam.Text + " run at " + now.String())
 	return "hello world", nil
 })
 
@@ -49,27 +52,36 @@ func TestRPC(t *testing.T) {
 }
 
 func TestCallAt(t *testing.T) {
-	var err error
-	callAt := api.CallAt(DemoRpc, time.Now().Add(time.Second*10))
-
-	if err = callAt(&Demo1{Text: "TestCallAt 10s later"}); err != nil {
-		t.Error(err)
-	}
-}
-
-func TestHTTPCall(t *testing.T) {
 	var (
-		body []byte
-		err  error
+		err   error
+		now   time.Time = time.Now()
+		param           = &Demo1{Text: "TestCallAt 10s later"}
 	)
-	//create a http context
-	rsb, err := http.Get("http://127.0.0.1:8080/api/CallAt?apiName=DemoRpc&timeAt=10s")
-	body = make([]byte, 1024)
-	rsb.Body.Read(body)
 
-	if err != nil {
+	fmt.Println("Demo api is calling with InParam:" + param.Text + " run at " + now.String())
+
+	callAt := api.CallAt(DemoRpc, now.Add(time.Second*10))
+
+	if err = callAt(param); err != nil {
 		t.Error(err)
-	} else if string(body) != "hello world" {
-		t.Error("result is not hello world")
 	}
+	time.Sleep(15 * time.Second)
+}
+func TestCallAtCancel(t *testing.T) {
+	var (
+		err   error
+		now   time.Time = time.Now()
+		param           = &Demo1{Text: "TestCallAt 10s later"}
+	)
+	timeToRun := time.Now().Add(time.Second * 10)
+	callAt := api.CallAt(DemoRpc, timeToRun)
+	fmt.Println("Demo api is calling with InParam:" + param.Text + " run at " + now.String())
+
+	if err = callAt(param); err != nil {
+		t.Error(err)
+	}
+	if ok := api.CallAtCancel(DemoRpc, timeToRun); !ok {
+		t.Error("cancel failed")
+	}
+	time.Sleep(30 * time.Second)
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strconv"
 	"sync"
@@ -12,13 +13,36 @@ import (
 	"github.com/yangkequn/saavuu/config"
 )
 
-type TaskAtFutureMs struct {
+type TaskAtFuture struct {
 	ServiceName  string
 	TimeAtUnixNs int64
 }
 
-var TasksAtFutureList = []*TaskAtFutureMs{}
+var TasksAtFutureList = []*TaskAtFuture{}
 var mut sync.Mutex = sync.Mutex{}
+
+// the reason why rpc can be removed locally is that the when doing rpc. api will recheck the data. only non empty data will be processed
+func rpcCallAtTaskRemoveOne(serviceName string, timeAtStr string) {
+	var (
+		rds          *redis.Client = config.RdsDefaultClient()
+		TimeAtUnixNs int64
+		err          error
+	)
+	if TimeAtUnixNs, err = strconv.ParseInt(timeAtStr, 10, 64); err != nil {
+		log.Info().Err(err).Send()
+		return
+	}
+
+	index := sort.Search(len(TasksAtFutureList), func(i int) bool {
+		return TasksAtFutureList[i].TimeAtUnixNs == TimeAtUnixNs && TasksAtFutureList[i].ServiceName == serviceName
+	})
+	if index >= 0 && index < len(TasksAtFutureList) {
+		mut.Lock()
+		TasksAtFutureList = append(TasksAtFutureList[:index], TasksAtFutureList[index+1:]...)
+		mut.Unlock()
+		go rds.HDel(context.Background(), serviceName+":delay", timeAtStr)
+	}
+}
 
 // put parameter to redis ,make it persistent
 func rpcCallAtTaskAddOne(serviceName string, timeAtStr string, bytesValue string) {
@@ -26,7 +50,7 @@ func rpcCallAtTaskAddOne(serviceName string, timeAtStr string, bytesValue string
 		rds *redis.Client = config.RdsDefaultClient()
 		err error
 	)
-	task := &TaskAtFutureMs{ServiceName: serviceName}
+	task := &TaskAtFuture{ServiceName: serviceName}
 	if task.TimeAtUnixNs, err = strconv.ParseInt(timeAtStr, 10, 64); err != nil {
 		log.Info().Err(err).Send()
 		return
@@ -39,12 +63,12 @@ func rpcCallAtTaskAddOne(serviceName string, timeAtStr string, bytesValue string
 
 	// Insert the new task into the TasksAtFuture at the found index.
 	mut.Lock()
-	TasksAtFutureList = append(TasksAtFutureList[:index], append([]*TaskAtFutureMs{task}, TasksAtFutureList[index:]...)...)
+	TasksAtFutureList = append(TasksAtFutureList[:index], append([]*TaskAtFuture{task}, TasksAtFutureList[index:]...)...)
 	mut.Unlock()
 }
 func rpcCallAtRoutine() {
 	var (
-		bytes                 []byte
+		data                  string
 		TaskAtFutureNs, nowNs int64
 		err                   error
 		cmd                   []redis.Cmder
@@ -55,11 +79,11 @@ func rpcCallAtRoutine() {
 			time.Sleep(time.Millisecond * 100)
 			continue
 		}
+		nowNs = time.Now().UnixNano()
 		mut.Lock()
-		nowNs, TaskAtFutureNs = time.Now().UnixNano(), TasksAtFutureList[0].TimeAtUnixNs
 		task := TasksAtFutureList[0]
-		TasksAtFutureList = TasksAtFutureList[1:]
 		mut.Unlock()
+		TaskAtFutureNs = task.TimeAtUnixNs
 
 		if timeSpan := TaskAtFutureNs - nowNs; timeSpan > 0 {
 			if timeSpan > 100*1000*1000 {
@@ -68,17 +92,22 @@ func rpcCallAtRoutine() {
 			time.Sleep(time.Duration(timeSpan))
 			continue
 		}
+		TasksAtFutureList = TasksAtFutureList[1:]
+		strTime := strconv.FormatInt(TaskAtFutureNs, 10)
 		pipeline := rds.Pipeline()
-		pipeline.HGet(context.Background(), task.ServiceName+":delay", strconv.FormatInt(TaskAtFutureNs, 10))
-		pipeline.HDel(context.Background(), task.ServiceName+":delay", strconv.FormatInt(TaskAtFutureNs, 10))
+		pipeline.HGet(context.Background(), task.ServiceName+":delay", strTime)
+		pipeline.HDel(context.Background(), task.ServiceName+":delay", strTime)
 		if cmd, err = pipeline.Exec(context.Background()); err != nil {
 			log.Info().Err(err).Send()
 			continue
-		}
-		if bytes, err = cmd[0].(*redis.StringCmd).Bytes(); err != nil || len(bytes) == 0 {
+		} else if len(cmd) != 2 || cmd[1].Err() != nil {
 			continue
 		}
-		CallApiLocallyAndSendBackResult(task.ServiceName, strconv.FormatInt(TaskAtFutureNs, 10), bytes)
+		if data = cmd[0].(*redis.StringCmd).Val(); err != nil || len(data) == 0 {
+			continue
+		}
+		fmt.Println("rpcCallAtRoutine key", task.ServiceName+":delay field", TaskAtFutureNs, "data length", len(data), "data", string(data))
+		CallApiLocallyAndSendBackResult(task.ServiceName, strconv.FormatInt(TaskAtFutureNs, 10), []byte(data))
 	}
 }
 
@@ -99,7 +128,7 @@ func rpcCallAtTasksLoad() {
 		log.Info().AnErr("err LoadDelayApiTask, ", err).Send()
 		return
 	}
-	var _TasksAtFutureList = []*TaskAtFutureMs{}
+	var _TasksAtFutureList = []*TaskAtFuture{}
 	for i, service := range services {
 		if err = cmd[i].(*redis.StringSliceCmd).Err(); err != nil {
 			continue
@@ -107,7 +136,7 @@ func rpcCallAtTasksLoad() {
 		timeAtStrs = cmd[i].(*redis.StringSliceCmd).Val()
 		for _, timeAtStr := range timeAtStrs {
 			if timeAt, err := strconv.ParseInt(timeAtStr, 10, 64); err == nil {
-				_TasksAtFutureList = append(_TasksAtFutureList, &TaskAtFutureMs{ServiceName: service, TimeAtUnixNs: timeAt})
+				_TasksAtFutureList = append(_TasksAtFutureList, &TaskAtFuture{ServiceName: service, TimeAtUnixNs: timeAt})
 			}
 		}
 	}

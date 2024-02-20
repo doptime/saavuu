@@ -52,13 +52,19 @@ func rpcReceive() {
 		for _, stream := range cmd.Val() {
 			apiName = stream.Stream
 			for _, message := range stream.Messages {
-				//skip case of placeholder stream
-				if data = message.Values["data"].(string); len(data) == 0 {
+				timeAtStr, atOk := message.Values["timeAt"]
+				//skip case of placeholder stream while not atOk
+				//but if timeAt is setted, then empty data is allowed, used to clear the task
+				if data = message.Values["data"].(string); len(data) == 0 && !atOk {
 					continue
 				}
 				//the delay calling will lost if the app is down
-				if timeAtStr, ok := message.Values["timeAt"]; ok {
-					go rpcCallAtTaskAddOne(apiName, timeAtStr.(string), data)
+				if atOk {
+					if len(data) == 0 {
+						rpcCallAtTaskRemoveOne(apiName, timeAtStr.(string))
+					} else {
+						rpcCallAtTaskAddOne(apiName, timeAtStr.(string), data)
+					}
 				} else {
 					go CallApiLocallyAndSendBackResult(apiName, message.ID, []byte(data))
 				}

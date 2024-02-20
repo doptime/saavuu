@@ -41,11 +41,26 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 	switch svcCtx.Cmd {
 	// all data that appears in the form or body is json format, will be stored in paramIn["JsonPack"]
 	// this is used to support 3rd party api
-	case "JSAPI":
+	case "API":
 		var (
-			paramIn     map[string]interface{} = map[string]interface{}{}
-			ServiceName string                 = svcCtx.Key
+			paramIn           map[string]interface{} = map[string]interface{}{}
+			ServiceName       string                 = svcCtx.Key
+			msgPack, BodyPack []byte
 		)
+		if BodyPack, err = svcCtx.BodyBytes(); len(BodyPack) > 0 && err == nil {
+			if svcCtx.Req.Header.Get("Content-Type") == "application/octet-stream" {
+				paramIn["MsgPack"] = BodyPack
+			} else if svcCtx.Req.Header.Get("Content-Type") == "application/json" {
+				var parambody map[string]interface{} = map[string]interface{}{}
+				if err = json.Unmarshal(BodyPack, &parambody); err != nil {
+					return nil, err
+				}
+				if msgPack, err = msgpack.Marshal(parambody); err != nil {
+					return nil, err
+				}
+				paramIn["MsgPack"] = msgPack
+			}
+		}
 		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		svcCtx.Req.ParseForm()

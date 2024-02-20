@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"sync"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
@@ -10,6 +11,7 @@ type ApiInfo struct {
 	// ApiName is the name of the service
 	ApiName string
 	DbName  string
+	Ctx     context.Context
 	// ApiFuncWithMsgpackedParam is the function of the service
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
@@ -23,4 +25,4 @@ func apiServiceNames() (serviceNames []string) {
 	return serviceNames
 }
 
-var fun2ApiInfo = &sync.Map{}
+var fun2ApiInfoMap = &sync.Map{}
