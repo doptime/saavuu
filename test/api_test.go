@@ -9,13 +9,17 @@ import (
 	_ "github.com/yangkequn/saavuu/https"
 )
 
-type Demo1 struct {
+type Demo struct {
 	Text string
+}
+type Demo1 struct {
+	Text   string
+	Attach *Demo
 }
 
 var ApiDemo = api.Api(func(InParam *Demo1) (ret string, err error) {
 	now := time.Now()
-	fmt.Println("Demo api is called with InParam:" + InParam.Text + " run at " + now.String())
+	fmt.Println("Demo api is called with InParam:" + InParam.Text + " run at " + now.String() + " Attach:" + InParam.Attach.Text)
 	return "hello world", nil
 })
 
@@ -55,7 +59,7 @@ func TestCallAt(t *testing.T) {
 	var (
 		err   error
 		now   time.Time = time.Now()
-		param           = &Demo1{Text: "TestCallAt 10s later"}
+		param           = &Demo1{Text: "TestCallAt 10s later", Attach: &Demo{Text: "Attach"}}
 	)
 
 	fmt.Println("Demo api is calling with InParam:" + param.Text + " run at " + now.String())

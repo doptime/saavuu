@@ -3,6 +3,7 @@ package https
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -81,20 +82,35 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 	return svcContext, nil
 }
 
-func (svc *HttpContext) BodyBytes() (data []byte, err error) {
+func (svc *HttpContext) MsgpackBodyBytes() (data []byte) {
 	var (
-		ctype string = svc.Req.Header.Get("Content-Type")
+		err error
 	)
-	if ctype != "application/octet-stream" {
-		return nil, errors.New("unsupported content type")
-	}
 	if svc.Req.ContentLength == 0 {
-		return nil, errors.New("empty body")
+		return nil
+	}
+	if !strings.HasPrefix(svc.Req.Header.Get("Content-Type"), "application/octet-stream") {
+		return nil
 	}
 	if data, err = io.ReadAll(svc.Req.Body); err != nil {
-		return nil, err
+		return nil
 	}
-	return data, nil
+	return data
+}
+func (svc *HttpContext) JsonBodyBytes() (data []byte) {
+	var (
+		err error
+	)
+	if svc.Req.ContentLength == 0 {
+		return nil
+	}
+	if !strings.HasPrefix(svc.Req.Header.Get("Content-Type"), "application/json") {
+		return nil
+	}
+	if data, err = io.ReadAll(svc.Req.Body); err != nil {
+		return nil
+	}
+	return data
 }
 
 // Ensure the body is msgpack format
@@ -102,8 +118,8 @@ func (svc *HttpContext) MsgpackBody() (bytes []byte, err error) {
 	var (
 		data interface{}
 	)
-	if bytes, err = svc.BodyBytes(); err != nil {
-		return nil, err
+	if bytes = svc.MsgpackBodyBytes(); len(bytes) == 0 {
+		return nil, fmt.Errorf("empty msgpack body")
 	}
 	//should make sure the data is msgpack format
 	if err = msgpack.Unmarshal(bytes, &data); err != nil {

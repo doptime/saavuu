@@ -2,6 +2,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"reflect"
 
@@ -43,59 +45,54 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
 		type DataPacked struct {
-			MsgPack  []byte
-			JsonPack []byte
+			MsgpackBody []byte
+			JsonBody    []byte
+			Form        url.Values
 		}
 		var (
 			in       i
+			pIn      *i
 			datapack DataPacked
 		)
 		//check configureation is loaded
 		if config.Rds == nil {
 			log.Panic().Msg("config.ParamRedis is nil.")
 		}
+		// case double pointer decoding
+		if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
+			in = reflect.New(vType.Elem()).Interface().(i)
+			pIn = &in
+		} else {
+			pIn = reflect.New(vType).Interface().(*i)
+			in = *pIn
+		}
+		// the base principle of decoding is delay the decoding to the latest moment, so that each element can be decoded to the right type
 
-		//step 1, try to unmarshal MsgPack
-		if err = msgpack.Unmarshal(s, &datapack); err == nil {
-			// case double pointer decoding
-			if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
-				in = reflect.New(vType.Elem()).Interface().(i)
-				//step 2, try to unmarshal jwt
-				err = msgpack.Unmarshal(s, in)
-				//step 3, try to unmarshal MsgPack
-				if err == nil && len(datapack.MsgPack) > 0 {
-					err = msgpack.Unmarshal(datapack.MsgPack, in)
-				}
-				//step 4, unmarshal JsonPack
-				if err == nil && len(datapack.JsonPack) > 0 {
-					var form url.Values = map[string][]string{}
-					if err = msgpack.Unmarshal(datapack.JsonPack, &form); err == nil {
-						err = schema.NewDecoder().Decode(in, form)
-					}
-				}
-
-			} else {
-				var pIn *i = reflect.New(vType).Interface().(*i)
-				//step 2, try to unmarshal jwt
-				err = msgpack.Unmarshal(s, pIn)
-				//step 3, try to unmarshal MsgPackƒ
-				if err == nil && len(datapack.MsgPack) > 0 {
-					err = msgpack.Unmarshal(datapack.MsgPack, pIn)
-				}
-				//step 4, unmarshal JsonPack
-				if err == nil && len(datapack.JsonPack) > 0 {
-					var form url.Values = map[string][]string{}
-					if err = msgpack.Unmarshal(datapack.JsonPack, &form); err == nil {
-						err = schema.NewDecoder().Decode(pIn, form)
-					}
-				}
-				in = *pIn
+		//step 1, try to unmarshal jwt
+		if err = msgpack.Unmarshal(s, in); err != nil {
+			return nil, err
+		}
+		//try to takeout DataPacked
+		if err = msgpack.Unmarshal(s, &datapack); err != nil {
+			return nil, fmt.Errorf("msgpack.Unmarshal DataPacked error %s", err)
+		}
+		//step 3, try to unmarshal MsgPack
+		if len(datapack.MsgpackBody) > 0 {
+			if err = msgpack.Unmarshal(datapack.MsgpackBody, in); err != nil {
+				return nil, fmt.Errorf("msgpack.Unmarshal MsgpackBody error %s", err)
 			}
 		}
-		if err != nil {
-			//print the unmarshal error
-			log.Debug().AnErr("ProcessOneJob unmarshal", err).Send()
-			return nil, err
+		//step 4, unmarshal Form
+		if len(datapack.Form) > 0 {
+			if err = schema.NewDecoder().Decode(in, datapack.Form); err != nil {
+				return nil, fmt.Errorf("schema.NewDecoder().Decode error %s", err)
+			}
+		}
+		//step 4, unmarshal JsonPack
+		if len(datapack.JsonBody) > 0 {
+			if err = json.Unmarshal(datapack.JsonBody, in); err != nil {
+				return nil, fmt.Errorf("msgpack.Unmarshal JsonBody error %s", err)
+			}
 		}
 		return f(in)
 	}

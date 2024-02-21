@@ -17,7 +17,6 @@ func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt tim
 		Rds     *redis.Client
 		apiInfo *ApiInfo
 		Values  []string
-		//cmd     *redis.IntCmd
 	)
 	funcPtr := reflect.ValueOf(f).Pointer()
 	if _apiInfo, ok := fun2ApiInfoMap.Load(funcPtr); !ok {
@@ -37,16 +36,4 @@ func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt tim
 		return false
 	}
 	return true
-	// if cmd =; cmd.Err() != nil {
-	// 	log.Info().AnErr("Do XAdd", cmd.Err()).Send()
-	// 	return out, cmd.Err()
-	// }
-	// if cmd = Rds.HSet(context.Background(), apiInfo.ApiName+":delay", timeAtStr, "abc123"); cmd.Err() != nil {
-	// 	log.Info().Str("CallAtCancel failed. key", apiInfo.ApiName+":delay").Str("field", timeAtStr).Send()
-	// 	log.Info().AnErr("CallAtCancel:Do HSet", cmd.Err()).Send()
-	// 	return false
-	// }
-	// cmd1 := Rds.HGet(context.Background(), apiInfo.ApiName+":delay", timeAtStr)
-	// log.Info().Str("CallAtCancel done. key", apiInfo.ApiName+":delay").Str("field", timeAtStr).Str("value", cmd1.Val()).Send()
-	// return true
 }

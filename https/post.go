@@ -1,7 +1,6 @@
 package https
 
 import (
-	"encoding/json"
 	"errors"
 	"strconv"
 
@@ -36,31 +35,18 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	// this is used to support 3rd party api
 	case "API":
 		var (
-			paramIn           map[string]interface{} = map[string]interface{}{}
-			ServiceName       string                 = svcCtx.Key
-			msgPack, BodyPack []byte
+			paramIn     map[string]interface{} = map[string]interface{}{}
+			ServiceName string                 = svcCtx.Key
 		)
-		if BodyPack, err = svcCtx.BodyBytes(); len(BodyPack) > 0 && err == nil {
-			if svcCtx.Req.Header.Get("Content-Type") == "application/octet-stream" {
-				paramIn["MsgPack"] = BodyPack
-			} else if svcCtx.Req.Header.Get("Content-Type") == "application/json" {
-				var parambody map[string]interface{} = map[string]interface{}{}
-				if err = json.Unmarshal(BodyPack, &parambody); err != nil {
-					return nil, err
-				}
-				if msgPack, err = msgpack.Marshal(parambody); err != nil {
-					return nil, err
-				}
-				paramIn["MsgPack"] = msgPack
-			}
-		}
 		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
-		svcCtx.Req.ParseForm()
-		if len(svcCtx.Req.Form) > 0 {
-			if paramIn["JsonPack"], err = msgpack.Marshal(svcCtx.Req.Form); err != nil {
-				return nil, err
-			}
+		if svcCtx.Req.ParseForm(); len(svcCtx.Req.Form) > 0 {
+			paramIn["Form"] = svcCtx.Req.Form
+		}
+		if msgPack := svcCtx.MsgpackBodyBytes(); len(msgPack) > 0 {
+			paramIn["MsgpackBody"] = msgPack
+		} else if jsonPack := svcCtx.JsonBodyBytes(); len(jsonPack) > 0 {
+			paramIn["JsonBody"] = jsonPack
 		}
 		return api.CallByHTTP(ServiceName, paramIn)
 	case "ZADD":
@@ -70,7 +56,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 			return "false", errors.New("parameter Score shoule be float")
 		}
 		//unmarshal msgpack
-		if MsgPack, _ := svcCtx.BodyBytes(); len(MsgPack) == 0 {
+		if MsgPack := svcCtx.MsgpackBodyBytes(); len(MsgPack) == 0 {
 			return "false", errors.New("missing MsgPack content")
 		} else if err = msgpack.Unmarshal(MsgPack, &obj); err != nil {
 			return "false", err
