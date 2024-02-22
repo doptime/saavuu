@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
@@ -48,12 +49,22 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 		svcCtx.MergeJwtField(paramIn)
 		//convert query fields to JsonPack. but ignore K field(api name )
 		if svcCtx.Req.ParseForm(); len(svcCtx.Req.Form) > 0 {
-			paramIn["Form"] = svcCtx.Req.Form
+			for key, value := range svcCtx.Req.Form {
+				if paramIn[key] = value[0]; len(value) > 1 {
+					paramIn[key] = value // Assign the single value directly
+				}
+			}
 		}
 		if msgPack := svcCtx.MsgpackBodyBytes(); len(msgPack) > 0 {
-			paramIn["MsgpackBody"] = msgPack
-		} else if jsonPack := svcCtx.JsonBodyBytes(); len(jsonPack) > 0 {
-			paramIn["JsonBody"] = jsonPack
+			if err = msgpack.Unmarshal(msgPack, &paramIn); err != nil {
+				return nil, fmt.Errorf("msgpack.Unmarshal msgPack error %s", err)
+			}
+			//paramIn["MsgpackBody"] = msgPack
+		} else if jsonBody := svcCtx.JsonBodyBytes(); len(jsonBody) > 0 {
+			//convert to msgpack, so that fields can be renamed in ProcessOneJob
+			if err = json.Unmarshal(jsonBody, &paramIn); err != nil {
+				return nil, fmt.Errorf("msgpack.Unmarshal JsonBody error %s", err)
+			}
 		}
 		return api.CallByHTTP(ServiceName, paramIn)
 

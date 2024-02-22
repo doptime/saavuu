@@ -13,7 +13,7 @@ type Demo struct {
 	Text string
 }
 type Demo1 struct {
-	Text   string
+	Text   string `mapstructure:"Text,nonempty"`
 	Attach *Demo
 }
 

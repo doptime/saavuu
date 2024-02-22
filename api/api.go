@@ -2,12 +2,9 @@ package api
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/url"
 	"reflect"
 
-	"github.com/gorilla/schema"
+	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
@@ -25,7 +22,8 @@ import (
 // ServiceName is automatically converted to lower case
 func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Option) (retf func(InParam i) (ret o, err error)) {
 	var (
-		option *Options = optionsMerge(options...)
+		option                *Options = optionsMerge(options...)
+		NonEmptyOrZeroToCheck []int
 	)
 	if len(option.ApiName) > 0 {
 		option.ApiName = specification.ApiName(option.ApiName)
@@ -42,17 +40,15 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 	}
 
 	log.Debug().Str("Api service create start. name", option.ApiName).Send()
+	NonEmptyOrZeroToCheck = fieldsToCheck(reflect.TypeOf(new(i)).Elem())
+
 	//create a goroutine to process one job
 	ProcessOneJob := func(s []byte) (ret interface{}, err error) {
-		type DataPacked struct {
-			MsgpackBody []byte
-			JsonBody    []byte
-			Form        url.Values
-		}
 		var (
-			in       i
-			pIn      *i
-			datapack DataPacked
+			in   i
+			pIn  interface{}
+			_map map[string]interface{} = map[string]interface{}{}
+			//datapack DataPacked
 		)
 		//check configureation is loaded
 		if config.Rds == nil {
@@ -61,39 +57,26 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 		// case double pointer decoding
 		if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
 			in = reflect.New(vType.Elem()).Interface().(i)
-			pIn = &in
+			pIn = in
 		} else {
 			pIn = reflect.New(vType).Interface().(*i)
-			in = *pIn
+			in = *pIn.(*i)
 		}
-		// the base principle of decoding is delay the decoding to the latest moment, so that each element can be decoded to the right type
 
-		//step 1, try to unmarshal jwt
-		if err = msgpack.Unmarshal(s, in); err != nil {
+		//type conversion of form data (from url parameter or post form)
+		if err = msgpack.Unmarshal(s, &_map); err != nil {
 			return nil, err
 		}
-		//try to takeout DataPacked
-		if err = msgpack.Unmarshal(s, &datapack); err != nil {
-			return nil, fmt.Errorf("msgpack.Unmarshal DataPacked error %s", err)
+		//mapstructure support type conversion
+		if err = mapstructure.Decode(_map, pIn); err != nil {
+			return nil, err
 		}
-		//step 3, try to unmarshal MsgPack
-		if len(datapack.MsgpackBody) > 0 {
-			if err = msgpack.Unmarshal(datapack.MsgpackBody, in); err != nil {
-				return nil, fmt.Errorf("msgpack.Unmarshal MsgpackBody error %s", err)
+		if len(NonEmptyOrZeroToCheck) > 0 {
+			if err = checkNonEmpty(pIn, NonEmptyOrZeroToCheck); err != nil {
+				return nil, err
 			}
 		}
-		//step 4, unmarshal Form
-		if len(datapack.Form) > 0 {
-			if err = schema.NewDecoder().Decode(in, datapack.Form); err != nil {
-				return nil, fmt.Errorf("schema.NewDecoder().Decode error %s", err)
-			}
-		}
-		//step 4, unmarshal JsonPack
-		if len(datapack.JsonBody) > 0 {
-			if err = json.Unmarshal(datapack.JsonBody, in); err != nil {
-				return nil, fmt.Errorf("msgpack.Unmarshal JsonBody error %s", err)
-			}
-		}
+
 		return f(in)
 	}
 	//register Api

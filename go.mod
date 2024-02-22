@@ -6,8 +6,8 @@ require (
 	github.com/bits-and-blooms/bloom/v3 v3.6.0
 	github.com/go-ping/ping v1.1.0
 	github.com/golang-jwt/jwt/v5 v5.0.0-rc.1
-	github.com/gorilla/schema v1.2.0
 	github.com/jinzhu/copier v0.3.5
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/orcaman/concurrent-map/v2 v2.0.1
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/rs/zerolog v1.29.1
