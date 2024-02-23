@@ -25,7 +25,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
 	}
-	if !permission.IsPermitted(permission.Put, svcCtx.Key, operation) {
+	if !permission.IsPermitted(svcCtx.Key, operation) {
 		return "false", ErrOperationNotPermited
 	}
 

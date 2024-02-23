@@ -23,7 +23,7 @@ func (svcCtx *HttpContext) DelHandler() (result interface{}, err error) {
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
 	}
-	if !permission.IsPermitted(permission.Del, svcCtx.Key, operation) {
+	if !permission.IsPermitted(svcCtx.Key, operation) {
 		// check operation permission
 		return nil, fmt.Errorf(" operation %v not permitted", operation)
 	}

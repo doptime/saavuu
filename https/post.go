@@ -24,7 +24,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	if operation, err = svcCtx.KeyFieldAtJwt(); err != nil {
 		return "", err
 	}
-	if !permission.IsPermitted(permission.Post, svcCtx.Key, operation) {
+	if !permission.IsPermitted(svcCtx.Key, operation) {
 		return "false", ErrOperationNotPermited
 	}
 
