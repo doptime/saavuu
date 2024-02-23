@@ -48,9 +48,16 @@ func LoadPermissionTable() {
 		}
 		ConfigurationLoaded = true
 	}
+	latestKeys := map[string]bool{}
 	for _, key := range keys {
+		latestKeys[key] = true
 		if _, ok := permitmap.Get(key); !ok {
 			permitmap.Set(key, true)
+		}
+	}
+	for _, key := range permitmap.Keys() {
+		if _, ok := latestKeys[key]; !ok {
+			permitmap.Remove(key)
 		}
 	}
 	go func() {
