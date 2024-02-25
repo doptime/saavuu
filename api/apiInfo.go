@@ -5,13 +5,15 @@ import (
 	"sync"
 
 	cmap "github.com/orcaman/concurrent-map/v2"
+	"github.com/redis/go-redis/v9"
+	"github.com/yangkequn/saavuu/config"
 )
 
 type ApiInfo struct {
 	// ApiName is the name of the service
-	ApiName string
-	DbName  string
-	Ctx     context.Context
+	ApiName        string
+	DataSourceName string
+	Ctx            context.Context
 	// ApiFuncWithMsgpackedParam is the function of the service
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
@@ -24,5 +26,11 @@ func apiServiceNames() (serviceNames []string) {
 	}
 	return serviceNames
 }
+func GetServiceDB(serviceName string) *redis.Client {
+	serviceInfo, _ := ApiServices.Get(serviceName)
+	DataSourceName := serviceInfo.DataSourceName
+	return config.Rds[DataSourceName]
+}
 
 var fun2ApiInfoMap = &sync.Map{}
+var APIGroupByDataSourceName = cmap.New[[]string]()

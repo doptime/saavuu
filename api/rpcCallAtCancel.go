@@ -24,8 +24,8 @@ func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt tim
 	} else {
 		apiInfo = _apiInfo.(*ApiInfo)
 	}
-	if Rds, ok = config.Rds[apiInfo.DbName]; !ok {
-		log.Info().Str("DBName not defined in enviroment", apiInfo.DbName).Send()
+	if Rds, ok = config.Rds[apiInfo.DataSourceName]; !ok {
+		log.Info().Str("DataSourceName not defined in enviroment", apiInfo.DataSourceName).Send()
 		return false
 	}
 	Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", ""}

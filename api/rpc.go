@@ -16,12 +16,12 @@ import (
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
-func Rpc[i any, o any](options ...Option) (retf func(InParam i) (ret o, err error)) {
+func Rpc[i any, o any](options ...With) (retf func(InParam i) (ret o, err error)) {
 	var (
 		db     *redis.Client
 		ok     bool
 		ctx             = context.Background()
-		option *Options = optionsMerge(options...)
+		option *Options = mergeOptions(options...)
 	)
 
 	if len(option.ApiName) > 0 {
@@ -34,8 +34,8 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i) (ret o, err erro
 		log.Error().Str("service misnamed", option.ApiName).Send()
 	}
 
-	if db, ok = config.Rds[option.DbName]; !ok {
-		log.Info().Str("DBName not defined in enviroment", option.DbName).Send()
+	if db, ok = config.Rds[option.DataSourceName]; !ok {
+		log.Info().Str("DataSourceName not defined in enviroment", option.DataSourceName).Send()
 		return nil
 	}
 
@@ -85,10 +85,13 @@ func Rpc[i any, o any](options ...Option) (retf func(InParam i) (ret o, err erro
 		return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 	}
 	rpcInfo := &ApiInfo{
-		DbName:  option.DbName,
-		ApiName: option.ApiName,
+		DataSourceName: option.DataSourceName,
+		ApiName:        option.ApiName,
 	}
 	funcPtr := reflect.ValueOf(retf).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, rpcInfo)
+	APIGroupByDataSourceName.Upsert(option.DataSourceName, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, option.ApiName)
+	})
 	return retf
 }

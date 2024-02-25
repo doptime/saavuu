@@ -28,20 +28,38 @@ var ApiStartingWaiter func() = func() func() {
 
 func rpcReceive() {
 	var (
+		rds      *redis.Client
+		services []string
+		ok       bool
+	)
+	for _, dataSource := range APIGroupByDataSourceName.Keys() {
+		if services, ok = APIGroupByDataSourceName.Get(dataSource); !ok {
+			log.Error().Str("dataSource", dataSource).Msg("dataSource not found")
+			continue
+		}
+
+		if rds, ok = config.Rds[dataSource]; !ok {
+			log.Error().Str("dataSource", dataSource).Msg("dataSource not found")
+			continue
+		}
+		go rpcReceiveOneDatasource(services, rds)
+	}
+}
+func rpcReceiveOneDatasource(serviceNames []string, rds *redis.Client) {
+	var (
 		apiName, data string
 		cmd           *redis.XStreamSliceCmd
-		rds           *redis.Client = config.RdsDefaultClient()
 	)
 
 	//wait for all rpc services ready, so that rpc results can be received
 	ApiStartingWaiter()
 
 	c := context.Background()
-	XGroupEnsureCreated(c, apiServiceNames())
+	XGroupEnsureCreated(c, serviceNames, rds)
 
 	//deprecate using list command LRange, to avoid continually query consumption
 	//use xreadgroup to receive data ,2023-01-31
-	for args := defaultXReadGroupArgs(); ; {
+	for args := defaultXReadGroupArgs(serviceNames); ; {
 		if cmd = rds.XReadGroup(c, args); cmd.Err() == redis.Nil {
 			continue
 		} else if cmd.Err() != nil {
@@ -91,8 +109,8 @@ func CallApiLocallyAndSendBackResult(apiName, BackToID string, s []byte) (err er
 		return
 	}
 	ctx := context.Background()
-	if rds, ok = config.Rds[service.DbName]; !ok {
-		return fmt.Errorf("DBName not defined in enviroment %s", service.DbName)
+	if rds, ok = config.Rds[service.DataSourceName]; !ok {
+		return fmt.Errorf("DataSourceName not defined in enviroment %s", service.DataSourceName)
 	}
 	pipline := rds.Pipeline()
 	pipline.RPush(ctx, BackToID, msgPackResult)

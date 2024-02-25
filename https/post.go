@@ -29,7 +29,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	}
 
 	//db := &data.Ctx{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
-	db := data.New[interface{}, interface{}](svcCtx.Key)
+	db := data.New[interface{}, interface{}](data.WithKey(svcCtx.Key))
 
 	//service name is stored in svcCtx.Key
 	switch svcCtx.Cmd {

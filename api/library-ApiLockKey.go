@@ -21,7 +21,7 @@ var ApiLockKey = Api(func(req *InLockKey) (ok bool, err error) {
 		now    int64 = time.Now().UnixMilli()
 		timeAt int64 = now + req.DurationMs
 		score  float64
-		rds    *redis.Client = config.RdsDefaultClient()
+		rds    *redis.Client = config.Rds[""]
 	)
 	if score, err = rds.ZScore(context.Background(), "KeyLocker", req.Key).Result(); err != nil {
 		if err != redis.Nil {

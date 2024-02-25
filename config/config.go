@@ -68,16 +68,6 @@ var Cfg Configuration = Configuration{
 
 var Rds map[string]*redis.Client = map[string]*redis.Client{}
 
-func RdsDefaultClient() *redis.Client {
-	var (
-		ok  bool
-		rds *redis.Client
-	)
-	if rds, ok = Rds[""]; !ok {
-		log.Panic().Msg("default redis client not found")
-	}
-	return rds
-}
 func RdsClientByName(name string) (rds *redis.Client, err error) {
 	var (
 		ok bool

@@ -10,14 +10,13 @@ import (
 	"github.com/yangkequn/saavuu/config"
 )
 
-func defaultXReadGroupArgs() *redis.XReadGroupArgs {
+func defaultXReadGroupArgs(serviceNames []string) *redis.XReadGroupArgs {
 	var (
 		streams []string
 	)
-	services := apiServiceNames()
-	streams = append(streams, services...)
+	streams = append(streams, serviceNames...)
 	//from services to ServiceInfos
-	for i := 0; i < len(services); i++ {
+	for i := 0; i < len(serviceNames); i++ {
 		//append default stream id
 		streams = append(streams, ">")
 	}
@@ -26,9 +25,8 @@ func defaultXReadGroupArgs() *redis.XReadGroupArgs {
 	args := &redis.XReadGroupArgs{Streams: streams, Block: time.Second * 20, Count: config.Cfg.Api.ServiceBatchSize, NoAck: true, Group: "group0", Consumer: "saavuu"}
 	return args
 }
-func XGroupEnsureCreated(c context.Context, ServiceNames []string) (err error) {
+func XGroupEnsureCreated(c context.Context, ServiceNames []string, rds *redis.Client) (err error) {
 	var (
-		rds       *redis.Client = config.RdsDefaultClient()
 		waitGroup sync.WaitGroup
 	)
 	waitGroup.Add(len(ServiceNames))

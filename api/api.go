@@ -20,9 +20,9 @@ import (
 //
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Option) (retf func(InParam i) (ret o, err error)) {
+func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...With) (retf func(InParam i) (ret o, err error)) {
 	var (
-		option                *Options = optionsMerge(options...)
+		option                *Options = mergeOptions(options...)
 		NonEmptyOrZeroToCheck []int
 	)
 	if len(option.ApiName) > 0 {
@@ -56,10 +56,10 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 		}
 		// case double pointer decoding
 		if vType := reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
-			in = reflect.New(vType.Elem()).Interface().(i)
-			pIn = in
+			pIn = reflect.New(vType.Elem()).Interface()
+			in = pIn.(i)
 		} else {
-			pIn = reflect.New(vType).Interface().(*i)
+			pIn = reflect.New(vType).Interface()
 			in = *pIn.(*i)
 		}
 
@@ -82,13 +82,16 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...Opti
 	//register Api
 	apiInfo := &ApiInfo{
 		ApiName:                   option.ApiName,
-		DbName:                    option.DbName,
+		DataSourceName:            option.DataSourceName,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 		Ctx:                       context.Background(),
 	}
 	ApiServices.Set(option.ApiName, apiInfo)
 	funcPtr := reflect.ValueOf(f).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, apiInfo)
+	APIGroupByDataSourceName.Upsert(option.DataSourceName, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, option.ApiName)
+	})
 	log.Debug().Str("ApiNamed service created completed!", option.ApiName).Send()
 	//return Api context
 	return f

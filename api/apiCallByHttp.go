@@ -18,7 +18,7 @@ func CallByHTTP(ServiceName string, paramIn map[string]interface{}) (ret interfa
 	//if function is stored locally, call it directly. This is alias monolithic mode
 	if apiInfo, ok = ApiServices.Get(ServiceName); !ok {
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		var rpc = Rpc[interface{}, interface{}](OptName(ServiceName), OptDb(apiInfo.DbName))
+		var rpc = Rpc[interface{}, interface{}](WithName(ServiceName), WithDS(apiInfo.DataSourceName))
 		return rpc(paramIn)
 	}
 	//if function is stored locally, call it directly. This is alias monolithic mode

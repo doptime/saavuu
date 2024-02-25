@@ -30,11 +30,11 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 	} else {
 		_apiInfo := apiInfo.(*ApiInfo)
 		option.ApiName = _apiInfo.ApiName
-		option.DbName = _apiInfo.DbName
+		option.DataSourceName = _apiInfo.DataSourceName
 	}
 
-	if db, ok = config.Rds[option.DbName]; !ok {
-		log.Info().Str("DBName not defined in enviroment", option.DbName).Send()
+	if db, ok = config.Rds[option.DataSourceName]; !ok {
+		log.Info().Str("DataSourceName not defined in enviroment", option.DataSourceName).Send()
 		return nil
 	}
 
