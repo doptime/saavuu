@@ -28,9 +28,9 @@ func apiServiceNames() (serviceNames []string) {
 }
 func GetServiceDB(serviceName string) *redis.Client {
 	serviceInfo, _ := ApiServices.Get(serviceName)
-	DataSourceName := serviceInfo.DataSource
-	return config.Rds[DataSourceName]
+	DataSource := serviceInfo.DataSource
+	return config.Rds[DataSource]
 }
 
 var fun2ApiInfoMap = &sync.Map{}
-var APIGroupByDataSourceName = cmap.New[[]string]()
+var APIGroupByDataSource = cmap.New[[]string]()

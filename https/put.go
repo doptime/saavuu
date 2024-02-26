@@ -18,7 +18,7 @@ func (svcCtx *HttpContext) PutHandler() (data interface{}, err error) {
 		operation string
 		rds       *redis.Client
 	)
-	if rds, err = config.GetRdsClientByName(svcCtx.RedisDataSourceName); err != nil {
+	if rds, err = config.GetRdsClientByName(svcCtx.RedisDataSource); err != nil {
 		return nil, err
 	}
 

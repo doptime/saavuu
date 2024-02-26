@@ -25,7 +25,7 @@ func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt tim
 		apiInfo = _apiInfo.(*ApiInfo)
 	}
 	if Rds, ok = config.Rds[apiInfo.DataSource]; !ok {
-		log.Info().Str("DataSourceName not defined in enviroment", apiInfo.DataSource).Send()
+		log.Info().Str("DataSource not defined in enviroment", apiInfo.DataSource).Send()
 		return false
 	}
 	Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", ""}

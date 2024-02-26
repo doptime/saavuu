@@ -9,20 +9,20 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/aopt"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/set"
 	"github.com/yangkequn/saavuu/specification"
 )
 
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
-func Rpc[i any, o any](options ...set.Api) (retf func(InParam i) (ret o, err error)) {
+func Rpc[i any, o any](options ...aopt.Setter) (retf func(InParam i) (ret o, err error)) {
 	var (
 		db     *redis.Client
 		ok     bool
-		ctx                    = context.Background()
-		option *set.ApiSetting = set.Merge(options...)
+		ctx                     = context.Background()
+		option *aopt.ApiOptions = aopt.MergeOptions(options...)
 	)
 
 	if len(option.Name) > 0 {
@@ -36,7 +36,7 @@ func Rpc[i any, o any](options ...set.Api) (retf func(InParam i) (ret o, err err
 	}
 
 	if db, ok = config.Rds[option.DataSource]; !ok {
-		log.Info().Str("DataSourceName not defined in enviroment", option.DataSource).Send()
+		log.Info().Str("DataSource not defined in enviroment", option.DataSource).Send()
 		return nil
 	}
 
@@ -91,7 +91,7 @@ func Rpc[i any, o any](options ...set.Api) (retf func(InParam i) (ret o, err err
 	}
 	funcPtr := reflect.ValueOf(retf).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, rpcInfo)
-	APIGroupByDataSourceName.Upsert(option.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+	APIGroupByDataSource.Upsert(option.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
 		return append(valueInMap, option.Name)
 	})
 	return retf

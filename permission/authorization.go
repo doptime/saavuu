@@ -8,9 +8,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
 	"github.com/yangkequn/saavuu/data"
+	"github.com/yangkequn/saavuu/dopt"
 )
 
-var rdsPermit = data.New[string, string](data.WithKey("_permissions"))
+var rdsPermit = data.New[string, string](dopt.Key("_permissions"))
 var permitmap cmap.ConcurrentMap[string, bool] = cmap.New[bool]()
 
 // this version of IsPermitted is design for fast searching & modifying

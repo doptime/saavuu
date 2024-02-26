@@ -32,8 +32,8 @@ func rpcReceive() {
 		services []string
 		ok       bool
 	)
-	for _, dataSource := range APIGroupByDataSourceName.Keys() {
-		if services, ok = APIGroupByDataSourceName.Get(dataSource); !ok {
+	for _, dataSource := range APIGroupByDataSource.Keys() {
+		if services, ok = APIGroupByDataSource.Get(dataSource); !ok {
 			log.Error().Str("dataSource", dataSource).Msg("dataSource not found")
 			continue
 		}
@@ -110,7 +110,7 @@ func CallApiLocallyAndSendBackResult(apiName, BackToID string, s []byte) (err er
 	}
 	ctx := context.Background()
 	if rds, ok = config.Rds[service.DataSource]; !ok {
-		return fmt.Errorf("DataSourceName not defined in enviroment %s", service.DataSource)
+		return fmt.Errorf("DataSource not defined in enviroment %s", service.DataSource)
 	}
 	pipline := rds.Pipeline()
 	pipline.RPush(ctx, BackToID, msgPackResult)

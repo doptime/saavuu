@@ -7,8 +7,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
+	"github.com/yangkequn/saavuu/aopt"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/set"
 	"github.com/yangkequn/saavuu/specification"
 )
 
@@ -21,26 +21,26 @@ import (
 //
 // ServiceName is defined as "In" + ServiceName in the InParameter
 // ServiceName is automatically converted to lower case
-func Api[i any, o any](f func(InParameter i) (ret o, err error), setting ...set.Api) (retf func(InParam i) (ret o, err error)) {
+func Api[i any, o any](f func(InParameter i) (ret o, err error), option ...aopt.Setter) (retf func(InParam i) (ret o, err error)) {
 	var (
-		settings              *set.ApiSetting = set.Merge(setting...)
+		options               *aopt.ApiOptions = aopt.MergeOptions(option...)
 		NonEmptyOrZeroToCheck []int
 	)
-	if len(settings.Name) > 0 {
-		settings.Name = specification.ApiName(settings.Name)
+	if len(options.Name) > 0 {
+		options.Name = specification.ApiName(options.Name)
 	}
-	if len(settings.Name) == 0 {
-		settings.Name = specification.ApiNameByType((*i)(nil))
+	if len(options.Name) == 0 {
+		options.Name = specification.ApiNameByType((*i)(nil))
 	}
-	if len(settings.Name) == 0 {
-		log.Error().Str("service misnamed", settings.Name).Send()
-	}
-
-	if _, ok := specification.DisAllowedServiceNames[settings.Name]; ok {
-		log.Error().Str("service misnamed", settings.Name).Send()
+	if len(options.Name) == 0 {
+		log.Error().Str("service misnamed", options.Name).Send()
 	}
 
-	log.Debug().Str("Api service create start. name", settings.Name).Send()
+	if _, ok := specification.DisAllowedServiceNames[options.Name]; ok {
+		log.Error().Str("service misnamed", options.Name).Send()
+	}
+
+	log.Debug().Str("Api service create start. name", options.Name).Send()
 	NonEmptyOrZeroToCheck = fieldsToCheck(reflect.TypeOf(new(i)).Elem())
 
 	//create a goroutine to process one job
@@ -82,18 +82,18 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), setting ...set.
 	}
 	//register Api
 	apiInfo := &ApiInfo{
-		Name:                      settings.Name,
-		DataSource:                settings.DataSource,
+		Name:                      options.Name,
+		DataSource:                options.DataSource,
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 		Ctx:                       context.Background(),
 	}
-	ApiServices.Set(settings.Name, apiInfo)
+	ApiServices.Set(options.Name, apiInfo)
 	funcPtr := reflect.ValueOf(f).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, apiInfo)
-	APIGroupByDataSourceName.Upsert(settings.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
-		return append(valueInMap, settings.Name)
+	APIGroupByDataSource.Upsert(options.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, options.Name)
 	})
-	log.Debug().Str("ApiNamed service created completed!", settings.Name).Send()
+	log.Debug().Str("ApiNamed service created completed!", options.Name).Send()
 	//return Api context
 	return f
 }

@@ -14,11 +14,11 @@ import (
 )
 
 type HttpContext struct {
-	Req                 *http.Request
-	Rsb                 http.ResponseWriter
-	jwtToken            *jwt.Token
-	Ctx                 context.Context
-	RedisDataSourceName string
+	Req             *http.Request
+	Rsb             http.ResponseWriter
+	jwtToken        *jwt.Token
+	Ctx             context.Context
+	RedisDataSource string
 	// case get
 	Cmd   string
 	Key   string
@@ -73,8 +73,8 @@ func NewHttpContext(ctx context.Context, r *http.Request, w http.ResponseWriter)
 			svcContext.ResponseContentType = "text/plain"
 		case "STREAM":
 			svcContext.ResponseContentType = "application/octet-stream"
-		case "DS=": //redis db name RDB=redisDataSourceName
-			if svcContext.RedisDataSourceName, err = url.QueryUnescape(CmdKeyFields[i][3:]); err != nil {
+		case "DS=": //redis db name RDB=redisDataSource
+			if svcContext.RedisDataSource, err = url.QueryUnescape(CmdKeyFields[i][3:]); err != nil {
 				return nil, err
 			}
 		}
