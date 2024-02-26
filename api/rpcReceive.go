@@ -109,8 +109,8 @@ func CallApiLocallyAndSendBackResult(apiName, BackToID string, s []byte) (err er
 		return
 	}
 	ctx := context.Background()
-	if rds, ok = config.Rds[service.DataSourceName]; !ok {
-		return fmt.Errorf("DataSourceName not defined in enviroment %s", service.DataSourceName)
+	if rds, ok = config.Rds[service.DataSource]; !ok {
+		return fmt.Errorf("DataSourceName not defined in enviroment %s", service.DataSource)
 	}
 	pipline := rds.Pipeline()
 	pipline.RPush(ctx, BackToID, msgPackResult)

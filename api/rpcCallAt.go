@@ -10,6 +10,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/set"
 	"github.com/yangkequn/saavuu/specification"
 )
 
@@ -19,22 +20,22 @@ import (
 // timeAt is ID of the task. if you want's to cancel the task, you should provide the same timeAt
 func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time) (retf func(InParam i) (err error)) {
 	var (
-		db     *redis.Client
-		ok     bool
-		ctx             = context.Background()
-		option *Options = &Options{}
+		db      *redis.Client
+		ok      bool
+		ctx                     = context.Background()
+		setting *set.ApiSetting = &set.ApiSetting{}
 	)
 	funcPtr := reflect.ValueOf(f).Pointer()
 	if apiInfo, ok := fun2ApiInfoMap.Load(funcPtr); !ok {
 		log.Fatal().Str("service function should be defined By Api or Rpc before used in CallAt", specification.ApiNameByType((*i)(nil))).Send()
 	} else {
 		_apiInfo := apiInfo.(*ApiInfo)
-		option.ApiName = _apiInfo.ApiName
-		option.DataSourceName = _apiInfo.DataSourceName
+		setting.Name = _apiInfo.Name
+		setting.DataSource = _apiInfo.DataSource
 	}
 
-	if db, ok = config.Rds[option.DataSourceName]; !ok {
-		log.Info().Str("DataSourceName not defined in enviroment", option.DataSourceName).Send()
+	if db, ok = config.Rds[setting.DataSource]; !ok {
+		log.Info().Str("DataSource not defined in enviroment", setting.DataSource).Send()
 		return nil
 	}
 
@@ -47,9 +48,9 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		if b, err = specification.MarshalApiInput(InParam); err != nil {
 			return err
 		}
-		fmt.Println("CallAt", option.ApiName, timeAt.UnixNano())
+		fmt.Println("CallAt", setting.Name, timeAt.UnixNano())
 		Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", string(b)}
-		args := &redis.XAddArgs{Stream: option.ApiName, Values: Values, MaxLen: 4096}
+		args := &redis.XAddArgs{Stream: setting.Name, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return cmd.Err()

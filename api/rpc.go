@@ -10,32 +10,33 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/config"
+	"github.com/yangkequn/saavuu/set"
 	"github.com/yangkequn/saavuu/specification"
 )
 
 // create Api context.
 // This New function is for the case the API is defined outside of this package.
 // If the API is defined in this package, use Api() instead.
-func Rpc[i any, o any](options ...With) (retf func(InParam i) (ret o, err error)) {
+func Rpc[i any, o any](options ...set.Api) (retf func(InParam i) (ret o, err error)) {
 	var (
 		db     *redis.Client
 		ok     bool
-		ctx             = context.Background()
-		option *Options = mergeOptions(options...)
+		ctx                    = context.Background()
+		option *set.ApiSetting = set.Merge(options...)
 	)
 
-	if len(option.ApiName) > 0 {
-		option.ApiName = specification.ApiName(option.ApiName)
+	if len(option.Name) > 0 {
+		option.Name = specification.ApiName(option.Name)
 	}
-	if len(option.ApiName) == 0 {
-		option.ApiName = specification.ApiNameByType((*i)(nil))
+	if len(option.Name) == 0 {
+		option.Name = specification.ApiNameByType((*i)(nil))
 	}
-	if len(option.ApiName) == 0 {
-		log.Error().Str("service misnamed", option.ApiName).Send()
+	if len(option.Name) == 0 {
+		log.Error().Str("service misnamed", option.Name).Send()
 	}
 
-	if db, ok = config.Rds[option.DataSourceName]; !ok {
-		log.Info().Str("DataSourceName not defined in enviroment", option.DataSourceName).Send()
+	if db, ok = config.Rds[option.DataSource]; !ok {
+		log.Info().Str("DataSourceName not defined in enviroment", option.DataSource).Send()
 		return nil
 	}
 
@@ -55,7 +56,7 @@ func Rpc[i any, o any](options ...With) (retf func(InParam i) (ret o, err error)
 		// } else {
 		// 	Values = []string{"data", string(b)}
 		// }
-		args := &redis.XAddArgs{Stream: option.ApiName, Values: Values, MaxLen: 4096}
+		args := &redis.XAddArgs{Stream: option.Name, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return out, cmd.Err()
@@ -85,13 +86,13 @@ func Rpc[i any, o any](options ...With) (retf func(InParam i) (ret o, err error)
 		return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 	}
 	rpcInfo := &ApiInfo{
-		DataSourceName: option.DataSourceName,
-		ApiName:        option.ApiName,
+		DataSource: option.DataSource,
+		Name:       option.Name,
 	}
 	funcPtr := reflect.ValueOf(retf).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, rpcInfo)
-	APIGroupByDataSourceName.Upsert(option.DataSourceName, []string{}, func(exist bool, valueInMap, newValue []string) []string {
-		return append(valueInMap, option.ApiName)
+	APIGroupByDataSourceName.Upsert(option.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, option.Name)
 	})
 	return retf
 }

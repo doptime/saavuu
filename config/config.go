@@ -68,7 +68,7 @@ var Cfg Configuration = Configuration{
 
 var Rds map[string]*redis.Client = map[string]*redis.Client{}
 
-func RdsClientByName(name string) (rds *redis.Client, err error) {
+func GetRdsClientByName(name string) (rds *redis.Client, err error) {
 	var (
 		ok bool
 	)

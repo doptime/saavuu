@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 
+	"github.com/yangkequn/saavuu/set"
 	"github.com/yangkequn/saavuu/specification"
 )
 
@@ -18,7 +19,7 @@ func CallByHTTP(ServiceName string, paramIn map[string]interface{}) (ret interfa
 	//if function is stored locally, call it directly. This is alias monolithic mode
 	if apiInfo, ok = ApiServices.Get(ServiceName); !ok {
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		var rpc = Rpc[interface{}, interface{}](WithName(ServiceName), WithDS(apiInfo.DataSourceName))
+		var rpc = Rpc[interface{}, interface{}](set.Name(ServiceName), set.DataSource(apiInfo.DataSource))
 		return rpc(paramIn)
 	}
 	//if function is stored locally, call it directly. This is alias monolithic mode

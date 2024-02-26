@@ -10,10 +10,10 @@ import (
 )
 
 type ApiInfo struct {
-	// ApiName is the name of the service
-	ApiName        string
-	DataSourceName string
-	Ctx            context.Context
+	// Name is the name of the service
+	Name       string
+	DataSource string
+	Ctx        context.Context
 	// ApiFuncWithMsgpackedParam is the function of the service
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
 }
@@ -22,13 +22,13 @@ var ApiServices cmap.ConcurrentMap[string, *ApiInfo] = cmap.New[*ApiInfo]()
 
 func apiServiceNames() (serviceNames []string) {
 	for _, serviceInfo := range ApiServices.Items() {
-		serviceNames = append(serviceNames, serviceInfo.ApiName)
+		serviceNames = append(serviceNames, serviceInfo.Name)
 	}
 	return serviceNames
 }
 func GetServiceDB(serviceName string) *redis.Client {
 	serviceInfo, _ := ApiServices.Get(serviceName)
-	DataSourceName := serviceInfo.DataSourceName
+	DataSourceName := serviceInfo.DataSource
 	return config.Rds[DataSourceName]
 }
 

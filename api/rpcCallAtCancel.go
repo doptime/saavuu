@@ -24,12 +24,12 @@ func CallAtCancel[i any, o any](f func(InParam i) (ret o, err error), timeAt tim
 	} else {
 		apiInfo = _apiInfo.(*ApiInfo)
 	}
-	if Rds, ok = config.Rds[apiInfo.DataSourceName]; !ok {
-		log.Info().Str("DataSourceName not defined in enviroment", apiInfo.DataSourceName).Send()
+	if Rds, ok = config.Rds[apiInfo.DataSource]; !ok {
+		log.Info().Str("DataSourceName not defined in enviroment", apiInfo.DataSource).Send()
 		return false
 	}
 	Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", ""}
-	args := &redis.XAddArgs{Stream: apiInfo.ApiName, Values: Values, MaxLen: 4096}
+	args := &redis.XAddArgs{Stream: apiInfo.Name, Values: Values, MaxLen: 4096}
 	//use Rds.XAdd rather than Rds.HSet, to prevent Hset before receiing the result of  XAdd
 	if cmd := Rds.XAdd(context.Background(), args); cmd.Err() != nil {
 		log.Info().AnErr("Do XAdd", cmd.Err()).Send()
