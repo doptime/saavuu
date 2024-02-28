@@ -61,7 +61,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 				return nil, fmt.Errorf("msgpack.Unmarshal JsonBody error %s", err)
 			}
 		}
-		return api.CallByHTTP(ServiceName, paramIn)
+		return api.CallByHTTP(ServiceName, paramIn, svcCtx.Req)
 	case "ZADD":
 		var Score float64
 		var obj interface{}

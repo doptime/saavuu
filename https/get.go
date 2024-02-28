@@ -66,7 +66,7 @@ func (svcCtx *HttpContext) GetHandler() (ret interface{}, err error) {
 				return nil, fmt.Errorf("msgpack.Unmarshal JsonBody error %s", err)
 			}
 		}
-		return api.CallByHTTP(ServiceName, paramIn)
+		return api.CallByHTTP(ServiceName, paramIn, svcCtx.Req)
 
 	case "GET":
 		return db.Get(svcCtx.Field)

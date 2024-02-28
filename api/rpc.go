@@ -88,6 +88,7 @@ func Rpc[i any, o any](options ...aopt.Setter) (retf func(InParam i) (ret o, err
 	rpcInfo := &ApiInfo{
 		DataSource: option.DataSource,
 		Name:       option.Name,
+		WithHeader: HeaderFieldsUsed(new(i)),
 	}
 	funcPtr := reflect.ValueOf(retf).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, rpcInfo)

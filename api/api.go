@@ -84,6 +84,7 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), option ...aopt.
 	apiInfo := &ApiInfo{
 		Name:                      options.Name,
 		DataSource:                options.DataSource,
+		WithHeader:                HeaderFieldsUsed(new(i)),
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 		Ctx:                       context.Background(),
 	}

@@ -13,6 +13,7 @@ type ApiInfo struct {
 	// Name is the name of the service
 	Name       string
 	DataSource string
+	WithHeader bool
 	Ctx        context.Context
 	// ApiFuncWithMsgpackedParam is the function of the service
 	ApiFuncWithMsgpackedParam func(s []byte) (ret interface{}, err error)
