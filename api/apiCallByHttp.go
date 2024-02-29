@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/yangkequn/saavuu/aopt"
 	"github.com/yangkequn/saavuu/specification"
 )
 
@@ -22,7 +21,7 @@ func CallByHTTP(ServiceName string, paramIn map[string]interface{}, req *http.Re
 	//if function is stored locally, call it directly. This is alias monolithic mode
 	if apiInfo, ok = ApiServices.Get(ServiceName); !ok {
 		//if function is not stored locally, call it remotely (RPC). This is alias microservice mode
-		var rpc = Rpc[interface{}, interface{}](aopt.Name(ServiceName), aopt.DataSource(apiInfo.DataSource))
+		var rpc = Rpc[interface{}, interface{}](Option.Name(ServiceName).DataSource(apiInfo.DataSource))
 		return rpc(paramIn)
 	}
 	if apiInfo.WithHeader {
