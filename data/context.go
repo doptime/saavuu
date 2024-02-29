@@ -28,15 +28,15 @@ func New[k comparable, v any](ops ...*DataOption) *Ctx[k, v] {
 		option = ops[0]
 	}
 	//panic if Key is empty
-	if !specification.GetValidDataKeyName((*v)(nil), &option.Key_) {
-		log.Panic().Str("Key is empty in Data.New", option.Key_).Send()
+	if !specification.GetValidDataKeyName((*v)(nil), &option.Key) {
+		log.Panic().Str("Key is empty in Data.New", option.Key).Send()
 	}
-	if rds, ok = config.Rds[option.DataSource_]; !ok {
-		log.Info().Str("DataSource not defined in enviroment", option.DataSource_).Send()
+	if rds, ok = config.Rds[option.DataSource]; !ok {
+		log.Info().Str("DataSource not defined in enviroment", option.DataSource).Send()
 		return nil
 	}
-	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: option.Key_}
-	log.Debug().Str("data New create end!", option.Key_).Send()
+	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: option.Key}
+	log.Debug().Str("data New create end!", option.Key).Send()
 	return ctx
 }
 func (db *Ctx[k, v]) Time() (tm time.Time, err error) {

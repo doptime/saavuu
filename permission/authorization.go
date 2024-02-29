@@ -10,7 +10,7 @@ import (
 	"github.com/yangkequn/saavuu/data"
 )
 
-var rdsPermit = data.New[string, string](data.Option.Key("_permissions"))
+var rdsPermit = data.New[string, string](data.Option.WithKey("_permissions"))
 var permitmap cmap.ConcurrentMap[string, bool] = cmap.New[bool]()
 
 // this version of IsPermitted is design for fast searching & modifying

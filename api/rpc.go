@@ -27,18 +27,18 @@ func Rpc[i any, o any](options ...*ApiOption) (retf func(InParam i) (ret o, err 
 		option = options[0]
 	}
 
-	if len(option.Name_) > 0 {
-		option.Name_ = specification.ApiName(option.Name_)
+	if len(option.Name) > 0 {
+		option.Name = specification.ApiName(option.Name)
 	}
-	if len(option.Name_) == 0 {
-		option.Name_ = specification.ApiNameByType((*i)(nil))
+	if len(option.Name) == 0 {
+		option.Name = specification.ApiNameByType((*i)(nil))
 	}
-	if len(option.Name_) == 0 {
-		log.Error().Str("service misnamed", option.Name_).Send()
+	if len(option.Name) == 0 {
+		log.Error().Str("service misnamed", option.Name).Send()
 	}
 
-	if db, ok = config.Rds[option.DataSource_]; !ok {
-		log.Info().Str("DataSource not defined in enviroment", option.DataSource_).Send()
+	if db, ok = config.Rds[option.DataSource]; !ok {
+		log.Info().Str("DataSource not defined in enviroment", option.DataSource).Send()
 		return nil
 	}
 
@@ -58,7 +58,7 @@ func Rpc[i any, o any](options ...*ApiOption) (retf func(InParam i) (ret o, err 
 		// } else {
 		// 	Values = []string{"data", string(b)}
 		// }
-		args := &redis.XAddArgs{Stream: option.Name_, Values: Values, MaxLen: 4096}
+		args := &redis.XAddArgs{Stream: option.Name, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return out, cmd.Err()
@@ -88,14 +88,14 @@ func Rpc[i any, o any](options ...*ApiOption) (retf func(InParam i) (ret o, err 
 		return *oValueWithPointer, msgpack.Unmarshal(b, oValueWithPointer)
 	}
 	rpcInfo := &ApiInfo{
-		DataSource: option.DataSource_,
-		Name:       option.Name_,
+		DataSource: option.DataSource,
+		Name:       option.Name,
 		WithHeader: HeaderFieldsUsed(new(i)),
 	}
 	funcPtr := reflect.ValueOf(retf).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, rpcInfo)
-	APIGroupByDataSource.Upsert(option.DataSource_, []string{}, func(exist bool, valueInMap, newValue []string) []string {
-		return append(valueInMap, option.Name_)
+	APIGroupByDataSource.Upsert(option.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, option.Name)
 	})
 	return retf
 }

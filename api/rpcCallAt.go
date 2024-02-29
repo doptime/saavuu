@@ -29,12 +29,12 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		log.Fatal().Str("service function should be defined By Api or Rpc before used in CallAt", specification.ApiNameByType((*i)(nil))).Send()
 	} else {
 		_apiInfo := apiInfo.(*ApiInfo)
-		option.Name_ = _apiInfo.Name
-		option.DataSource_ = _apiInfo.DataSource
+		option.Name = _apiInfo.Name
+		option.DataSource = _apiInfo.DataSource
 	}
 
-	if db, ok = config.Rds[option.DataSource_]; !ok {
-		log.Info().Str("DataSource not defined in enviroment", option.DataSource_).Send()
+	if db, ok = config.Rds[option.DataSource]; !ok {
+		log.Info().Str("DataSource not defined in enviroment", option.DataSource).Send()
 		return nil
 	}
 
@@ -47,9 +47,9 @@ func CallAt[i any, o any](f func(InParam i) (ret o, err error), timeAt time.Time
 		if b, err = specification.MarshalApiInput(InParam); err != nil {
 			return err
 		}
-		fmt.Println("CallAt", option.Name_, timeAt.UnixNano())
+		fmt.Println("CallAt", option.Name, timeAt.UnixNano())
 		Values = []string{"timeAt", strconv.FormatInt(timeAt.UnixNano(), 10), "data", string(b)}
-		args := &redis.XAddArgs{Stream: option.Name_, Values: Values, MaxLen: 4096}
+		args := &redis.XAddArgs{Stream: option.Name, Values: Values, MaxLen: 4096}
 		if cmd = db.XAdd(ctx, args); cmd.Err() != nil {
 			log.Info().AnErr("Do XAdd", cmd.Err()).Send()
 			return cmd.Err()

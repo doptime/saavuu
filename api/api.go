@@ -29,21 +29,21 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...ApiO
 		option = &options[0]
 	}
 
-	if len(option.Name_) > 0 {
-		option.Name_ = specification.ApiName(option.Name_)
+	if len(option.Name) > 0 {
+		option.Name = specification.ApiName(option.Name)
 	}
-	if len(option.Name_) == 0 {
-		option.Name_ = specification.ApiNameByType((*i)(nil))
+	if len(option.Name) == 0 {
+		option.Name = specification.ApiNameByType((*i)(nil))
 	}
-	if len(option.Name_) == 0 {
-		log.Error().Str("service misnamed", option.Name_).Send()
-	}
-
-	if _, ok := specification.DisAllowedServiceNames[option.Name_]; ok {
-		log.Error().Str("service misnamed", option.Name_).Send()
+	if len(option.Name) == 0 {
+		log.Error().Str("service misnamed", option.Name).Send()
 	}
 
-	log.Debug().Str("Api service create start. name", option.Name_).Send()
+	if _, ok := specification.DisAllowedServiceNames[option.Name]; ok {
+		log.Error().Str("service misnamed", option.Name).Send()
+	}
+
+	log.Debug().Str("Api service create start. name", option.Name).Send()
 	NonEmptyOrZeroToCheck = fieldsToCheck(reflect.TypeOf(new(i)).Elem())
 
 	//create a goroutine to process one job
@@ -85,19 +85,19 @@ func Api[i any, o any](f func(InParameter i) (ret o, err error), options ...ApiO
 	}
 	//register Api
 	apiInfo := &ApiInfo{
-		Name:                      option.Name_,
-		DataSource:                option.DataSource_,
+		Name:                      option.Name,
+		DataSource:                option.DataSource,
 		WithHeader:                HeaderFieldsUsed(new(i)),
 		ApiFuncWithMsgpackedParam: ProcessOneJob,
 		Ctx:                       context.Background(),
 	}
-	ApiServices.Set(option.Name_, apiInfo)
+	ApiServices.Set(option.Name, apiInfo)
 	funcPtr := reflect.ValueOf(f).Pointer()
 	fun2ApiInfoMap.Store(funcPtr, apiInfo)
-	APIGroupByDataSource.Upsert(option.DataSource_, []string{}, func(exist bool, valueInMap, newValue []string) []string {
-		return append(valueInMap, option.Name_)
+	APIGroupByDataSource.Upsert(option.DataSource, []string{}, func(exist bool, valueInMap, newValue []string) []string {
+		return append(valueInMap, option.Name)
 	})
-	log.Debug().Str("ApiNamed service created completed!", option.Name_).Send()
+	log.Debug().Str("ApiNamed service created completed!", option.Name).Send()
 	//return Api context
 	return f
 }
