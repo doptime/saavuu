@@ -103,7 +103,7 @@ func rpcCallAtDispatcher() {
 		} else if len(cmd) != 2 || cmd[1].Err() != nil {
 			continue
 		}
-		if data = cmd[0].(*redis.StringCmd).Val(); err != nil || len(data) == 0 {
+		if data = cmd[0].(*redis.StringCmd).Val(); len(data) == 0 {
 			continue
 		}
 		fmt.Println("rpcCallAtRoutine key", task.ServiceName+":delay field", TaskAtFutureNs, "data length", len(data), "data", string(data))

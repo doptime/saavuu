@@ -56,9 +56,12 @@ func HeaderFieldsUsed[i any](param i) bool {
 	//use reflect to detect if the param has a field start with "Header", or tag of that field contains "Header",if true return true else return false
 
 	// case double pointer decoding
-	if vType = reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr {
-		vType = vType.Elem()
+	for vType = reflect.TypeOf((*i)(nil)).Elem(); vType.Kind() == reflect.Ptr; vType = vType.Elem() {
 	}
+	if vType.Kind() != reflect.Struct {
+		return false
+	}
+
 	for i := 0; i < vType.NumField(); i++ {
 		name := strings.ToLower(vType.Field(i).Name)
 		tag := strings.ToLower(vType.Field(i).Tag.Get("mapstructure"))
