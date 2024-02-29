@@ -8,7 +8,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/yangkequn/saavuu/config"
-	"github.com/yangkequn/saavuu/dopt"
 	"github.com/yangkequn/saavuu/specification"
 )
 
@@ -19,22 +18,25 @@ type Ctx[k comparable, v any] struct {
 	BloomFilterKeys *bloom.BloomFilter
 }
 
-func New[k comparable, v any](ops ...dopt.Setter) *Ctx[k, v] {
+func New[k comparable, v any](ops ...*DataOption) *Ctx[k, v] {
 	var (
 		rds    *redis.Client
-		option *dopt.DataOptions = dopt.MergeOptions(ops...)
+		option *DataOption = &DataOption{}
 		ok     bool
 	)
-	//panic if Key is empty
-	if !specification.GetValidDataKeyName((*v)(nil), &option.Key) {
-		log.Panic().Str("Key is empty in Data.New", option.Key).Send()
+	if len(ops) > 0 {
+		option = ops[0]
 	}
-	if rds, ok = config.Rds[option.DataSource]; !ok {
-		log.Info().Str("DataSource not defined in enviroment", option.DataSource).Send()
+	//panic if Key is empty
+	if !specification.GetValidDataKeyName((*v)(nil), &option.Key_) {
+		log.Panic().Str("Key is empty in Data.New", option.Key_).Send()
+	}
+	if rds, ok = config.Rds[option.DataSource_]; !ok {
+		log.Info().Str("DataSource not defined in enviroment", option.DataSource_).Send()
 		return nil
 	}
-	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: option.Key}
-	log.Debug().Str("data New create end!", option.Key).Send()
+	ctx := &Ctx[k, v]{Ctx: context.Background(), Rds: rds, Key: option.Key_}
+	log.Debug().Str("data New create end!", option.Key_).Send()
 	return ctx
 }
 func (db *Ctx[k, v]) Time() (tm time.Time, err error) {

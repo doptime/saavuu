@@ -10,7 +10,6 @@ import (
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/yangkequn/saavuu/api"
 	"github.com/yangkequn/saavuu/data"
-	"github.com/yangkequn/saavuu/dopt"
 	"github.com/yangkequn/saavuu/permission"
 )
 
@@ -30,7 +29,7 @@ func (svcCtx *HttpContext) PostHandler() (ret interface{}, err error) {
 	}
 
 	//db := &data.Ctx{Ctx: svcCtx.Ctx, Rds: config.Rds, Key: svcCtx.Key}
-	db := data.New[interface{}, interface{}](dopt.Key(svcCtx.Key))
+	db := data.New[interface{}, interface{}](data.Option.Key(svcCtx.Key))
 
 	//service name is stored in svcCtx.Key
 	switch svcCtx.Cmd {
